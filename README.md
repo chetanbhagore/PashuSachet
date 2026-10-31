@@ -1,7 +1,8 @@
 # 🐄 PashuSachet (पशूसचेत / Seva First)
 > **A Multilingual, AI-Assisted Livestock-Health and Veterinary-Service Platform for Rural Maharashtra**
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-brightgreen?style=for-the-badge&logo=github)](https://chetanbhagore.github.io/PashuSachet/)
+[![Vercel Deployment](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://pashu-sachet.vercel.app)
+[![GitHub Pages](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-brightgreen?style=for-the-badge&logo=github)](https://chetanbhagore.github.io/PashuSachet/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 [![Status: Prototype](https://img.shields.io/badge/Prototype-Operational-orange?style=for-the-badge)]()
 [![Government Aligned](https://img.shields.io/badge/Aligned-ICAR--NIVEDI%20%2F%20DAHD-emerald?style=for-the-badge)]()
@@ -132,3 +133,4 @@ python -m http.server 8000
 ## 📄 License
 This project is open-source under the [MIT License](LICENSE).
 Developed with dedication for the farmers and veterinary professionals of Maharashtra.
+
