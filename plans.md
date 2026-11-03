@@ -5,6 +5,11 @@
 > **Lifecycle Coverage:** Registration ➔ Login ➔ Animal Registration (Pashu Aadhar) ➔ Disease Detection ➔ Veterinary Consultation ➔ Treatment & Withdrawal Tracking ➔ Vaccination ➔ Outbreak Surveillance ➔ Reporting & Audits.  
 > **Repository:** `chetanbhagore/PashuSachet` | **Live Web App:** `https://pashu-sachet.vercel.app`
 
+### 📚 Complete Engineering Blueprint Suite:
+* 🎨 **Frontend Design & UI Specification:** [`FRONTEND_DESIGN_SPEC.md`](file:///g:/Chetan/pashuSachet/FRONTEND_DESIGN_SPEC.md) — *“The Village Animal-Care Notebook” (WCAG AA, Lucide SVGs, Scoped Hero Loop).*
+* ⚙️ **Backend Architecture & API Blueprint:** [`BACKEND_ARCHITECTURE_PLAN.md`](file:///g:/Chetan/pashuSachet/BACKEND_ARCHITECTURE_PLAN.md) — *FastAPI, PostgreSQL 16 + PostGIS, RBAC, Delta Offline Sync, Food Safety Worker.*
+* 🧠 **AI & Machine Learning System Architecture:** [`ML_AI_SYSTEM_PLAN.md`](file:///g:/Chetan/pashuSachet/ML_AI_SYSTEM_PLAN.md) — *Models A (Triage), B (Lesion Vision), C (Outbreak CUSUM), D (Vitals EWMA), Safety Circuit Breakers.*
+
 ---
 
 ## 1. Complete Feature Map
