@@ -7,8 +7,8 @@
 
 ### 📚 Complete Engineering Blueprint Suite:
 * 🎨 **Frontend Design & UI Specification:** [`FRONTEND_DESIGN_SPEC.md`](file:///g:/Chetan/pashuSachet/FRONTEND_DESIGN_SPEC.md) — *“The Village Animal-Care Notebook” (WCAG AA, Lucide SVGs, Scoped Hero Loop).*
-* ⚙️ **Backend Architecture & API Blueprint:** [`BACKEND_ARCHITECTURE_PLAN.md`](file:///g:/Chetan/pashuSachet/BACKEND_ARCHITECTURE_PLAN.md) — *FastAPI, PostgreSQL 16 + PostGIS, RBAC, Delta Offline Sync, Food Safety Worker.*
-* 🧠 **AI & Machine Learning System Architecture:** [`ML_AI_SYSTEM_PLAN.md`](file:///g:/Chetan/pashuSachet/ML_AI_SYSTEM_PLAN.md) — *Models A (Triage), B (Lesion Vision), C (Outbreak CUSUM), D (Vitals EWMA), Safety Circuit Breakers.*
+* ⚙️ **Backend Architecture & API Blueprint:** [`BACKEND_ARCHITECTURE_PLAN.md`](file:///g:/Chetan/pashuSachet/BACKEND_ARCHITECTURE_PLAN.md) — *Phase 1: Pure FastAPI (Python 3.11) for Project Deadline; Phase 2: Java Spring Boot 3 Core API for Personal Portfolio & Placement.*
+* 🧠 **AI & Machine Learning System Architecture:** [`ML_AI_SYSTEM_PLAN.md`](file:///g:/Chetan/pashuSachet/ML_AI_SYSTEM_PLAN.md) — *V1 Scoped: Model A (Unified Triage Rules), Model C (Herd Vitals EWMA), Model S (Space-Time ST-DBSCAN), Red Flag Safety Circuits.*
 
 ---
 
@@ -380,12 +380,16 @@ flowchart LR
 * Administrator credential verification queue (Vet MSVC licenses and Officer department IDs).
 * Demo audit trail viewer and system health analytics.
 
-### 🔹 Phase 5: Production Infrastructure
-* FastAPI modular monolith backend scaffolding (`app/api`, `app/core`, `app/models`, `app/services`).
-* PostgreSQL 16 + PostGIS spatial database setup with Alembic migrations.
-* Real mobile SMS OTP authentication service and cryptographic JWT session tokens.
-* Server-side role-based access control (RBAC) middleware enforcing privilege boundaries.
-* Automated database backups, TLS configuration, and production monitoring.
+### 🔹 Phase 5: Production Infrastructure & Polyglot Phasing
+* **Phase 5A (Active Target for Project Deadline): Pure FastAPI (Python 3.11)**
+  * Scaffolds clean async REST API (`app/api/v1`, `app/core`, `app/models`, `app/services`).
+  * Runs on embedded SQLite (for zero-setup local dev/offline verification) and PostgreSQL 16 + PostGIS for production deployment.
+  * Native evaluation of `shared/rules/triage_rules_v1.json` with zero inter-process overhead.
+  * Dynamic read-time calculation of drug milk/meat withdrawal hours from final treatment dose.
+* **Phase 5B (Post-Deadline / Personal Portfolio & Placement Upgrade): Java Spring Boot 3 Extraction**
+  * Migrates the Core Business API to Java 17/21 + Spring Boot 3 (Spring Data JPA, Hibernate Spatial, Spring Security).
+  * Retains the FastAPI service strictly for Python AI & spatial anomaly algorithms (`/ai/v1/triage`).
+  * Zero schema rewrite needed, as the PostgreSQL DDL and API contracts are 100% compliant with both stacks!
 
 ### 🔹 Phase 6: Validated Intelligence & Integrations
 * Machine learning pipelines trained on verified clinical datasets (scikit-learn / XGBoost).

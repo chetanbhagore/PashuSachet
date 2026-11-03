@@ -3,6 +3,23 @@ Thumbs.db
 *.log
 .vscode/
 .idea/
-
-
 .vercel
+
+# Python virtual environments & bytecode
+.venv/
+env/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Node / frontend
+node_modules/
+dist/
+.cache/

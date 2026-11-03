@@ -1,0 +1,206 @@
+{
+  "version": "1.0.0",
+  "name": "PashuSachet Unified Clinical Triage Rules",
+  "reference_standard": "ICAR-NIVEDI / Department of Animal Husbandry Clinical Protocols",
+  "last_updated": "2026-11-04",
+  "red_flag_triggers": [
+    {
+      "id": "severe_bloat",
+      "label_en": "Severe Left Flank Distention / Bloat with Respiratory Distress",
+      "label_mr": "पोटाचा डावा भाग प्रचंड फुगणे / धाप लागणे",
+      "action": "EMERGENCY_OVERRIDE_1962",
+      "message": "EMERGENCY: Immediate veterinary intervention required. Call 1962 toll-free hotline or rush to nearest polyclinic."
+    },
+    {
+      "id": "continuous_convulsions",
+      "label_en": "Continuous Convulsions / Inability to Stand or Lift Head",
+      "label_mr": "सतत झटके येणे / जनावर उठू न शकणे",
+      "action": "EMERGENCY_OVERRIDE_1962",
+      "message": "EMERGENCY: Severe neurological or toxic distress. Contact mobile veterinary emergency unit immediately."
+    },
+    {
+      "id": "sudden_hemorrhage",
+      "label_en": "Sudden Profuse Bleeding from Natural Orifices (Nose/Mouth/Anus)",
+      "label_mr": "नाक, तोंड किंवा गुदद्वारातून अचानक रक्तस्त्राव",
+      "action": "EMERGENCY_OVERRIDE_1962",
+      "message": "EMERGENCY SUSPICION (Anthrax): DO NOT open carcass. Call 1962 and isolate area immediately."
+    }
+  ],
+  "species_rules": {
+    "cattle": [
+      {
+        "condition_id": "LSD",
+        "name_en": "Lumpy Skin Disease",
+        "name_mr": "लम्पी त्वचा रोग (LSD)",
+        "notifiable": true,
+        "default_urgency": "URGENT",
+        "cardinal_symptoms": ["nodules", "high_fever"],
+        "supporting_symptoms": ["off_feed", "swollen_lymph_nodes", "milk_drop"],
+        "min_fever_f": 103.0,
+        "cardinal_match_min": 1,
+        "supporting_match_min": 1,
+        "safe_first_aid": [
+          "Isolate the affected cattle in a clean, shaded, fly-screened stall immediately.",
+          "Apply pure neem oil or herbal fly repellent around unruptured skin to prevent vector bites.",
+          "Provide clean, cool drinking water mixed with oral electrolytes and jaggery.",
+          "Clean weeping skin sores with 0.1% potassium permanganate or mild antiseptic solution.",
+          "WARNING: Do NOT administer human painkillers (paracetamol/diclofenac) without a prescription."
+        ],
+        "suggested_action": "BOOK_LOCAL_DISPENSARY"
+      },
+      {
+        "condition_id": "FMD",
+        "name_en": "Foot and Mouth Disease",
+        "name_mr": "लाळ्या खुरकूत (FMD)",
+        "notifiable": true,
+        "default_urgency": "URGENT",
+        "cardinal_symptoms": ["mouth_blisters", "excessive_drool", "lameness"],
+        "supporting_symptoms": ["high_fever", "off_feed", "milk_drop"],
+        "min_fever_f": 103.5,
+        "cardinal_match_min": 2,
+        "supporting_match_min": 1,
+        "safe_first_aid": [
+          "Keep the animal on clean, dry, soft bedding (straw, sand, or rubber mat).",
+          "Gently wash mouth blisters with 1% potassium permanganate or mild alum wash.",
+          "Dress foot lesions with antiseptic fly-repellent ointment (e.g. Lorexane / herbal spray).",
+          "Do not herd infected animals through village lanes or shared grazing areas."
+        ],
+        "suggested_action": "BOOK_LOCAL_DISPENSARY"
+      },
+      {
+        "condition_id": "MASTITIS_ACUTE",
+        "name_en": "Acute Clinical Mastitis",
+        "name_mr": "तीव्र कासदाह / स्तनाचा दाह (Mastitis)",
+        "notifiable": false,
+        "default_urgency": "URGENT",
+        "cardinal_symptoms": ["udder_swelling", "abnormal_milk"],
+        "supporting_symptoms": ["high_fever", "off_feed", "pain_on_touch"],
+        "min_fever_f": 102.8,
+        "cardinal_match_min": 1,
+        "supporting_match_min": 1,
+        "safe_first_aid": [
+          "Strip the affected quarter clean every 2 to 3 hours into a disinfectant cup to relieve udder pressure.",
+          "Apply cold water compresses or ice packs to the hot, swollen quarter.",
+          "DO NOT CONSUME OR SELL MILK from the affected animal; discard safely.",
+          "Ensure veterinary inspection for intramammary infusion and systemic anti-inflammatory therapy."
+        ],
+        "suggested_action": "BOOK_LOCAL_DISPENSARY"
+      },
+      {
+        "condition_id": "BOVINE_PNEUMONIA",
+        "name_en": "Bovine Respiratory Disease (Pneumonia)",
+        "name_mr": "फुफ्फुसदाह / न्यूमोनिया",
+        "notifiable": false,
+        "default_urgency": "URGENT",
+        "cardinal_symptoms": ["dyspnea", "coughing"],
+        "supporting_symptoms": ["nasal_discharge", "high_fever", "off_feed"],
+        "min_fever_f": 103.0,
+        "cardinal_match_min": 1,
+        "supporting_match_min": 1,
+        "safe_first_aid": [
+          "Move the animal to a dry, well-ventilated, draft-free stall.",
+          "Keep the animal warm with jute sack coverings during winter or cold night winds.",
+          "Administer eucalyptus steam inhalation if facilities permit.",
+          "Seek prompt veterinary antibiotic and bronchodilator treatment."
+        ],
+        "suggested_action": "BOOK_LOCAL_DISPENSARY"
+      },
+      {
+        "condition_id": "INDIGESTION_SIMPLE",
+        "name_en": "Simple Indigestion / Off Feed",
+        "name_mr": "साधे अपचन / चारा न खाणे",
+        "notifiable": false,
+        "default_urgency": "MODERATE",
+        "cardinal_symptoms": ["off_feed"],
+        "supporting_symptoms": ["mild_dullness", "reduced_rumination"],
+        "min_fever_f": 101.5,
+        "cardinal_match_min": 1,
+        "supporting_match_min": 0,
+        "safe_first_aid": [
+          "Withhold concentrated grains and lush green fodder for 12 hours.",
+          "Provide clean drinking water with a pinch of common salt and baking soda (sodium bicarbonate 50g in water).",
+          "Offer palatable dry fodder (wheat straw/jowar kadbi) in small amounts.",
+          "Monitor body temperature; if fever develops or condition persists >24 hours, request vet visit."
+        ],
+        "suggested_action": "MONITOR_OR_BOOK"
+      }
+    ],
+    "buffalo": [
+      {
+        "condition_id": "HS",
+        "name_en": "Hemorrhagic Septicemia (Galgothu)",
+        "name_mr": "घटसर्प (HS / गळसुज्या)",
+        "notifiable": true,
+        "default_urgency": "CRITICAL",
+        "cardinal_symptoms": ["submandibular_swelling", "respiratory_distress", "high_fever"],
+        "supporting_symptoms": ["excessive_drool", "off_feed"],
+        "min_fever_f": 104.0,
+        "cardinal_match_min": 2,
+        "supporting_match_min": 1,
+        "safe_first_aid": [
+          "CRITICAL EMERGENCY: Isolate immediately; notify veterinary officer without delay.",
+          "Keep head elevated to ease severe breathing difficulty.",
+          "Do not stress or force the buffalo to walk."
+        ],
+        "suggested_action": "EMERGENCY_OVERRIDE_1962"
+      },
+      {
+        "condition_id": "FMD",
+        "name_en": "Foot and Mouth Disease",
+        "name_mr": "लाळ्या खुरकूत (FMD)",
+        "notifiable": true,
+        "default_urgency": "URGENT",
+        "cardinal_symptoms": ["mouth_blisters", "excessive_drool", "lameness"],
+        "supporting_symptoms": ["high_fever", "off_feed"],
+        "min_fever_f": 103.5,
+        "cardinal_match_min": 2,
+        "supporting_match_min": 1,
+        "safe_first_aid": [
+          "Isolate buffalo on clean, soft bedding.",
+          "Gently wash mouth lesions with 1% potassium permanganate.",
+          "Apply fly-repellent wound cream to foot clefts."
+        ],
+        "suggested_action": "BOOK_LOCAL_DISPENSARY"
+      }
+    ],
+    "goat": [
+      {
+        "condition_id": "PPR",
+        "name_en": "Peste des Petits Ruminants (Goat Plague)",
+        "name_mr": "पीपीआर (शेळी प्लेग / तोंडी रोग)",
+        "notifiable": true,
+        "default_urgency": "URGENT",
+        "cardinal_symptoms": ["mouth_blisters", "diarrhea", "high_fever"],
+        "supporting_symptoms": ["nasal_discharge", "off_feed", "coughing"],
+        "min_fever_f": 104.0,
+        "cardinal_match_min": 2,
+        "supporting_match_min": 1,
+        "safe_first_aid": [
+          "Isolate infected goats immediately from the rest of the flock.",
+          "Provide oral rehydration salts (ORS) in clean water to prevent fatal dehydration.",
+          "Keep the goat warm and clean eye/mouth crusts with warm sterile cotton."
+        ],
+        "suggested_action": "BOOK_LOCAL_DISPENSARY"
+      },
+      {
+        "condition_id": "ENTEROTOXEMIA",
+        "name_en": "Enterotoxemia (Pulpy Kidney)",
+        "name_mr": "फाशी रोग / एंटरोटॉक्सेमिया",
+        "notifiable": false,
+        "default_urgency": "CRITICAL",
+        "cardinal_symptoms": ["sudden_colic", "convulsions"],
+        "supporting_symptoms": ["bloat", "sudden_prostration"],
+        "min_fever_f": 102.0,
+        "cardinal_match_min": 1,
+        "supporting_match_min": 1,
+        "safe_first_aid": [
+          "Emergency condition: call veterinarian immediately.",
+          "Immediately stop all grain/concentrate feed to the flock.",
+          "Administer activated charcoal slurry if advised by doctor."
+        ],
+        "suggested_action": "EMERGENCY_OVERRIDE_1962"
+      }
+    ]
+  }
+}
+

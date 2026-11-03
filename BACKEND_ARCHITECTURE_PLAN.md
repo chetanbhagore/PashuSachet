@@ -3,9 +3,10 @@
 > **Document Type:** Production Backend Architecture & Corrected Schema Blueprint  
 > **Status:** Revised & Corrected (Post-Audit)  
 > **Associated Specs:** [`FRONTEND_DESIGN_SPEC.md`](file:///g:/Chetan/pashuSachet/FRONTEND_DESIGN_SPEC.md) | [`plans.md`](file:///g:/Chetan/pashuSachet/plans.md) | [`ML_AI_SYSTEM_PLAN.md`](file:///g:/Chetan/pashuSachet/ML_AI_SYSTEM_PLAN.md)  
-> **Stack Strategy:** 
-> - **Core API Options:** Option A (FastAPI Pure) OR Option B (Spring Boot 3 Core API + FastAPI ML Microservice for Placements).
-> - **Database:** PostgreSQL 16 + PostGIS extension.
+> **Stack Execution Strategy:** 
+> - **Active Build Target (Project Deadline):** **Pure FastAPI (Python 3.11)** with SQLite / PostgreSQL. Single runtime, fast execution, unified rules evaluation.
+> - **Post-Deadline Evolution (Personal Portfolio Upgrade):** Extract Core Business API to **Java Spring Boot 3 + Hibernate Spatial**, retaining FastAPI strictly for the AI/ML triage microservice.
+> - **Database:** PostgreSQL 16 + PostGIS (with SQLite + aiosqlite for zero-friction local prototype runs).
 > - **Security:** Object-level authorization, DPDP consent event ledger, hashed OTPs, refresh token rotation.
 
 ---
@@ -520,22 +521,32 @@ ORDER BY p.milk_withdrawal_end_timestamp DESC;
 
 ---
 
-## 4. Stack Architecture: Placement Strategy (Spring Boot vs FastAPI)
+## 4. Stack Architecture & Phased Execution Strategy
 
-As noted, for campus placements and enterprise engineering profiles, **Java Spring Boot 3** on the core backend demonstrates enterprise competence, while **Python FastAPI** excels for AI/ML:
+To balance **rapid prototype delivery for the upcoming project deadline** with **long-term personal portfolio value for enterprise campus placements**, the project follows a two-phase architecture:
 
 ```mermaid
-flowchart LR
-    Client["Client Web / PWA"] --> SpringBoot["Core Business API\n(Java 17/21 + Spring Boot 3)\n• Spring Security + JWT RBAC\n• Spring Data JPA + PostGIS (Hibernate Spatial)\n• Animal Passport, Appointments, Rx Ledger"]
-    
-    SpringBoot --> PG[("PostgreSQL 16 + PostGIS")]
-    
-    SpringBoot -->|Internal REST / gRPC| FastAPIML["Python AI Microservice (FastAPI)\n• Model A: Calibrated Symptom Triage\n• Model B: Lesion Photo Screener (Grad-CAM)\n• Model C: Outbreak Anomaly Detector"]
+flowchart TD
+    subgraph Phase1["PHASE 1: Project Deadline Build (Active Target)"]
+        ClientPWA["Client Web App / PWA\n(Vanilla JS + Lucide)"] --> PureFastAPI["Pure FastAPI Backend (Python 3.11)\n• Auth & JWT RBAC (SQLite / PostgreSQL)\n• Animal Passport & Appointments API\n• Prescription Items & Dynamic Withdrawal\n• Native Rule Triage (triage_rules_v1.json)"]
+    end
+
+    subgraph Phase2["PHASE 2: Post-Deadline Personal Portfolio Evolution"]
+        ClientPWA2["Client Web App / PWA"] --> SpringBoot["Core Business API (Java Spring Boot 3)\n• Spring Security + JWT RBAC\n• Spring Data JPA + Hibernate Spatial\n• PostgreSQL 16 + PostGIS"]
+        SpringBoot -->|Internal REST| FastAPIMicro["AI Microservice (FastAPI)\n• Model A Triage Engine\n• Model C Spatio-Temporal Anomaly"]
+    end
 ```
 
-### Recommendation:
-* **Demo / Hackathon Prototype:** Can be run as a clean unified FastAPI service to move fast with working code.
-* **Resume & Enterprise Deployment:** Split into **Spring Boot Core API** + **FastAPI ML Service**. The database DDL above is 100% compliant with both Hibernate Spatial and SQLAlchemy 2.0!
+### Phase Breakdown & Deliverables
+
+#### Phase 1: Pure FastAPI (Python 3.11) — The Deadline Build
+* **Why:** Single runtime, single environment, zero inter-service network overhead, fast execution and immediate debugging.
+* **Database Flexibility:** Runs seamlessly on embedded **SQLite + aiosqlite** for immediate local demo/testing without Docker, while fully compatible with **PostgreSQL 16 + PostGIS** via configuration flag (`DATABASE_URL`).
+* **Direct ML/Rule Access:** Python natively imports `shared/rules/triage_rules_v1.json` and evaluates Model A decision bands without HTTP hops.
+
+#### Phase 2: Polyglot Enterprise Migration — The Self-Project & Placement Upgrade
+* **Why:** Demonstrates production microservices, enterprise Java competency (Spring Boot 3, Hibernate Spatial, Spring Data), and polyglot architecture on your resume.
+* **Seamless Migration:** Because Phase 1 already uses the exact relational schema, DDL, table names, and REST endpoint contracts documented in Section 2, transitioning the Core API to Java Spring Boot requires zero database schema redesign or frontend rewrites!
 
 ---
 
