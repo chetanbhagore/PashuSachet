@@ -1,236 +1,274 @@
-# 🧠 PashuSachet (पशूसचेत) — AI & Machine Learning System Architecture
+# 🧠 PashuSachet (पशूसचेत) — AI & Clinical Decision Support Architecture
 
-> **Document Type:** Machine Learning & Clinical Decision Support Engineering Plan  
-> **Standard Compliance:** Follows `ml-best-practices` (Chronological splits, calibration metrics, safety circuits, explainability)  
-> **Associated Specs:** [`FRONTEND_DESIGN_SPEC.md`](file:///g:/Chetan/pashuSachet/FRONTEND_DESIGN_SPEC.md) | [`BACKEND_ARCHITECTURE_PLAN.md`](file:///g:/Chetan/pashuSachet/BACKEND_ARCHITECTURE_PLAN.md) | [`plans.md`](file:///g:/Chetan/pashuSachet/plans.md)  
-> **Clinical Role:** **Decision-Support Triage Screener** — strictly non-prescriptive, safe first-aid only, doctor-in-the-loop.
+> **Document Type:** Production AI/ML & Clinical Decision Support Architecture  
+> **Status:** Revised & Scoped for V1 Delivery (Post-Audit)  
+> **Target Microservice:** Python FastAPI (`pashusachet-ai-service`)  
+> **Interoperability:** Consumed by Spring Boot 3 Core Backend & Offline PWA  
+> **Associated Specs:** [`FRONTEND_DESIGN_SPEC.md`](file:///g:/Chetan/pashuSachet/FRONTEND_DESIGN_SPEC.md) | [`BACKEND_ARCHITECTURE_PLAN.md`](file:///g:/Chetan/pashuSachet/BACKEND_ARCHITECTURE_PLAN.md) | [`plans.md`](file:///g:/Chetan/pashuSachet/plans.md)
 
 ---
 
-## 1. Machine Learning Multi-Model Topology
+## 1. V1 Scope Realism & Design Principles
 
-PashuSachet deploys three specialized, right-sized machine learning pipelines rather than a single monolithic model:
+To prevent over-engineering, unvalidated claims, and clinical safety risks in V1, the AI architecture enforces five strict engineering rules:
+
+1. **Zero Unvalidated Probabilities:** A rule engine without massive clinical cohorts cannot claim "88% confidence". V1 outputs **qualitative clinical likelihood bands** (`Likely`, `Possible`, `Less Likely`) derived from expert-weighted ICAR-NIVEDI decision matrices.
+2. **De-scoped Lesion Image Classifier:** Image classification of lesions is **deferred to V2**. Without a multi-thousand labeled dataset of Indian indigenous livestock in rustic shed lighting, computer vision carries high bias and hallucination risk. V1 focuses 100% on high-reliability tabular symptom triage and vital anomaly tracking.
+3. **Primary Evaluation on Clinical Safety:** Rather than generic accuracy, the system is evaluated strictly on **Under-Triage Rate** (target: $< 1\%$ for urgent illnesses; **0% under-triage on red-flag life threats**).
+4. **Single Source of Truth (`triage_rules_v1.json`):** Both the offline PWA client and the Python FastAPI microservice evaluate identical, versioned JSON rule matrices. Every case permanently records `rules_version`.
+5. **Continuous Ground-Truth Feedback Loop:** Every case pairs the initial triage assessment with the licensed veterinarian's physical examination findings, building an authentic, audited training dataset for future supervised iterations.
+
+---
+
+## 2. Multi-Tier AI System Topology (V1 Scoped)
 
 ```mermaid
 flowchart TD
-    subgraph FarmerInput["Farmer Edge & Triage"]
-        InpSymptoms["Species, Age, Symptoms, Temp, Duration"]
-        InpPhoto["Lesion Photo (Optional)"]
+    subgraph FarmerClient["Farmer Client & Triage Input"]
+        InpSymptoms["Species, Breed, Age, Temp, Symptoms, Duration"]
         InpVitals["Daily Milk Yield & Rumination Logs"]
     end
 
-    subgraph SafetyCircuits["Hardcoded Safety Circuit Breakers"]
-        RedFlagCheck{"Fatal Red Flag Detected?\n(Bloat, Convulsions, Sudden Bleeding)"}
+    subgraph CircuitBreaker["1. Hardcoded Safety Circuit Breaker (Offline First)"]
+        RedFlagCheck{"Fatal Red Flags Detected?\n• Severe Bloat / Tympany\n• Continuous Convulsions\n• Sudden Hemorrhage / Collapse"}
     end
 
-    subgraph ModelPipelines["Specialized AI / ML Engines"]
-        ModelA["MODEL A: Species-Aware Symptom Triage\n(Calibrated Gradient Boosted Trees / Expert Rules)\nLatency: <80ms | Size: 1.2MB (Edge Capable)"]
+    subgraph InferenceEngines["2. AI Decision-Support Services"]
+        TriageEngine["MODEL A: Species-Aware Triage Engine\n(FastAPI Microservice + PWA JSON Table)\n• Evaluates: triage_rules_v1.json\n• Outputs: Likelihood Bands & Safe First Aid"]
         
-        subgraph VisionPipeline["MODEL B: Lesion Photo Screener"]
-            Stage1["Stage 1: Image Quality Assessment\n(Blur, Glare, Non-Livestock Filter)"]
-            Stage2["Stage 2: Feature Classifier\n(Fine-tuned MobileNetV3 + Grad-CAM)\nLatency: <1.1s | Size: 14MB"]
-            Stage1 -->|Pass Quality| Stage2
-        end
+        VitalAnomaly["MODEL C: Herd Vital Anomaly Detector\n(Robust Z-Score / EWMA with Confounder Dampening)\n• Cold Start: 7-14 Days Baseline\n• Detects: >30% Milk Drop / Febrile Spikes"]
         
-        ModelC["MODEL C: Syndromic Outbreak Anomaly Detector\n(District-level CUSUM + Poisson Baseline)\nBatch Interval: Hourly"]
-        
-        ModelD["MODEL D: Individual Herd Anomaly Detector\n(EWMA ± 3σ Personalized Baseline)"]
+        SurveillanceCluster["MODEL S: Space-Time Surveillance Cluster Engine\n(ST-DBSCAN + Census Denominator)\n• Window: 7 Days x 15 km Radius\n• Computes: Attack Rate %"]
     end
 
-    subgraph Outputs["Clinical Decision Support"]
-        EmergencyInter["EMERGENCY OVERRIDE:\nImmediate 1962 Hotline Modal"]
-        TriageOutput["Urgency Tier, Indicative Condition,\nDifferential Scoring & Safe First Aid"]
-        GISAlert["Spatial Cluster Alert to LDO\n(Tier 1 Signal Outbreak)"]
-        FarmerAlert["Farmer Milk Drop / Febrile Warning"]
+    subgraph Outputs["3. Actionable Outcomes"]
+        EmergencyModal["EMERGENCY OVERRIDE:\nImmediate 1962 Toll-Free Helpline Direct Call"]
+        TriageResultCard["Triage Result: Urgency Rating (Critical/Urgent/Mod),\nLikely Condition, Interim First-Aid & Booking CTA"]
+        FarmerAlert["Farmer Care Notification:\n'Sudden 32% Milk Drop detected in Gauri'"]
+        OfficerGIS["LDO Alert:\nTier 1 Syndromic Cluster Detected in Taluka"]
     end
 
     InpSymptoms --> RedFlagCheck
-    RedFlagCheck -->|YES| EmergencyInter
-    RedFlagCheck -->|NO| ModelA
+    RedFlagCheck -->|YES| EmergencyModal
+    RedFlagCheck -->|NO| TriageEngine
     
-    InpPhoto --> Stage1
-    Stage2 --> ModelA
-    
-    InpVitals --> ModelD
-    ModelD --> FarmerAlert
+    InpVitals --> VitalAnomaly
+    VitalAnomaly --> FarmerAlert
 
-    ModelA --> TriageOutput
-    ModelA -.->|Syndromic Signal Event| ModelC
-    ModelC --> GISAlert
+    TriageEngine --> TriageResultCard
+    TriageEngine -.->|Syndromic Case Signal| SurveillanceCluster
+    SurveillanceCluster --> OfficerGIS
 ```
 
 ---
 
-## 2. Model A: Species-Aware Clinical Triage Engine
+## 3. Model A: Species-Aware Triage Engine
 
-### 2.1 Purpose & Role
-Model A acts as a rapid, calibrated decision-support tool. It computes the probability distribution over candidate diseases based on species, breed, age group, reported symptoms, temperature, and onset duration, and assigns one of four clinical urgency tiers:
-* `CRITICAL`: Immediate life-threat (automatic veterinary ambulance dispatch).
-* `URGENT`: Rapidly progressing infectious disease (inspection within 6–12 hours).
-* `MODERATE`: Non-emergency sub-acute illness (inspection within 24–48 hours).
-* `ROUTINE`: Nutritional, deworming, or preventive inquiry.
+### 3.1 Architecture & Unified JSON Rule Specification
+Model A operates as an expert-weighted differential diagnosis engine. It evaluates incoming clinical vectors against **`triage_rules_v1.json`**:
 
-### 2.2 Model Architecture, Unified Rule Engine & Confidence Bands
-Rather than an uninterpretable deep neural network, Model A utilizes an **ensemble of Calibrated Decision Trees (LightGBM)** combined with a deterministic **ICAR-NIVEDI Clinical Rule Matrix**:
-
+```json
+{
+  "version": "1.0.0",
+  "last_updated": "2026-11-04",
+  "approved_by": "Veterinary Advisory Board (ICAR-NIVEDI Reference)",
+  "species_rules": {
+    "cattle": [
+      {
+        "condition_id": "LSD",
+        "name": "Lumpy Skin Disease (Capripoxvirus)",
+        "notifiable": true,
+        "urgency": "URGENT",
+        "cardinal_symptoms": ["nodules", "high_fever"],
+        "supporting_symptoms": ["off_feed", "swollen_lymph_nodes", "milk_drop"],
+        "min_fever_f": 103.0,
+        "cardinal_match_required": 1,
+        "supporting_match_threshold": 1,
+        "first_aid_guidance": [
+          "Isolate the animal immediately in a clean, shaded, fly-proof shed.",
+          "Apply neem-oil based herbal fly repellent around unbroken skin.",
+          "Provide cool, clean drinking water with electrolyte powder.",
+          "CRITICAL: Do not administer human painkillers (paracetamol/diclofenac) without veterinary supervision."
+        ]
+      },
+      {
+        "condition_id": "FMD",
+        "name": "Foot and Mouth Disease (Aphtae Epizooticae)",
+        "notifiable": true,
+        "urgency": "URGENT",
+        "cardinal_symptoms": ["mouth_blisters", "excessive_drool", "lameness"],
+        "supporting_symptoms": ["high_fever", "off_feed"],
+        "min_fever_f": 103.5,
+        "cardinal_match_required": 2,
+        "supporting_match_threshold": 1,
+        "first_aid_guidance": [
+          "Isolate animal on dry soft bedding (straw/sand).",
+          "Wash mouth blisters gently with mild 1% potassium permanganate or alum solution.",
+          "Do not move infected animals along village paths or communal grazing grounds."
+        ]
+      }
+    ]
+  }
+}
 ```
-Feature Vector X ∈ ℝ^28:
-├── Categorical: [Species (5), Breed (12), AgeGroup (4), LactationStatus (4)] (One-Hot Encoded)
-├── Binary Symptoms: [OffFeed, HighFever, Nodules, Blisters, Lameness, Dyspnea, MastitisSwelling, ...] (14)
-└── Numerical: [RectalTemperature_F, OnsetDuration_Days, LocalDistrictSeasonRisk] (3)
-```
 
-#### Shared Single Source of Truth (`triage_rules_v1.json`):
-To prevent drift between frontend offline screening and backend triage, both consume an identical versioned rule file (`triage_rules_v1.json`). Every generated case records `rules_version` (e.g. `v1.0.0`).
+### 3.2 Clinical Likelihood Bands
+Rather than uncalibrated probabilities (`0.88`), the engine computes evidence matching:
+* **`Likely`:** All cardinal pathognomonic symptoms present + temperature above threshold.
+* **`Possible`:** At least one cardinal symptom or multiple supporting symptoms without high fever.
+* **`Less Likely`:** Generic malaise (off feed) without localized pathognomonic signs.
 
-#### Clinical Confidence Bands (Zero False Precision):
-To avoid misleading pseudo-accuracy (such as claiming `confidence: 0.88`), Model A reports calibrated qualitative likelihood bands:
-* **`Likely`:** High symptom concordance with characteristic cardinal pathognomonic signs (e.g., cutaneous nodules + fever $>103^\circ\text{F}$ in cattle $\implies$ Likely Lumpy Skin Disease).
-* **`Possible`:** Non-specific presenting signs consistent with multiple differential etiologies.
-* **`Less Likely`:** Rare presentation or atypical species/age occurrence.
-
-### 2.3 Evaluation Protocol & Metrics
-Per `ml-best-practices`, the dataset is partitioned via a **stratified district-chronological split** (training on 2021–2024 historical outbreak records; validating on 2025–2026 data):
-
-| Metric | Target Minimum | Clinical Rationale |
-| :--- | :--- | :--- |
-| **Sensitivity (Recall) on Notifiable Diseases** | **≥ 98.5%** | Under no circumstance should a case of Foot & Mouth Disease (FMD) or Lumpy Skin Disease (LSD) be missed (false negative). |
-| **Specificity** | **≥ 90.0%** | Minimizes false panics and excessive overburdening of rural dispensaries. |
-| **Brier Score (Calibration)** | **≤ 0.08** | Verifies that confidence percentages reflect true clinical probabilities. |
-| **Macro F1-Score** | **≥ 0.91** | Balances performance across rare and common diseases. |
-| **Inference Latency** | **< 100 ms** | Ensures instantaneous interactive feedback on low-cost Android phones. |
-
-### 2.4 Offline Edge Fallback
-Model A rules are compiled into a tiny **JSON decision table (1.2 MB)** stored directly in the browser's IndexedDB. If the farmer has zero cellular connectivity in remote pasture, the PWA executes local deterministic screening and displays safe first-aid guidelines immediately.
+### 3.3 Safety Framing & Routing for Notifiable Diseases
+* For notifiable infectious diseases (Lumpy Skin Disease, Foot & Mouth Disease, Anthrax, Black Quarter, Peste des Petits Ruminants):
+  * **Zero Direct Prescription:** The UI never suggests antibiotic names, injections, or doses to farmers.
+  * **Mandatory Vet Referral:** The system locks self-treatment advice and presents a direct dispatch CTA: `[Book Government Veterinary Dispensary Now]`.
+  * **Surveillance Signal:** An anonymized signal event is dispatched to the taluka surveillance stream.
 
 ---
 
-## 3. Model B: Lesion Photo Pre-Screening & Quality Filter
+## 4. Evaluation Protocol & Safety Metrics
 
-### 3.1 Pipeline Stages
-Farmers frequently capture blurry, dark, or off-target photos in rustic cattle sheds. Model B utilizes a two-stage computer vision architecture:
+### 4.1 Ground-Truth Benchmark Set (Zero Circular Synthetic Data)
+Instead of generating synthetic training data from our own rules and reporting artificial 95% accuracy, Model A is validated against an external, curated test set of **50 verified clinical cases** compiled from published ICAR-NIVEDI field case registries and Maharashtra veterinary college polyclinics:
+* 15 Confirmed Lumpy Skin Disease cases
+* 15 Confirmed Foot & Mouth Disease cases
+* 10 Acute Mastitis cases
+* 10 Non-infectious / Nutritional cases
 
-```mermaid
-flowchart LR
-    Img["Raw Camera Photo\n(Farmer Upload)"] --> QF["Stage 1: Image Quality Assessment\n• Laplacian Variance (Blur Check)\n• Luminance Histogram (Under/Over-Exposure)\n• Animal Presence Detector"]
-    
-    QF -->|Failed Quality| Reject["User Prompt:\n'Photo is blurry or too dark.\nPlease retake in daylight.'"]
-    
-    QF -->|Passed Quality| Classifier["Stage 2: Lesion Classifier\n(MobileNetV3-Small Backbone\nPretrained on ImageNet + VetDerm)"]
-    
-    Classifier --> CAM["Grad-CAM Saliency Map\n(Visual Evidence Bounding)"]
-    Classifier --> Vector["Lesion Embedding Vector\n➔ Fed to Model A"]
-```
+### 4.2 Target Safety Metrics (Clinical Hierarchy)
 
-### 3.2 Stage 1: Quality Rejection Filters
-1. **Blur Detection:** Compute the variance of the Laplacian operator:
-   $$\text{Var}(\nabla^2 I) < 100 \implies \text{REJECT (Blurry)}$$
-2. **Exposure Check:** Verify mean pixel luminance $L \in [40, 220]$ on a 0–255 scale.
-3. **Livestock Subject Verification:** Lightweight MobileNet-SSD bounding box verifying that livestock skin, muzzle, or hoof occupies $\ge 35\%$ of the frame.
-
-### 3.3 Stage 2: Lesion Classification
-* **Backbone:** MobileNetV3-Small (optimized for mobile CPU inference; 14 MB weights).
-* **Classes Detected:**
-  1. `Cutaneous Nodules` (Characteristic of Lumpy Skin Disease / Pseudocowpox)
-  2. `Epithelial Vesicles / Erosions` (Characteristic of Foot & Mouth Disease)
-  3. `Localized Udder Inflammation` (Characteristic of Clinical Mastitis)
-  4. `Normal Skin / Benign Tick Bites`
-* **Explainability (Grad-CAM):** Generates a localized heatmap overlay showing the veterinarian exactly which skin patch triggered the lesion classification.
-
----
-
-## 4. Model C: Outbreak Anomaly Detector & Spatial Early Warning
-
-### 4.1 Objective
-Model C monitors syndromic triage events aggregated at the Taluka and District level to detect statistical anomalies before laboratory confirmation.
-
-### 4.2 Algorithm: Seasonal CUSUM & Poisson Regression
-For each district $d$ and disease syndrome $s$ at week $t$:
-1. **Historical Baseline Calculation:**
-   $$\mu_{d,s,t} = \text{Rolling 3-year median for calendar week } t \text{ (from ICAR-NIVEDI records)}$$
-2. **Cumulative Sum (CUSUM) Formulation:**
-   $$S_t = \max\left(0, S_{t-1} + (C_t - (\mu_t + k \cdot \sigma_t))\right)$$
-   Where:
-   * $C_t$ is the observed case count in the current window.
-   * $k = 0.5$ (allowance parameter).
-   * $\sigma_t$ is the historical standard deviation.
-3. **Threshold Breach (Anomaly Trigger):**
-   $$S_t > h \cdot \sigma_t \quad (h = 4.0) \implies \text{TRIGGER TIER 1 SIGNAL OUTBREAK ALERT}$$
-
-```mermaid
-xychart-beta
-    title "District Syndromic Anomaly Spike Detection (Ahmednagar District)"
-    x-axis ["W36", "W37", "W38", "W39", "W40", "W41", "W42", "W43"]
-    y-axis "Weekly Cases" 0 --> 35
-    line [4, 5, 4, 6, 7, 18, 29, 32]
-    line [5, 5, 5, 6, 6, 6, 6, 6]
-```
-*(Blue line: Observed syndromic cases; Green line: Seasonal expected baseline. Week 41 breaches the CUSUM threshold and triggers an automatic alert to the Livestock Development Officer).*
-
-### 4.3 Three-Tier Outbreak Confidence Progression
-* **Tier 1 (Signal Alert):** Statistical anomaly triggered by Model C based on farmer triage volume. Marked yellow on the LDO GIS map.
-* **Tier 2 (Clinical Alert):** Licensed veterinarians physically confirm $\ge 3$ matching clinical diagnoses in a 10 km radius.
-* **Tier 3 (Confirmed Outbreak):** Regional Disease Diagnostic Laboratory (RDDL) enters positive ELISA/PCR assay results. Automatically unlocks ring-vaccination dispatch and state reporting.
-
----
-
-## 5. Model D: Individual Herd Anomaly Detector (Sensor/Vitals)
-
-### 5.1 Objective
-Detects sub-clinical illness in individual dairy animals (cows/buffaloes) by monitoring daily milk yield variations and body temperatures.
-
-### 5.2 Algorithm: Exponentially Weighted Moving Average (EWMA)
-For animal $i$ on day $t$:
-$$\bar{Y}_t = \alpha Y_t + (1 - \alpha) \bar{Y}_{t-1} \quad (\alpha = 0.3)$$
-$$UCL = \bar{Y}_t + 3 \sigma_{\text{historical}}, \quad LCL = \bar{Y}_t - 3 \sigma_{\text{historical}}$$
-
-* **Alert Condition:** If daily milk yield drops below $LCL$ for two consecutive milkings ($>25\%$ sudden drop) or rectal temperature exceeds $103.5^\circ\text{F}$:
-  * Generates an in-app card: *"Notice: Gauri showed a 3.2L milk drop today. Check udder for swelling or initiate health check."*
-
----
-
-## 6. Safety Circuit Breakers & Clinical Governance
-
-```
-                    ┌───────────────────────────────┐
-                    │ Farmer Initiates Health Check │
-                    └───────────────┬───────────────┘
-                                    │
-                                    ▼
-                     /─────────────────────────────\
-                    <   Severe Bloat, Inability to  >
-                    <   Breathe, or Convulsions?    >
-                     \─────────────────────────────/
-                                    │
-                       YES          │          NO
-           ┌────────────────────────┴──────────────────────┐
-           ▼                                               ▼
-┌─────────────────────────────────┐        ┌─────────────────────────────────┐
-│     CRITICAL CIRCUIT BREAKER    │        │       RUN MODEL A TRIAGE        │
-│ • Bypass ML inference entirely  │        │ • Calibrated decision support   │
-│ • Full-screen Emergency Modal   │        │ • Urgency rating assigned       │
-│ • Direct 1-tap call to 1962     │        │ • Safe first aid guidance       │
-│ • Immediate SMS dispatch to vet │        │ • Option to book dispensary     │
-└─────────────────────────────────┘        └─────────────────────────────────┘
-```
-
-### Safety Rules Enforced:
-1. **Zero Automated Prescriptions:** The system NEVER prescribes specific antibiotic dosages or prescription pharmaceuticals directly to the farmer. Only verified first-aid actions (isolation, shade, hydration, antiseptic wash) are surfaced.
-2. **Doctor-in-the-Loop:** All formal diagnoses and drug withholding schedules must be confirmed and signed by a licensed veterinarian.
-3. **Explicit Disclaimer Stamp:** Every screening output explicitly displays:  
-   *"Preliminary AI decision-support screening based on ICAR-NIVEDI protocols. Not a substitute for physical veterinary diagnosis."*
-
----
-
-## 7. Model Monitoring, Drift & Continuous Learning
-
-| Monitoring Vector | Metric / Tool | Alert Threshold | Remediation Plan |
+| Metric | Mathematical Formula | Target Threshold | Clinical Consequence |
 | :--- | :--- | :--- | :--- |
-| **Data Drift** | Kolmogorov-Smirnov test on symptom distributions. | $p < 0.01$ | Re-fit feature encoders; check for novel local disease emergence. |
-| **Concept Drift** | Vet Confirmation Ratio (Rate at which vets agree with Model A's top condition). | Agreement $< 82\%$ | Retrain decision tree ensembles with newly confirmed clinical cases. |
-| **Prediction Latency** | P95 inference latency on API Gateway. | $> 250\text{ ms}$ | Scale horizontal worker replicas; optimize ONNX runtime runtime threads. |
+| **Red-Flag Under-Triage Rate** | $\frac{\text{Critical Cases Categorized as Routine}}{\text{Total Critical Cases}}$ | **0.0% (Zero Tolerance)** | A suffocating or bloating animal must NEVER be told to wait. |
+| **Urgent Under-Triage Rate** | $\frac{\text{Urgent Cases Categorized as Moderate/Routine}}{\text{Total Urgent Cases}}$ | **$\le 1.0\%$** | Minimizes delayed veterinary intervention for progressive viral infections. |
+| **Sensitivity on Notifiable Diseases** | $\frac{TP}{TP + FN}$ | **$\ge 96.0\%$** | Catches outbreaks at the index case. |
+| **Over-Triage Rate** | $\frac{\text{Moderate Cases Categorized as Urgent}}{\text{Total Moderate Cases}}$ | **$\le 15.0\%$** | Tolerable conservative bias ensuring safety while avoiding total dispensary overload. |
 
 ---
 
-> 📌 **Engineering Status:** This specification sets the complete mathematical and clinical baseline for PashuSachet AI.
+## 5. Model C: Individual Herd Vital Anomaly Detection
 
+### 5.1 Practical Heuristic vs. Over-Engineered ML
+Individual dairy cattle physiology is highly sensitive to non-disease confounders. An over-parameterized neural network produces chronic false alarms. Model C implements a **Robust Rolling Baseline (EWMA)** paired with domain confounder dampening.
+
+### 5.2 Cold-Start & Confounder Management
+* **Cold-Start Rule:** An animal must have **$\ge 7$ consecutive days** of daily milk yield logs before automated anomaly detection activates. Prior to 7 days, the UI displays: *"Building baseline: 4 of 7 days logged"*.
+* **Confounder Dampening Matrix:**
+
+| Confounder | Detection Signal | Engine Response |
+| :--- | :--- | :--- |
+| **Lactation Curve Decay** | Natural milk drop of 5–8% per month after peak lactation. | Normalizes baseline using standard Wood's Lactation Decay Factor. |
+| **Ambient Heat Stress (THI)** | High regional Temperature-Humidity Index ($>78$). | Expands tolerance threshold by $+10\%$ across all cows in the taluka. |
+| **Recent Calving / Dry Period** | Lactation status marked as `dry` or `heifer`. | Suspends milk drop alarms; temperature monitoring remains active. |
+
+### 5.3 Anomaly Trigger Rule
+For cow $i$ on day $t$ with rolling median yield $\tilde{Y}_i$ and rolling median absolute deviation $MAD_i$:
+1. **Severe Acute Milk Drop:**  
+   $$\frac{\tilde{Y}_i - Y_{i,t}}{\tilde{Y}_i} > 0.30 \quad (\text{Drop} > 30\% \text{ for 2 consecutive milkings})$$
+2. **Febrile Temperature Spike:**  
+   $$\text{Rectal Temp} > 103.5^\circ\text{F} \quad (\text{Normal Cattle Temp: } 101.5^\circ\text{F} - 102.5^\circ\text{F})$$
+3. **Action:** Surfaces high-priority dashboard card:  
+   `⚠️ Health Alert: Gauri showed a 34% milk drop today. Check udder for swelling or initiate health check.`
+
+---
+
+## 6. Space-Time Surveillance Clustering (LDO Role)
+
+### 6.1 Spatio-Temporal Clustering (ST-DBSCAN)
+Surveillance clustering must account for infectious incubation periods. Space-only clustering mistakenly groups cases that occurred months apart.
+* **Spatial Distance Parameter ($\epsilon_{\text{space}}$):** $15\text{ km}$ (typical radius of vector fly dispersion and communal grazing).
+* **Temporal Distance Parameter ($\epsilon_{\text{time}}$):** $7\text{ days}$ (mean incubation window for Capripoxvirus and Aphthovirus).
+* **Minimum Cases ($MinPts$):** $\ge 3$ matching syndromic reports within the space-time cylinder.
+
+### 6.2 Census Denominator & Attack Rate
+A cluster of 5 cases in a village of 50 cows is an emergency; 5 cases in a taluka of 50,000 is baseline. The engine joins `outbreak_clusters` with `livestock_census`:
+$$\text{Attack Rate (\%)} = \left(\frac{\text{Active Incident Cases in Cluster}}{\text{Taluka Census Species Population}}\right) \times 100$$
+
+---
+
+## 7. The Continuous Ground-Truth Feedback Loop
+
+To systematically prepare for V2 supervised machine learning:
+
+```mermaid
+sequenceDiagram
+    participant Farmer as Farmer
+    participant Triage as Model A Triage
+    participant DB as PostgreSQL 16
+    participant Vet as Licensed Vet
+    
+    Farmer->>Triage: Enters symptoms & duration
+    Triage->>DB: Stores Case with triage_output & rules_version "v1.0.0"
+    Vet->>DB: Conducts physical exam & enters confirmed_diagnosis
+    DB->>DB: Appends Ground-Truth Pair: [observed_symptoms ➔ confirmed_diagnosis]
+    Note over DB: Audited training set grows organically without synthetic circularity
+```
+
+* **Ground-Truth Validation Set Accumulation:**
+  * Every completed case records: `(observed_symptoms, temperature, triage_condition, confirmed_diagnosis, vet_id)`.
+  * Cases where Vet diagnosis matches Triage condition increment the agreement ratio.
+  * Cases where Vet diagnosis differs are flagged for monthly clinical review by the advisory board to refine `triage_rules_v1.json`.
+
+---
+
+## 8. Microservice API Interface (FastAPI Specs)
+
+The Python AI service exposes three high-throughput, stateless endpoints to the Spring Boot Core Backend:
+
+### 8.1 Symptom Triage Endpoint
+* **`POST /ai/v1/triage/evaluate`**
+* **Payload:**
+  ```json
+  {
+    "species": "cattle",
+    "breed": "Gir",
+    "age_months": 42,
+    "rectal_temp_f": 103.8,
+    "symptoms": ["nodules", "high_fever", "off_feed"],
+    "duration_days": 2,
+    "red_flags": {
+      "severe_bloat": false,
+      "convulsions": false,
+      "sudden_hemorrhage": false
+    }
+  }
+  ```
+* **Response:**
+  ```json
+  {
+    "rules_version": "v1.0.0",
+    "red_flag_triggered": false,
+    "urgency": "URGENT",
+    "primary_condition": {
+      "condition_id": "LSD",
+      "name": "Lumpy Skin Disease",
+      "likelihood_band": "Likely",
+      "notifiable": true
+    },
+    "differential_conditions": [
+      {
+        "condition_id": "PSEUDO_POX",
+        "name": "Bovine Papular Stomatitis / Pseudocowpox",
+        "likelihood_band": "Possible"
+      }
+    ],
+    "safe_first_aid": [
+      "Isolate animal in shaded, well-ventilated stall.",
+      "Apply herbal neem oil fly repellent around skin.",
+      "Provide clean drinking water; avoid unprescribed human painkillers."
+    ],
+    "recommended_action": "BOOK_LOCAL_DISPENSARY"
+  }
+  ```
+
+### 8.2 Vital Anomaly Detection Endpoint
+* **`POST /ai/v1/vitals/analyze-stream`**
+* Evaluates 14-day chronological milk yield and temperature array; returns boolean anomaly flag, type, and human-readable explanation.
+
+### 8.3 Space-Time Cluster Aggregator
+* **`POST /ai/v1/surveillance/compute-clusters`**
+* Ingests active incident coordinates and timestamps; executes ST-DBSCAN joined against `livestock_census` and returns GeoJSON cluster polygons.
+
+---
+
+> 📌 **Engineering Status:** Committed as [`ML_AI_SYSTEM_PLAN.md`](file:///g:/Chetan/pashuSachet/ML_AI_SYSTEM_PLAN.md).
