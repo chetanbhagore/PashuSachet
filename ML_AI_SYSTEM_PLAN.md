@@ -70,7 +70,7 @@ Model A acts as a rapid, calibrated decision-support tool. It computes the proba
 * `MODERATE`: Non-emergency sub-acute illness (inspection within 24–48 hours).
 * `ROUTINE`: Nutritional, deworming, or preventive inquiry.
 
-### 2.2 Model Architecture & Feature Engineering
+### 2.2 Model Architecture, Unified Rule Engine & Confidence Bands
 Rather than an uninterpretable deep neural network, Model A utilizes an **ensemble of Calibrated Decision Trees (LightGBM)** combined with a deterministic **ICAR-NIVEDI Clinical Rule Matrix**:
 
 ```
@@ -80,9 +80,14 @@ Feature Vector X ∈ ℝ^28:
 └── Numerical: [RectalTemperature_F, OnsetDuration_Days, LocalDistrictSeasonRisk] (3)
 ```
 
-#### Calibration (Platt Scaling / Isotonic Regression):
-Raw classifier margins are calibrated using isotonic regression on a held-out clinical validation set to guarantee that a reported 80% confidence corresponds to true 80% clinical prevalence:
-$$P(Y = d \mid X) = \frac{1}{1 + \exp\left(A \cdot f(X) + B\right)}$$
+#### Shared Single Source of Truth (`triage_rules_v1.json`):
+To prevent drift between frontend offline screening and backend triage, both consume an identical versioned rule file (`triage_rules_v1.json`). Every generated case records `rules_version` (e.g. `v1.0.0`).
+
+#### Clinical Confidence Bands (Zero False Precision):
+To avoid misleading pseudo-accuracy (such as claiming `confidence: 0.88`), Model A reports calibrated qualitative likelihood bands:
+* **`Likely`:** High symptom concordance with characteristic cardinal pathognomonic signs (e.g., cutaneous nodules + fever $>103^\circ\text{F}$ in cattle $\implies$ Likely Lumpy Skin Disease).
+* **`Possible`:** Non-specific presenting signs consistent with multiple differential etiologies.
+* **`Less Likely`:** Rare presentation or atypical species/age occurrence.
 
 ### 2.3 Evaluation Protocol & Metrics
 Per `ml-best-practices`, the dataset is partitioned via a **stratified district-chronological split** (training on 2021–2024 historical outbreak records; validating on 2025–2026 data):
@@ -228,3 +233,4 @@ $$UCL = \bar{Y}_t + 3 \sigma_{\text{historical}}, \quad LCL = \bar{Y}_t - 3 \sig
 ---
 
 > 📌 **Engineering Status:** This specification sets the complete mathematical and clinical baseline for PashuSachet AI.
+
