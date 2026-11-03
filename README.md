@@ -9,27 +9,31 @@
 
 ---
 
-## 🌟 Overview & Product Promise
-**PashuSachet** (developed under the *Seva First* initiative) bridges rural livestock owners, veterinarians, and district livestock development officers across Maharashtra.
+## 🎯 Core Positioning: The Missing Participatory Layer
 
-It provides:
-- **Species-aware preliminary symptom screening** with triage uncertainty metrics and instant veterinary referrals.
-- **District-level disease outbreak risk intelligence** based on ICAR-NIVEDI / NADRES historical patterns and seasonal climate data.
-- **Digital Pashu Aadhar & Health Passports** providing persistent vaccination records, deworming calendars, and clinical timelines.
-- **Multilingual rural accessibility** in **Marathi (मराठी)**, **Hindi (हिन्दी)**, and **English**.
+**PashuSachet (Seva First) is not another disease-forecasting or animal-registry platform.**  
+It is the **missing last-mile participatory layer** that turns fragmented farmer observations into structured, real-time, village-level early warning signals and closed-loop action — while feeding cleaned data upward into existing national systems (**NADRES V2** and **Bharat Pashudhan / NDLM**).
+
+> **One-Line Promise:**  
+> *“Every farmer and para-vet in rural Maharashtra can report a concern in under 90 seconds (voice or simple form, even offline), receive an immediate safe-next-step + urgency score, trigger local verification and referral, and contribute to district-level intelligence — without creating a parallel silo.”*
+
+### ⚡ Attacking Critical Operational Gaps:
+* **Late / Incomplete Farmer-Initiated Reporting:** Farmers report when animals die; PashuSachet provides an accessible 90-second voice/form intake.
+* **Lack of Real-Time Village/Block Visibility:** Official forecasts operate at monthly district macro-levels; PashuSachet creates a live village-level signal heat map.
+* **Fragmented Last-Mile Coordination & Referral Tracking:** Unifies farmer, para-vet, 1962 MVU, and regional diagnostic labs into one transparent timeline.
+* **Low-Connectivity & Low-Literacy Support:** Full offline-first IndexedDB queue, Marathi voice-first recording, and low-friction micro-forms.
 
 ---
 
-## 🏛️ The Six Strategic Pillars
+## 🏛️ Differentiated Pillars (New Architecture of Value)
 
-| Pillar | Delivery Mechanism | Primary Beneficiary |
+| Pillar | What It Does Differently | Why It Is Not a Copy |
 | :--- | :--- | :--- |
-| **🔍 Detect** | Species-aware symptom screening with calibrated decision trees and referral | Farmer / Vet |
-| **📡 Predict** | Disease-specific geographic outbreak risk from historical & environmental data | Farmer / Livestock Officer |
-| **📊 Monitor** | Animal-specific anomaly detection from vital sign observations and milk yield | Farmer / Vet |
-| **🤝 Connect** | Digital animal records, verified vet directory, and doorstep appointment booking | All Stakeholders |
-| **🗣️ Inform** | Multilingual guidance and plain-language vernacular explanations | Rural Livestock Keepers |
-| **🛡️ Govern** | Farmer data sovereignty, One Health alignment, and strict clinical boundaries | All Users |
+| **1. Participatory Real-Time Sentinel** | Farmers + para-vets submit structured micro-reports. System generates live village-level **“signal heat”**. | **NADRES is top-down official + model-driven.** Seva First is **bottom-up, continuous, farmer-sourced signal generation** catching syndromic spikes days earlier. |
+| **2. Uncertainty-Aware Triage & Escalation** | Rule + lightweight ML hybrid that outputs urgency tier, safe next steps, and escalation path (*self-monitor / para-vet / vet / sample kit / lab*). | **Avoids “diagnosis” claims.** Focuses on **action routing**, not disease ranking. Stronger clinical safety posture. |
+| **3. Closed-Loop Referral & Sample Tracker** | End-to-end tracking from report ➔ appointment / MVU dispatch ➔ clinical note ➔ sample collection ➔ lab status ➔ outcome. | Existing systems (1962, E-Pashu, Bharat Pashudhan) handle pieces; **none close the full loop** with farmer visibility and sample custody. |
+| **4. Federated Contribution Layer** | Verified cases de-identified and pushed to NADRES / state surveillance pipelines. Animal identity links to existing **Pashu Aadhaar** ear tags. | **Explicitly strengthens national systems instead of competing with them.** Zero redundant data silos. |
+| **5. Offline-First + Voice + Verification** | Full offline queue, Marathi voice-first intake, and local para-vet verification before high-urgency alarms. | Built ground-up for **real rural Maharashtra cowshed constraints** (low literacy, intermittent 2G/3G connectivity). |
 
 ---
 

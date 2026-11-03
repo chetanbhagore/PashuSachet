@@ -11,6 +11,28 @@
 
 ---
 
+
+---
+
+## 0. Strategic Architecture: Participatory Layer, Not Competing Silo
+
+Seva First / PashuSachet is architected as the **participatory last-mile integration layer** for livestock health in Maharashtra. It attacks four systemic data gaps:
+1. **Farmer-Initiated Intake Gaps:** Solved by a high-throughput, low-bandwidth `90-Second Report Flow` (`POST /api/v1/reports/90s`) with offline IndexedDB queueing.
+2. **Missing Village-Level Granularity:** Solved by micro-spatial spatio-temporal aggregation (`village_signal_aggregations`) with privacy-preserving count suppression.
+3. **Broken Referral & Sample Handoffs:** Solved by a normalized `sample_tracking` ledger tracking chain of custody from cowshed to diagnostic laboratory.
+4. **National System Interoperability:** Solved by linking directly to **12-digit Pashu Aadhaar ear tags** (Bharat Pashudhan / NDLM) and offering consent-driven de-identified export pipelines for **ICAR-NIVEDI NADRES V2**.
+
+
+### 🏛️ Differentiated Pillars (New Architecture of Value)
+
+| Pillar | What It Does Differently | Why It Is Not a Copy |
+| :--- | :--- | :--- |
+| **1. Participatory Real-Time Sentinel** | Farmers + para-vets submit structured micro-reports (symptoms + photos + location + mortality). System creates a live village-level **“signal heat”** that is distinct from NADRES district forecasts. | **NADRES is top-down official + model-driven.** Seva First is **bottom-up, continuous, farmer-sourced signal generation** capturing syndromic spikes days before lab confirmation. |
+| **2. Uncertainty-Aware Triage & Escalation Engine** | Rule + lightweight ML hybrid that outputs: **urgency tier, safe next action, confidence band**, and recommended escalation path (*self-monitor / para-vet visit / vet / sample kit / lab*). Explicit **abstention** when data is insufficient. | **Avoids “diagnosis” claims.** Focuses on **action routing**, not disease ranking. Enforces a vastly stronger clinical safety posture than typical uncalibrated symptom checkers. |
+| **3. Closed-Loop Referral & Sample Tracker** | End-to-end tracking from report ➔ appointment / MVU dispatch ➔ clinical note ➔ sample collection ➔ lab status ➔ outcome. Visible to farmer, para-vet, and officer. | Existing systems (1962, E-Pashu, Bharat Pashudhan) handle pieces; **none close the full loop** with farmer visibility, sample chain-of-custody, and lab hand-off. |
+| **4. Federated Contribution Layer** | Every verified case can (with farmer consent) be de-identified and pushed to NADRES / state surveillance pipelines. Animal identity links to existing **Pashu Aadhaar** when available instead of creating a competing registry. | **Explicitly strengthens national systems instead of competing with them.** Avoids redundant data silos and respects existing government investments. |
+| **5. Offline-First + Voice + Community Verification** | Full offline queue, voice reporting in Marathi (and Hindi/English), community/para-vet confirmation of serious reports before high-urgency escalation. | Goes beyond current WhatsApp chatbots and basic offline forms. Designed ground-up for **real rural Maharashtra constraints** (low literacy, intermittent networks). |
+
 ## 1. Architectural Bug Fixes & Corrections Summary
 
 | Area | Previous Flaw | Corrected Architectural Design |
@@ -493,6 +515,60 @@ FOR EACH ROW EXECUTE FUNCTION enforce_audit_immutability();
 
 ---
 
+
+### 2.7 Bharat Pashudhan Linkage, Para-Vet Sensors, Sample Tracking & Village Signals
+
+```sql
+-- Linkage to 12-digit Bharat Pashudhan (NDLM) Ear Tag
+ALTER TABLE animals 
+ADD COLUMN IF NOT EXISTS pashu_aadhaar_id VARCHAR(12) UNIQUE,
+ADD COLUMN IF NOT EXISTS bharat_pashudhan_sync_status VARCHAR(32) DEFAULT 'VERIFIED_LINKED';
+
+-- Para-Vet Field Verifications (Active Frontline Sensors)
+CREATE TABLE IF NOT EXISTS para_vet_verifications (
+    verification_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    case_id UUID NOT NULL REFERENCES clinical_cases(case_id) ON DELETE CASCADE,
+    para_vet_id UUID NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
+    vitals_recorded JSONB NOT NULL DEFAULT '{}'::JSONB,
+    visual_signs_confirmed TEXT[] NOT NULL DEFAULT '{}',
+    sample_kit_requested BOOLEAN NOT NULL DEFAULT FALSE,
+    verification_notes TEXT,
+    verified_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Closed-Loop Sample Tracking & Lab Chain-of-Custody
+CREATE TABLE IF NOT EXISTS sample_tracking (
+    sample_id VARCHAR(32) PRIMARY KEY, -- e.g. "SMP-MH-2026-9812"
+    case_id UUID NOT NULL REFERENCES clinical_cases(case_id) ON DELETE CASCADE,
+    sample_type VARCHAR(64) NOT NULL, -- "Serum", "Nasal Swab", "Whole Blood", "Milk Sample"
+    collected_by UUID NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
+    collected_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    lab_id VARCHAR(64) NOT NULL, -- e.g. "Pune Regional Disease Diagnostic Laboratory (RDDL)"
+    mvu_dispatch_id VARCHAR(32), -- Linkage to 1962 Mobile Veterinary Unit
+    chain_of_custody_status VARCHAR(32) NOT NULL DEFAULT 'COLLECTED',
+    diagnostic_test VARCHAR(64), -- "RT-PCR", "ELISA", "Bacterial Culture"
+    test_result VARCHAR(32), -- "POSITIVE", "NEGATIVE", "INCONCLUSIVE", "PENDING"
+    result_details JSONB DEFAULT '{}'::JSONB,
+    resulted_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Village Signal Aggregations (Micro-Spatial with Privacy-Preserving k-Anonymity)
+CREATE TABLE IF NOT EXISTS village_signal_aggregations (
+    aggregation_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    village_census_code VARCHAR(16) NOT NULL,
+    block_name VARCHAR(64) NOT NULL,
+    district_name VARCHAR(64) NOT NULL,
+    time_window_start TIMESTAMPTZ NOT NULL,
+    time_window_end TIMESTAMPTZ NOT NULL,
+    syndromic_signal_count INT NOT NULL DEFAULT 0,
+    suppression_applied BOOLEAN NOT NULL DEFAULT FALSE, -- True if count < 3 (k-anonymity)
+    centroid_lat NUMERIC(9,6) NOT NULL,
+    centroid_lon NUMERIC(9,6) NOT NULL,
+    generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
 ## 3. Dynamic Withdrawal Calculation (Zero Sweeper Dependency)
 
 Instead of relying on a background cron sweeper that risks data drift or server failure, **active withdrawal status is derived deterministically at read time**:
@@ -543,6 +619,16 @@ flowchart TD
 * **Why:** Single runtime, single environment, zero inter-service network overhead, fast execution and immediate debugging.
 * **Database Flexibility:** Runs seamlessly on embedded **SQLite + aiosqlite** for immediate local demo/testing without Docker, while fully compatible with **PostgreSQL 16 + PostGIS** via configuration flag (`DATABASE_URL`).
 * **Direct ML/Rule Access:** Python natively imports `shared/rules/triage_rules_v1.json` and evaluates Model A decision bands without HTTP hops.
+
+
+#### Participatory API Endpoints (FastAPI V1):
+1. `POST /api/v1/reports/90s`: Low-bandwidth 90-second report intake (voice/form, offline-sync-friendly with `Idempotency-Key`).
+2. `POST /api/v1/paravet/verify`: Field worker validation of reported signs and vitals check.
+3. `POST /api/v1/samples/collect`: Registration of diagnostic sample kit with chain of custody tracking.
+4. `GET /api/v1/samples/track/{sample_id}`: Real-time sample status (Collected ➔ MVU Transit ➔ In-Lab ➔ Confirmed Outcome).
+5. `GET /api/v1/surveillance/village-signals`: Village/block syndromic heat map with $k$-anonymity suppression ($<3$).
+6. `POST /api/v1/integrations/nadres/export`: Automated de-identified export pipeline conforming to ICAR-NIVEDI NADRES V2.
+7. `GET /api/v1/integrations/bharat-pashudhan/lookup/{tag}`: Resolution of official 12-digit Pashu Aadhaar ear tags.
 
 #### Phase 2: Polyglot Enterprise Migration — The Self-Project & Placement Upgrade
 * **Why:** Demonstrates production microservices, enterprise Java competency (Spring Boot 3, Hibernate Spatial, Spring Data), and polyglot architecture on your resume.

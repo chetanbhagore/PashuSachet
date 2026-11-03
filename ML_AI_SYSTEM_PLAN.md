@@ -8,6 +8,85 @@
 
 ---
 
+
+---
+
+## 0. Core Philosophy: Action Routing, Not Uncalibrated Diagnosis
+
+PashuSachet fundamentally re-defines the role of machine learning in livestock health:
+* **The Trap:** Typical apps attempt to build a generic "AI disease classifier" that predicts rare pathogens with false precision (`"88% probability of Anthrax"`). This creates severe clinical liability and farmer panic.
+* **The Reality:** Smallholder farmers do not need an unconfirmed probabilistic pathogen diagnosis from a smartphone. They need **action routing**:
+  1. *How urgent is this?*
+  2. *What is a safe immediate next step?*
+  3. *Who needs to be dispatched (Self-monitor / Para-vet / Vet / 1962 MVU / Sample kit)?*
+* **The Distinction vs NADRES:**
+  - **ICAR-NIVEDI NADRES:** Top-down, macro-level, monthly district outbreak forecasting driven by meteorological and historical epidemiological models.
+  - **Seva First:** **Bottom-up, continuous, participatory village-level signal generation** capturing syndromic spikes days before lab samples reach district offices.
+
+
+> **One-Line Promise:**  
+> *“Every farmer and para-vet in rural Maharashtra can report a concern in under 90 seconds (voice or simple form, even offline), receive an immediate safe-next-step + urgency score, trigger local verification and referral, and contribute to district-level intelligence — without creating a parallel silo.”*
+
+### Differentiated Pillars (New Architecture of Value)
+
+| Pillar | What It Does Differently | Why It Is Not a Copy |
+| :--- | :--- | :--- |
+| **1. Participatory Real-Time Sentinel** | Farmers + para-vets submit structured micro-reports. System creates a live village-level **“signal heat”**. | **NADRES is top-down official + model-driven.** Seva First is **bottom-up, continuous, farmer-sourced signal generation**. |
+| **2. Uncertainty-Aware Triage & Escalation Engine** | Rule + lightweight ML hybrid that outputs: urgency tier, safe next action, confidence band, and recommended escalation path (*self-monitor / para-vet visit / vet / sample kit / lab*). Explicit abstention when data is insufficient. | **Avoids “diagnosis” claims.** Focuses on **action routing**, not disease ranking. Stronger clinical safety posture. |
+| **3. Closed-Loop Referral & Sample Tracker** | End-to-end tracking from report ➔ appointment / MVU dispatch ➔ clinical note ➔ sample collection ➔ lab status ➔ outcome. | Existing systems (1962, E-Pashu, Bharat Pashudhan) handle pieces; **none close the full loop** with farmer visibility and lab hand-off. |
+| **4. Federated Contribution Layer** | Every verified case can (with consent) be de-identified and pushed to NADRES / state surveillance pipelines. Animal identity links to existing **Pashu Aadhaar** ear tags. | **Explicitly strengthens national systems instead of competing with them.** Avoids redundant data silos. |
+| **5. Offline-First + Voice + Community Verification** | Full offline queue, voice reporting in Marathi (and Hindi/English), community/para-vet confirmation of serious reports before high-urgency escalation. | Goes beyond current WhatsApp chatbots and basic offline apps. Designed for real rural Maharashtra constraints. |
+
+---
+
+### The Three Tightly-Scoped ML Capabilities
+
+```mermaid
+flowchart TD
+    subgraph Inputs["Participatory Intake (Voice / Form, Offline OK)"]
+        Inp1["Farmer / Para-Vet Micro-Report
+(Species, 4-6 Signs, Duration, Mortality)"]
+        Inp2["Optional Herd Daily Logs
+(Milk Yield, Temp - Commercial Herds Only)"]
+    end
+
+    subgraph CoreML["Tightly Scoped ML Capabilities"]
+        M1["CAPABILITY 1 (Primary, High-Value):
+Triage & Urgency Escalation Engine
+• Action Routing (Emergency / Urgent / Routine / Self-Monitor)
+• Safe Immediate Next-Step Card
+• Explicit Abstention on Ambiguous Data"]
+        
+        M2["CAPABILITY 2 (Surveillance Sentinel):
+Village/Block Cluster Signal Detector
+• ST-DBSCAN Spatio-Temporal Emerging Patterns
+• Privacy-Preserving k-Anonymity Suppression (<3 Counts)
+• Alerts Block LDO Days Ahead of Monthly Forecasts"]
+
+        M3["CAPABILITY 3 (Optional Module):
+Rolling Baseline Anomaly Detection
+• Active ONLY when 7-14 Day Daily Logs Exist
+• Robust Z-Score / EWMA on Milk Drop & Febrile Spikes"]
+    end
+
+    subgraph ClosedLoop["Closed-Loop Escalation & Verification"]
+        Out1["Role-Based Action Cards:
+Farmer First-Aid | Para-Vet Sensor | Vet/MVU Dispatch"]
+        Out2["Sample Kit Request & Lab Tracking:
+Swab/Serum Chain-of-Custody -> Outcome"]
+        Out3["Federated Contribution:
+De-Identified Syndromic Stream to NADRES V2"]
+    end
+
+    Inp1 --> M1
+    Inp1 --> M2
+    Inp2 --> M3
+    M1 --> Out1
+    Out1 --> Out2
+    Out2 --> Out3
+    M2 --> Out3
+```
+
 ## 1. V1 Scope Realism & Design Principles
 
 To prevent over-engineering, unvalidated claims, and clinical safety risks in V1, the AI architecture enforces five strict engineering rules:

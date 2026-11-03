@@ -6,6 +6,23 @@
 
 ---
 
+
+---
+
+## 0. New Core Positioning & Architecture of Value
+
+Seva First is **not another disease-forecasting or animal-registry platform**. It is the missing **last-mile participatory layer** that turns fragmented farmer observations into structured, real-time, village-level early warning signals and closed-loop action — while feeding cleaned data upward into existing national systems (**NADRES V2** and **Bharat Pashudhan / NDLM**).
+
+> **One-Line Promise:**  
+> *“Every farmer and para-vet in rural Maharashtra can report a concern in under 90 seconds (voice or simple form, even offline), receive an immediate safe-next-step + urgency score, trigger local verification and referral, and contribute to district-level intelligence — without creating a parallel silo.”*
+
+### The 5 Differentiated Pillars:
+1. **Participatory Real-Time Sentinel:** Farmers + para-vets submit structured micro-reports. System creates a live village-level “signal heat” (bottom-up continuous generation vs NADRES top-down monthly forecasts).
+2. **Uncertainty-Aware Triage & Escalation Engine:** Rule + lightweight ML hybrid that outputs urgency tier, safe next action, confidence band, and escalation path (*self-monitor / para-vet visit / vet / sample kit / lab*). Explicit abstention on ambiguous data.
+3. **Closed-Loop Referral & Sample Tracker:** End-to-end tracking from report ➔ appointment / MVU dispatch ➔ clinical examination ➔ sample collection ➔ lab status ➔ outcome.
+4. **Federated Contribution Layer:** Verified cases de-identified and pushed to NADRES / state surveillance pipelines. Animal identity links to existing Pashu Aadhaar ear tags.
+5. **Offline-First + Voice + Community Verification:** Full offline queue, Marathi-primary voice reporting, and para-vet confirmation of serious reports before high-urgency escalation.
+
 ## 1. System Vision & Non-Negotiable Boundaries
 
 PashuSachet is designed to bridge the gap between rural livestock farmers, field veterinarians, and district livestock development officers (LDOs).
@@ -37,12 +54,15 @@ graph LR
 | :--- | :--- | :--- |
 | **F-01** | **Multilingual Engine** | Real-time switching across Marathi (मराठी), Hindi (हिन्दी), and English. Voice-friendly labels and icons. |
 | **F-02** | **Farmer Auth & Profile** | Mobile number + OTP sign-in, profile management (Village, Taluka, District, Milk Cooperative affiliation). |
-| **F-03** | **Digital Pashu Aadhar** | Digital herd registry: Animal cards with 12-digit ear tag, species, breed, age, lactation status, and photo upload. |
+| **F-03** | **Pashu Aadhaar Federated Link** | Integration-first identity: Links directly to official 12-digit Bharat Pashudhan ear tags (no competing silo). |
+| **F-03B** | **Para-Vet Sensor Module** | Dedicated mobile interface for field workers to verify farmer reports, check vitals, and request sample kits. |
 | **F-04** | **Vaccination Tracker** | Visual calendar tracking completed vs. upcoming vaccines (FMD, LSD, BQ, HS, PPR, Deworming) with due-date alerts. |
-| **F-05** | **AI Symptom Screening** | Touch-optimized symptom selector chips, duration/vitals input, and photo submission for Model A inference. |
+| **F-05** | **90-Second Report Flow** | Voice-first Marathi or 4-6 tap simple form, auto-location, optional photo, offline queueing. |
+| **F-05B** | **Uncertainty Triage & Safe Steps** | Action routing with urgency grading and explicit abstention when observations are ambiguous. |
 | **F-06** | **Triage & First-Aid Card** | Dynamic urgency banner (`CRITICAL`, `URGENT`, `MODERATE`), probability matches, rule-out conditions, and first-aid checklist. |
 | **F-07** | **Veterinary Directory** | Geo-filtered list of Government Dispensaries, Taluka Polyclinics, and verified private mobile clinics with calling shortcut. |
-| **F-08** | **Appointment Booking** | Schedule doorstep visit, clinic consultation, or tele-triage call with real-time status tracker (`Requested` ➔ `Confirmed` ➔ `Completed`). |
+| **F-08** | **Closed-Loop Referral & Sample Tracker** | End-to-end audit tracking: Report ➔ MVU Dispatch ➔ Clinical Exam ➔ Sample Hand-off ➔ Lab Status ➔ Outcome. |
+| **F-08B** | **Village Signal Map** | Micro-spatial signal heat map at village/block level with small-count privacy suppression ($k$-anonymity). |
 | **F-09** | **Veterinarian Portal** | Vet triage queue, case inspection, clinical record documentation, prescription entry, and follow-up scheduling. |
 | **F-10** | **Officer GIS Map** | Interactive district & taluka outbreak heatmap, active cluster cards, vaccination drive dispatch triggers. |
 | **F-11** | **Offline Queue** | Local storage of case drafts and animal edits when rural connectivity is lost; auto-syncs when online. |
@@ -297,3 +317,4 @@ Before we write code for Part 1, please review and confirm the following design 
    - **FastAPI (Python 3.11):** Clean async REST endpoints, automatic Swagger/OpenAPI documentation at `/docs`, native integration with Python ML packages (`scikit-learn`, `numpy`).
 3. **Database Choice:**
    - **PostgreSQL 16 + PostGIS:** Local via Docker Compose or free cloud database (e.g. Supabase Postgres with PostGIS enabled).
+

@@ -8,6 +8,35 @@
 
 ---
 
+## 0. Core Positioning & Participatory Value Architecture
+
+> **The Problem with Typical Apps:** They build a redundant, parallel animal registry (competing with Bharat Pashudhan) or broad macro-outbreak forecasts (duplicating ICAR-NIVEDI NADRES).  
+> **Seva First's True Value:** It is the **missing last-mile participatory layer** connecting fragmented farmer observations into real-time, village-level early warning signals and closed-loop field action.
+
+```
++---------------------------------------------------------------------------------------------------+
+|                                  THE 90-SECOND LAST-MILE PROMISE                                  |
+|                                                                                                   |
+|  "Every farmer and para-vet in rural Maharashtra can report a concern in under 90 seconds        |
+|  (voice or simple form, even offline), receive an immediate safe-next-step + urgency score,       |
+|  trigger local verification and referral, and contribute to district-level intelligence —        |
+|  without creating a parallel silo."                                                               |
++---------------------------------------------------------------------------------------------------+
+```
+
+### 🏛️ Differentiated Pillars (New Architecture of Value)
+
+| Pillar | What It Does Differently | Why It Is Not a Copy |
+| :--- | :--- | :--- |
+| **1. Participatory Real-Time Sentinel** | Farmers + para-vets submit structured micro-reports (symptoms + photos + location + mortality). System creates a live village-level **“signal heat”** that is distinct from NADRES district forecasts. | **NADRES is top-down official + model-driven.** Seva First is **bottom-up, continuous, farmer-sourced signal generation** capturing syndromic spikes days before lab confirmation. |
+| **2. Uncertainty-Aware Triage & Escalation Engine** | Rule + lightweight ML hybrid that outputs: **urgency tier, safe next action, confidence band**, and recommended escalation path (*self-monitor / para-vet visit / vet / sample kit / lab*). Explicit **abstention** when data is insufficient. | **Avoids “diagnosis” claims.** Focuses on **action routing**, not disease ranking. Enforces a vastly stronger clinical safety posture than typical uncalibrated symptom checkers. |
+| **3. Closed-Loop Referral & Sample Tracker** | End-to-end tracking from report ➔ appointment / MVU dispatch ➔ clinical note ➔ sample collection ➔ lab status ➔ outcome. Visible to farmer, para-vet, and officer. | Existing systems (1962, E-Pashu, Bharat Pashudhan) handle pieces; **none close the full loop** with farmer visibility, sample chain-of-custody, and lab hand-off. |
+| **4. Federated Contribution Layer** | Every verified case can (with farmer consent) be de-identified and pushed to NADRES / state surveillance pipelines. Animal identity links to existing **Pashu Aadhaar** when available instead of creating a competing registry. | **Explicitly strengthens national systems instead of competing with them.** Avoids redundant data silos and respects existing government investments. |
+| **5. Offline-First + Voice + Community Verification** | Full offline queue, voice reporting in Marathi (and Hindi/English), community/para-vet confirmation of serious reports before high-urgency escalation. | Goes beyond current WhatsApp chatbots and basic offline forms. Designed ground-up for **real rural Maharashtra constraints** (low literacy, intermittent networks). |
+
+---
+
+
 ## 1. Scope Realism: The SIH / Demo "Golden Thread"
 
 Trying to build 4 full production portals (Farmer, Vet, Officer, Admin), a spatial GIS engine, rules configurator, and offline synchronization simultaneously is a multi-month effort that risks producing 4 broken dashboards. 
@@ -252,3 +281,77 @@ src/
 
 > 📌 **Execution Status:** Updated and saved as [`FRONTEND_DESIGN_SPEC.md`](file:///g:/Chetan/pashuSachet/FRONTEND_DESIGN_SPEC.md).  
 > **No code implementation has been started.**
+
+
+---
+
+## 9. The 90-Second Participatory Report Flow Specification
+
+### 9.1 Voice-First & Simple-Mode Intake
+* **Primary Target Audience:** Smallholder farmers in Ahmednagar, Solapur, and Pune regions with low text literacy or operating in rustic cattle sheds with wet/gloved hands.
+* **Input Options:**
+  1. **Marathi Voice Record Button:** Large 64px tap-to-speak button (`"येथे बोला"` / *"Speak symptoms here"*). Captures 10–20s audio clip, stores locally in IndexedDB if offline.
+  2. **4–6 Tap Micro-Form (Fallback):**
+     - *Step 1: Animal Tag / Pashu Aadhaar* (Auto-select from herd or manual 12-digit ear tag input).
+     - *Step 2: Species Selection* (Cattle, Buffalo, Goat, Sheep, Poultry).
+     - *Step 3: Primary Visual Sign* (High Fever, Skin Nodules, Mouth/Foot Blisters, Udder Swelling, Respiratory Distress, Hemorrhage).
+     - *Step 4: Onset Duration* (<24h, 1–3 days, >3 days).
+     - *Step 5: Herd Mortality Flag* (Yes/No — immediate red-flag circuit breaker trigger).
+     - *Step 6: Optional Camera Capture* (1 photo of lesion/eye/udder, compressed to <300KB on device).
+
+### 9.2 The Safe-Next-Step & Urgency Card
+* **Zero Diagnosis Claims:** The card never outputs *"Your cow has Foot and Mouth Disease (88%)"*.
+* **Action-Oriented Output:**
+  ```
+  +-----------------------------------------------------------------------------------+
+  | ⚠️ URGENCY: HIGH (ACTION REQUIRED WITHIN 12 HOURS)                                |
+  | Safe Immediate Steps:                                                             |
+  | 1. Isolate animal immediately in a dry, shaded pen away from milk shed.           |
+  | 2. Wash lesions with clean potassium permanganate solution (1:1000).              |
+  | 3. Offer fresh drinking water with electrolytes; halt hard grain concentrates.    |
+  |                                                                                   |
+  | Recommended Escalation:                                                           |
+  | [ Request Doorstep Para-Vet Verification ]  [ Call 1962 Mobile Veterinary Unit ]  |
+  +-----------------------------------------------------------------------------------+
+  ```
+* **Abstention State:** If symptoms are ambiguous (e.g., only "off-feed" without temperature or duration), the card displays:  
+  *“Observations are insufficient for automated risk assessment. Please record body temperature or request a para-vet visit for physical checkup.”*
+
+---
+
+## 10. Village Signal Map (Not Macro District Forecasts)
+
+### 10.1 Micro-Spatial Signal Heat
+* Rather than duplicating *ICAR-NIVEDI NADRES* broad monthly district forecasts, PashuSachet provides **real-time village and block-level signal heat**.
+* Clusters emerge organically when multiple farmers in the same gram panchayat report syndromic signs (e.g. 4 fever + mouth blister reports in Sangamner village within 48 hours).
+
+### 10.2 Privacy Protection: Small-Count Suppression ($k$-Anonymity)
+* **Social Risk:** If an individual farmer is publicly pinpointed on an outbreak map, local dairy cooperatives may refuse milk collection, causing severe economic harm.
+* **Suppression Rule:** If a village has fewer than 3 active syndromic reports, the pin is generalized to the **Gram Panchayat / Block Centroid** and labeled as an anonymous signal cluster:  
+  `"Ahmednagar Block 4: Syndromic Signal Cluster (3 verified reports) — Official investigation recommended."`
+
+---
+
+## 11. Closed-Loop Referral & Sample Tracking Specification
+
+The lifecycle tracking replaces fragmented 1962 / local clinic hand-offs with an end-to-end audit card:
+
+| Step # | Event Stage | Responsible Actor | Visible State in App |
+| :--- | :--- | :--- | :--- |
+| **S1** | **Report Filed** | Farmer / Para-Vet | `REPORTED (Urgency: High)` |
+| **S2** | **Field Verification** | Local Para-Vet | `PARA_VET_VERIFIED (Vitals Checked)` |
+| **S3** | **Referral / MVU** | Government Vet / 1962 | `MVU_DISPATCHED (ETA: 2 Hours)` |
+| **S4** | **Exam & Prescription** | MSVC Veterinarian | `UNDER_TREATMENT (Withholding Clock Active)` |
+| **S5** | **Sample Kit Hand-off** | Attending Vet / Para-Vet | `SAMPLE_COLLECTED (Sample #MH-SMP-8921)` |
+| **S6** | **Lab Processing** | Regional Disease Diagnostic Lab | `IN_LAB_TESTING (ELISA / PCR Pending)` |
+| **S7** | **Confirmed Outcome** | Lab Officer & Vet | `LAB_CONFIRMED (Bovine Ephemeral Fever)` |
+| **S8** | **National Uplink** | System (Farmer Consent) | `DE_IDENTIFIED_EXPORT_TO_NADRES` |
+
+---
+
+## 12. Consent-Driven Data Contribution Specification
+
+Every verified case includes an explicit, DPDP-compliant consent toggle for the livestock owner:
+* **Option A (Private Care Only):** Report visible only to the attending veterinarian and local dispensary.
+* **Option B (Local Public Health Warning):** Report contributes to anonymized village signal heat for neighboring farmers.
+* **Option C (State & National Surveillance):** Case de-identified (GPS truncated to block centroid, owner name redacted) and streamed to NADRES V2 and Bharat Pashudhan surveillance pipelines.

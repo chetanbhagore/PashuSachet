@@ -7,15 +7,25 @@
 
 ---
 
+
+---
+
+## 0. Originality & Positioning: The Missing Participatory Layer
+
+**PashuSachet (Seva First) is not another disease-forecasting or animal-registry platform.** It is the missing **last-mile participatory layer** connecting fragmented farmer observations into structured, real-time, village-level early warning signals and closed-loop action — while feeding cleaned data upward into existing national systems (**NADRES V2** and **Bharat Pashudhan / NDLM**).
+
+> **One-Line Promise:**  
+> *“Every farmer and para-vet in rural Maharashtra can report a concern in under 90 seconds (voice or simple form, even offline), receive an immediate safe-next-step + urgency score, trigger local verification and referral, and contribute to district-level intelligence — without creating a parallel silo.”*
+
 ## 1. Executive Summary & Core Value Proposition
 
-PashuSachet bridges rural livestock owners, veterinarians, and government livestock officers through:
-1. **Multilingual Access:** Mobile-first, voice/touch-friendly interfaces in **Marathi (मराठी)**, **Hindi (हिन्दी)**, and **English**.
-2. **Species-Aware Symptom Screening (Model A):** Structured triage with clinical uncertainty, urgency grading, and referral.
-3. **Outbreak Intelligence & GIS (Model B):** Spatio-temporal disease risk alerts based on ICAR-NIVEDI / NADRES and weather factors.
-4. **Physiological Anomaly Detection (Model C):** Sensor / daily observation baseline tracking (milk yield, rumination, temperature).
-5. **Care Coordination:** Digital Pashu Aadhar cards, vaccination timelines, verified vet booking, and clinical record loops.
-6. **Governance & Ethics:** Decision-support only (no automated prescription), farmer data consent, and One Health compliance.
+PashuSachet bridges rural livestock owners, para-vets, veterinarians, and government surveillance teams through:
+1. **Participatory Real-Time Sentinel:** Structured 90-second micro-reports (voice or 4-tap form) creating live village-level signal heat (bottom-up continuous generation vs NADRES top-down forecasts).
+2. **Uncertainty-Aware Triage & Escalation:** Action routing (urgency tier, safe next step, recommended escalation path) with explicit abstention when data is ambiguous (no fake diagnosis claims).
+3. **Closed-Loop Referral & Sample Tracker:** Transparent chain-of-custody tracking from report ➔ para-vet verification ➔ 1962 MVU dispatch ➔ clinical exam & sample kit ➔ lab status ➔ outcome.
+4. **Federated Contribution Layer:** Direct linkage to 12-digit Pashu Aadhaar ear tags; consent-driven de-identified export pipelines feeding into ICAR-NIVEDI NADRES V2.
+5. **Offline-First + Voice + Community Verification:** Designed for rustic shed constraints with Marathi-first voice recording, full offline IndexedDB sync, and para-vet verification.
+6. **Privacy-Preserving Village Signals:** Micro-spatial heat maps with small-count suppression ($k$-anonymity $<3$) to protect smallholder farmers from milk cooperative boycotts.
 
 ---
 
@@ -298,3 +308,4 @@ pip install fastapi uvicorn sqlalchemy psycopg2-binary
 * `main`: Stable, production-ready code (automatically deployed to Vercel).
 * `develop`: Active integration branch.
 * `feature/<feature-name>`: Individual teammate branches (e.g., `feature/auth-api`, `feature/gis-map`).
+
