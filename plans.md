@@ -1,8 +1,8 @@
 # 🐄 PashuSachet (पशूसचेत / Seva First)
-## Complete End-to-End Livestock Health Platform Specification & Implementation Plan
+## End-to-End Master Product Specification, Role Architecture & Implementation Blueprint
 
 > **System Vision:** A complete, production-grade digital livestock-health and veterinary-service platform connecting Farmers, Veterinarians, Livestock Development Officers (LDOs), and Administrators across rural Maharashtra.  
-> **Lifecycle Coverage:** Registration ➔ Login ➔ Animal Registration (Pashu Aadhar) ➔ Disease Detection ➔ Veterinary Consultation ➔ Treatment Tracking ➔ Vaccination ➔ Outbreak Monitoring ➔ Reporting.  
+> **Lifecycle Coverage:** Registration ➔ Login ➔ Animal Registration (Pashu Aadhar) ➔ Disease Detection ➔ Veterinary Consultation ➔ Treatment & Withdrawal Tracking ➔ Vaccination ➔ Outbreak Surveillance ➔ Reporting & Audits.  
 > **Repository:** `chetanbhagore/PashuSachet` | **Live Web App:** `https://pashu-sachet.vercel.app`
 
 ---
@@ -15,22 +15,22 @@ graph TD
         R1["👨‍🌾 Farmer / Owner"]
         R2["🩺 Veterinarian"]
         R3["🏛️ Livestock Development Officer (LDO)"]
-        R4["🛡️ Administrator"]
+        R4["🛡️ Administrator (Securely Provisioned)"]
     end
 
     subgraph CorePlatform["PashuSachet Platform Modules"]
-        P1["Auth, Onboarding & RBAC"]
+        P1["Auth, Onboarding & Server RBAC"]
         P2["Pashu Aadhar & Herd Registry"]
         P3["AI Disease Screening (Model A)"]
         P4["Vet Consultation & Case Management"]
         P5["Vaccination & Preventive Timeline"]
         P6["3-Tier GIS Outbreak Surveillance (Model B)"]
-        P7["Health Anomaly Monitoring (Model C)"]
+        P7["Daily Monitoring & Anomaly Tracking (Model C)"]
         P8["Governance, Audits & Analytics"]
     end
 
-    R1 --> P1 & P2 & P3 & P4 & P5
-    R2 --> P1 & P4 & P5
+    R1 --> P1 & P2 & P3 & P4 & P5 & P7
+    R2 --> P1 & P4 & P5 & P7
     R3 --> P1 & P6 & P8
     R4 --> P1 & P8
 ```
@@ -39,29 +39,31 @@ graph TD
 
 #### 👨‍🌾 Farmer / Livestock Owner
 * **Registration & Identity:** Multilingual onboarding, mobile OTP verification, farm location setup.
-* **Animal Health & Passport:** Digital herd profile, health status, Pashu Aadhar card.
-* **AI Symptom Screening:** Guided species-specific triage with red-flag detection and urgency scoring.
+* **Animal Health & Passport:** Digital herd inventory, health status cards, Pashu Aadhar cards.
+* **AI Symptom Screening (Model A):** Guided species-specific triage with red-flag emergency detection and urgency scoring.
+* **Vital & Health Monitoring (Model C):** Simple daily entry for milk yield, temperature, feeding, and rumination; automated anomaly alerts.
 * **Veterinary Booking:** Radius-based discovery of verified dispensaries and mobile clinic doorstep booking.
-* **Reminders & Food Safety:** Upcoming vaccination countdowns, deworming alerts, and medication milk/meat withdrawal warnings.
-* **Health Records:** Lifelong timeline of clinical cases, diagnoses, treatments, and vaccination certificates.
+* **Reminders & Food Safety:** Upcoming vaccination countdowns, deworming alerts, and vet-entered medication milk/meat withdrawal warnings.
+* **Health Records:** Lifelong timeline of clinical cases, diagnoses, treatments, and downloadable vaccination certificates.
 
 #### 🩺 Veterinarian
-* **Verified Profile:** Maharashtra State Veterinary Council (MSVC) credentials, clinic location, service radius.
-* **Case Inbox:** Urgency-sorted queue (`CRITICAL` ➔ `URGENT` ➔ `MODERATE`), symptom inspection, lesion photos.
-* **Clinical Documentation:** Physical exam recording, confirmed diagnosis, prescribed treatment, and milk/meat withholding period.
-* **Treatment Tracking & Follow-up:** 7-day follow-up scheduler, case resolution, and referral to Taluka Polyclinic.
+* **Verified Profile:** Maharashtra State Veterinary Council (MSVC) credentials, clinic location, designated service talukas.
+* **Triage Inbox:** Urgency-sorted queue (`CRITICAL` ➔ `URGENT` ➔ `MODERATE`), symptom inspection, lesion photos, and animal baseline anomaly charts.
+* **Clinical Documentation:** Physical exam recording, confirmed diagnosis, prescribed treatment, and veterinary-entered milk/meat withholding period.
+* **Treatment Tracking & Follow-up:** 7-day follow-up scheduler, case resolution, 14-day case reopening review, and referral to Taluka Polyclinic.
 * **Vaccination Administration:** Log administered vaccines with batch number, manufacturer, and booster dates.
 
 #### 🏛️ Livestock Development Officer (LDO)
-* **Outbreak Surveillance Map:** District/taluka/village GIS heatmap with 3-tier case filtering.
-* **Village Surveillance:** Monitor attack rates, case clusters, and threshold breach alerts.
+* **Outbreak Surveillance Map:** District/taluka/village GIS heatmap with 3-tier case filtering (Signal vs. Clinical vs. Confirmed).
+* **Village Surveillance:** Monitor attack rates, case clusters, and automated threshold breach alerts.
+* **Outbreak Alert Acknowledgment:** Structured action logging (`Acknowledged`, `Field Team Dispatched`, `False Alarm`).
 * **Vaccination Campaigns:** Design ring-vaccination perimeters around active outbreaks, assign mobile teams.
 * **Surveillance Reports:** Export anonymized aggregated PDF/CSV bulletins for state authorities (DAHD/ICAR-NIVEDI).
 
-#### 🛡️ Administrator
+#### 🛡️ Administrator (Provisioned Privately)
 * **User Management:** Verify and approve Veterinarian MSVC licenses and Officer government credentials.
-* **System Configuration:** Configure disease triage rules, species symptom matrices, and regional vaccination schedules.
-* **Data Quality & Audit Logs:** Monitor missing clinical fields, duplicate tag numbers, stale feeds, and review immutable audit trails.
+* **System Configuration:** Manage disease triage rules, species symptom matrices, and regional vaccination schedules against validated clinical guidance.
+* **Data Quality & Audit Logs:** Monitor missing clinical fields, duplicate tag numbers, stale feeds, and review audit trails.
 * **Platform Analytics:** Track adoption metrics, case turnaround times, and vaccination coverage percentages.
 
 ---
@@ -71,7 +73,8 @@ graph TD
 | Feature | Details & Specification |
 | :--- | :--- |
 | **Language Selection** | Marathi (मराठी), Hindi (हिन्दी), and English with instant dynamic switching and persistent preference. |
-| **Registration** | Name, mobile number, 6-digit OTP verification, and role selection (`Farmer`, `Veterinarian`, `Officer`, `Admin`). |
+| **Registration** | Name, mobile number, 6-digit OTP verification, and role selection (`Farmer`, `Veterinarian`, `Officer`). **Admin accounts cannot be self-registered.** |
+| **Admin Provisioning** | Admin accounts are provisioned out-of-band by existing super-administrators or secure environment bootstrapping; public signup is strictly prohibited. |
 | **Login** | Mobile OTP sign-in, secure cryptographic JWT session token, automatic session refresh, and explicit logout. |
 | **Farmer Profile** | Village, taluka, district, optional farm GPS coordinates, milk cooperative affiliation, contact preferences. |
 | **Vet Registration** | Veterinary degree qualifications (B.V.Sc / M.V.Sc), state council license (MSVC), clinic name, service area radius. |
@@ -80,11 +83,10 @@ graph TD
 | **Role-Based Access** | Strictly segregated dashboards, interfaces, and API permissions for each role. |
 | **Consent Management** | Granular user consent for health-record preservation, farm location, photo upload, and secondary surveillance use. |
 
-> ⚠️ **Important Verification Rule:** Farmer self-registration is open upon OTP confirmation. Veterinarian and Livestock Officer accounts **require administrative verification** of professional credentials before accessing privileged clinical and surveillance features.
-
-### Security Architecture: Prototype Sandbox vs. Production Backend
-* **Client-Side Prototype Sandbox:** Features an interactive role-switcher with a clear banner: `[DEMO SIMULATION MODE]`. This allows evaluators to preview all 4 stakeholder views without a live SMS gateway.
-* **Production Backend (FastAPI + PostgreSQL):** Server-side cryptographic JWT tokens with role claims. Server-enforced middleware (`@require_roles(['veterinarian', 'admin'])`) guarantees that client-side modifications can never escalate access privileges.
+> ⚠️ **Verification Gates & Privilege Escalation Prevention:**
+> * **Farmer:** Open self-registration upon mobile OTP confirmation.
+> * **Veterinarian & Officer:** Registration creates a `Pending Verification` account. Privileged access to clinical and surveillance records remains locked until verified by an Administrator.
+> * **Prototype Sandbox vs. Production:** The top-bar role-switcher is strictly a **Demo UI evaluation tool** badged `[DEMO SIMULATION MODE]`. In production, users only access roles cryptographically granted to their authenticated server session; client-side state manipulation cannot escalate privileges.
 
 ---
 
@@ -93,17 +95,18 @@ graph TD
 ### Core Sections:
 1. **My Animals:** Registered herd inventory, animal profile cards, live health status badges.
 2. **Check Symptoms:** Guided AI-assisted screening and clinical urgency assessment.
-3. **Vet Appointment:** Search verified doctors, request clinic visit or doorstep field consultation.
-4. **Vaccination:** Species vaccination calendar, due dates, countdowns, and completion history.
+3. **Animal Monitoring (Model C):** Quick-log tool for daily milk yield (Liters), body temperature, and rumination; live anomaly alert cards.
+4. **Vet Appointment:** Search verified doctors, request clinic visit or doorstep field consultation.
+5. **Vaccination:** Species vaccination calendar, due dates, countdowns, and completion history.
 
 ### Additional Dashboard Sections:
 * **Active Health Cases:** Track progress of submitted cases (`Submitted` ➔ `Under Care` ➔ `Follow-Up` ➔ `Resolved`).
+* **Food Safety & Medication Withdrawal Banner:** Clear warning showing remaining milk and meat withholding hours following vet-prescribed antibiotic administration.
 * **Upcoming Vaccinations & Follow-Ups:** High-visibility banner for vaccines due within 14 days and scheduled vet re-checks.
-* **Recent Animal Health History:** Quick chronological summary of recent treatments, vitals, and diagnoses.
+* **Recent Animal Health History:** Chronological summary of recent treatments, vitals, and diagnoses.
 * **Local Disease Alerts & Prevention Advisories:** Real-time taluka-level alerts (e.g. Lumpy Skin Disease warning in Ahmednagar) with seasonal prevention tips.
 * **Emergency Veterinary Contact & Helpline 1962:** One-tap calling to the National Animal Disease Emergency Helpline (Toll-Free 1962) and assigned local dispensary.
-* **Offline Saved Forms & Pending Submissions:** Visual indicator of drafts saved locally during network disconnection, with auto-sync when back online.
-* **Food Safety & Medication Withdrawal Banner:** Prominent warning showing remaining milk and meat withholding hours following antibiotic administration.
+* **Offline Saved Forms & Pending Submissions:** Visual indicator of drafts saved locally in IndexedDB during network disconnection, with auto-sync when back online.
 
 ---
 
@@ -112,7 +115,7 @@ graph TD
 Every registered animal receives a comprehensive digital health passport.
 
 ### Registration Fields:
-* **Unique Animal ID:** System-generated unique identifier (e.g. `PS-MH-2026-08149`).
+* **Unique Animal ID:** System-generated unique identifier (e.g. `PS-MH-2026-08149`). Clearly documented as an internal digital health passport ID, not a replacement for government identification.
 * **Official Ear Tag Number (Optional):** 12-digit **Bharat Pashudhan (INAPH)** polyurethane RFID/barcode ear tag number.
 * **Core Demographics:** Animal name, species (`Cattle`, `Buffalo`, `Goat`, `Sheep`, `Poultry`), breed (e.g. Gir, Murrah, Osmanabadi), sex, date of birth or estimated age.
 * **Owner & Location:** Owner name, mobile number, village, taluka, district, and farm coordinates.
@@ -144,13 +147,13 @@ The screening system is a **guided decision-support workflow**, not an autonomou
 
 ### Result Screen Components:
 * **Urgency Rating:** Color-coded triage badge (`CRITICAL`, `URGENT`, `MODERATE`, `ROUTINE`).
-* **Possible Conditions:** Ranked condition possibilities with calibrated confidence percentages (clearly labelled as illustrative decision support in prototype).
+* **Possible Conditions:** Ranked condition possibilities with calibrated confidence percentages. In prototype mode, results are explicitly badged: `[ILLUSTRATIVE SCREENING DECISION SUPPORT - REQUIRES PHYSICAL VET EXAMINATION]`.
 * **Trigger Symptoms:** Plain-language explanation of which observed signs led to the assessment.
 * **Safe, Vet-Approved Interim Guidance:** Immediate safe steps (isolation, clean water, shade, fly repellent; strict advice **NOT** to administer unprescribed human medicines).
 * **Clear Clinical Disclaimer:** Explicit warning that screening is decision support and not a substitute for physical veterinary examination.
 * **Referral Options & Reference Number:** Generated Case Reference ID (e.g. `#HC-4012`) with direct button to book a consultation.
 
-> 🛡️ **Safety Rule:** Never generate automated drug prescriptions or medication dosages. Low-confidence or out-of-scope cases must explicitly output `ABSTAIN` and instruct the user to seek immediate physical veterinary attention.
+> 🛡️ **Clinical Safety & Abstention Rule:** Never generate automated drug prescriptions or medication dosages. Low-confidence, contradictory, or out-of-scope cases must explicitly output `ABSTAIN` and instruct the user to seek immediate physical veterinary examination.
 
 ---
 
@@ -161,18 +164,20 @@ The screening system is a **guided decision-support workflow**, not an autonomou
 * **Request Consultation:** Call dispensary, book clinic visit, or request doorstep field visit with preferred date/time and problem notes.
 * **Track Request Status:** Real-time progression: `Pending` ➔ `Accepted` ➔ `Rescheduled` ➔ `Completed`.
 * **Reminders & Updates:** In-app and SMS reminders for scheduled visits and 7-day follow-up checks.
+* **Appointment Cancellation & No-Show Tracking:** Cancel with reason codes; no-shows recorded neutrally for scheduling optimization.
 * **Service Feedback:** Rate consultation quality and report appointment issues.
 
 ### Veterinarian Features:
 * **Verified Profile & Service Area:** Display degrees, MSVC registration, clinic timings, and service talukas.
-* **Urgency-Sorted Case Inbox:** Incoming cases ranked by urgency (`CRITICAL` first), displaying symptom chips, photos, and vitals.
+* **Urgency-Sorted Case Inbox:** Incoming cases ranked by urgency (`CRITICAL` first), displaying symptom chips, photos, vitals, and Model C anomaly baselines.
 * **Review History:** Inspect past illnesses, previous treatments, and vaccination history before examination.
 * **Manage Requests:** Accept visit, propose alternative time slot, or decline with structured reason code.
 * **Examination & Confirmed Diagnosis:** Record physical clinical findings, body condition score, and final confirmed veterinary diagnosis.
-* **Treatment & Medication Prescriptions:** Enter prescribed medications, dosage instructions, and calculate mandatory **milk/meat withdrawal periods**.
+* **Treatment & Medication Prescriptions:** Enter prescribed medications, dosage instructions, and **vet-confirmed milk/meat withdrawal periods**.
 * **Follow-up & Case Closure:** Schedule re-check dates, mark cases `Resolved`, or refer complex cases to District Veterinary Polyclinic.
+* **14-Day Reopening Review:** If a farmer reopens a resolved case within 14 days due to recurring symptoms, it highlights in the vet inbox as `Reopened Case`.
 
-### Separate State Machines: Clinical Cases vs. Appointments
+### Decoupled State Machines: Clinical Cases vs. Appointments
 
 ```mermaid
 stateDiagram-v2
@@ -206,13 +211,13 @@ stateDiagram-v2
 ```
 
 * **Independent Decoupling:** A clinical case remains `Under Care` across multiple sequential appointments.
-* **Cancellation & Reopening:** Mandatory structured reason codes for cancellations; resolved cases can be reopened within 14 days if symptoms recur.
+* **Food Safety Withholding Rule:** The veterinarian explicitly inputs the withdrawal period (in hours/days), documents the clinical source/drug label rule, and sets start/end dates. The system does not guess unverified drug rules automatically.
 
 ---
 
 ## 7. Vaccination and Preventive Care
 
-1. **Species- & Region-Aware Schedules:** Pre-loaded schedules approved by Maharashtra Animal Husbandry authorities (FMD, LSD, BQ, HS, Anthrax, PPR, Enterotoxaemia, Ranikhet).
+1. **Curated & Validated Schedules:** Schedules are not blanket-approved; each schedule must be curated and validated against current veterinary clinical guidance considering species, regional prevalence in Maharashtra, animal age, and booster timing.
 2. **Individual Animal Timeline:** Dedicated preventive history showing exact dates, dose counts, and boosters for each animal.
 3. **Upcoming, Overdue & Completed Status:** Clear visual badges:
    * 🟢 `Completed` (with date and administering vet)
@@ -241,10 +246,14 @@ stateDiagram-v2
   3. `Tier 3: Lab-Confirmed Outbreak` (Diagnostic lab confirmation via ELISA/PCR; triggers public advisories).
 * **Data Sources:** DAHD annual statistics, ICAR-NIVEDI NADRES monthly bulletins, regional weather indicators.
 
-### 📊 Model C: Animal Anomaly Detection (Baseline Monitoring)
-* **Function:** Flag physiological or behavioral deviations relative to an individual animal's baseline.
-* **Inputs:** Daily milk yield records, body temperature readings, rumination cycles, feeding behavior.
-* **Output:** Anomaly deviation score alerting farmer to early sub-clinical illness before visible lesions appear.
+### 📊 Model C: Animal Anomaly Detection & Vital Monitoring Workflow
+* **Farmer Data-Entry Workflow:**
+  * Simple daily/weekly tracking screen: Daily Milk Yield (Liters), Rectal Temperature (°F), Feeding vigor (`Normal`, `Reduced`, `Off-Feed`), Rumination cycles.
+* **Automated Anomaly Scoring:**
+  * Compares latest entry against the individual animal's 14-day rolling baseline.
+  * Triggers visual dashboard alert: `⚠️ Anomaly Flag: Gauri's milk yield dropped 35% over 48h while temperature elevated to 103.8°F`.
+* **Veterinarian Review Workflow:**
+  * Anomaly deviation charts (milk yield curve vs. temperature curve) are embedded directly inside the Vet Case Details screen to assist early sub-clinical triage (e.g. sub-clinical mastitis or systemic infection).
 
 ---
 
@@ -254,7 +263,7 @@ stateDiagram-v2
 2. **Granular Multi-Filters:** Filter by disease (LSD, FMD, BQ, HS, PPR), date range (7d/30d/90d), species, and severity.
 3. **Segregated Case Metrics:** View suspected signals, vet-examined cases, confirmed outbreaks, and mortalities separately.
 4. **Cluster Detection & Threshold Breaches:** Automated notification when taluka incident rates exceed statistical alert baselines.
-5. **Outbreak Alert Acknowledgment:** Structured action logging for officers:
+5. **Outbreak Alert Acknowledgment Workflow:** Structured action logging for officers:
    * `[Acknowledged - Active Monitoring]`
    * `[Field Investigation Team Dispatched]`
    * `[False Alarm / Controlled Incident]`
@@ -271,10 +280,10 @@ stateDiagram-v2
 | :--- | :--- |
 | **Notifications** | OTP delivery, case updates, appointment confirmations, vaccine reminders, and outbreak alerts via In-App, SMS, WhatsApp, or IVR. |
 | **Accessibility** | Large 44x44px touch targets, high contrast (WCAG AAA), clear Devanagari font rendering, icon-supported choices, audio voice-over ready. |
-| **Offline Support** | ServiceWorker caching, IndexedDB / localStorage offline queue; save drafts and queue submissions with automatic reconnection sync. |
-| **Privacy & DPDP Compliance** | Explicit consent capture, least-privilege role access, data minimization, "Export My Health Data" (JSON/PDF), and "Request Account Deletion". |
+| **Offline Storage Architecture** | **IndexedDB** for offline case records, photos, and pending form submissions; **localStorage** for lightweight UI preferences (language, theme, active demo role). |
+| **DPDP-Aligned Data Governance** | Explicit consent capture, least-privilege role access, data minimization, "Export My Health Data" (JSON/PDF), and "Request Account Deletion". (Full DPDP compliance claim subject to formal legal audit). |
 | **Help Center** | Curated veterinary FAQs, visual first-aid guides, animal husbandry best practices, and emergency helpline (1962) directory. |
-| **Immutable Audit Trail** | Comprehensive ledger recording clinical edits, diagnosis updates, prescription entries, ownership transfers, and administrative actions. |
+| **Audit Trail** | **Demo Audit Log** in prototype mode; comprehensive, immutable append-only database audit log in production recording clinical edits, Rx entries, ownership transfers, and admin actions. |
 | **Analytics & KPIs** | Dashboards tracking platform adoption, disease resolution rates, average response time, vaccination coverage, and referral completion. |
 
 ---
@@ -284,13 +293,14 @@ stateDiagram-v2
 ```
 PashuSachet Platform
 │
-├── 🌐 Global Top Bar: Brand Logo | Language Switcher (मराठी/हिन्दी/EN) | Mode Indicator | Emergency 1962 Badge
+├── 🌐 Global Top Bar: Brand Identity | Language Toggle (मराठी/हिन्दी/EN) | Role Switcher [Demo Mode] | Emergency 1962 Badge
 │
 ├── 👨‍🌾 1. FARMER PORTAL
 │   ├── /farmer/dashboard               # Overview, active cases, upcoming vaccines, offline queue banner
 │   ├── /farmer/animals                 # Herd inventory, "+ Register Animal" modal
 │   │   ├── /farmer/animals/:id         # Pashu Aadhar card, health passport, clinical history timeline
 │   │   └── /farmer/animals/transfer    # Ownership transfer initiation and acceptance
+│   ├── /farmer/monitoring              # Model C daily vital logging (Milk, Temp, Rumination) & anomaly alerts
 │   ├── /farmer/symptom-checker         # Guided 3-step triage, photo/vitals input, red flag check
 │   │   ├── /farmer/screening/result    # Urgency banner, condition match, food safety withdrawal, first-aid
 │   │   └── /farmer/screening/submit    # Dispatch case to verified local dispensary
@@ -303,7 +313,7 @@ PashuSachet Platform
 ├── 🩺 2. VETERINARIAN PORTAL
 │   ├── /vet/dashboard                  # Triage queue, today's visits, urgent alerts
 │   ├── /vet/cases                      # Urgency-sorted case inbox (Critical -> Urgent -> Moderate)
-│   │   ├── /vet/cases/:id              # Symptom breakdown, photo review, animal history, exam form
+│   │   ├── /vet/cases/:id              # Symptom breakdown, photo review, animal history, Model C anomaly curve
 │   │   └── /vet/cases/:id/diagnose     # Confirmed diagnosis, Rx, withdrawal period, follow-up scheduler
 │   ├── /vet/appointments               # Calendar view, accept / reschedule / cancel / complete visits
 │   ├── /vet/vaccination-logs           # Administer vaccines, record batch number & date
@@ -317,7 +327,7 @@ PashuSachet Platform
 │   ├── /ldo/campaigns                  # Vaccination campaign planner, team dispatch tracker
 │   └── /ldo/reports                    # Generate district surveillance bulletins (PDF/CSV)
 │
-└── 🛡️ 4. ADMINISTRATOR PORTAL
+└── 🛡️ 4. ADMINISTRATOR PORTAL (Provisioned Privately)
     ├── /admin/dashboard                # System health, active users, data ingestion status
     ├── /admin/verifications            # Vet & Officer credential review (Approve/Reject)
     ├── /admin/disease-rules            # Model A triage rules & vaccination calendar config
@@ -327,53 +337,73 @@ PashuSachet Platform
 
 ---
 
-## 12. Build Priority
+## 12. Final Recommended 6-Phase Build Order
 
-### 🚀 Phase 1 — Core Working Product (Immediate Focus)
-* Role quick-switcher and simulated login sessions for all 4 roles.
-* Farmer herd registry with Pashu Aadhar cards and duplicate detection check.
-* Guided symptom reporting with red-flag detection and Model A triage results.
-* Case dispatch from farmer to veterinarian triage inbox.
-* Veterinarian case examination form (diagnosis, Rx notes, withdrawal calculation).
-* Species-aware vaccination calendar and food safety withdrawal banner.
+We adopt a structured, 6-phase engineering roadmap that builds a fully operational prototype first, establishes the real production backend infrastructure, and integrates validated intelligence models:
 
-### 🌐 Phase 2 — Connected Services
-* Verified veterinary directory with geo-distance filtering.
-* Three-tier GIS surveillance map with district/taluka cluster markers.
-* Outbreak alert acknowledgment workflow for Livestock Officers.
-* Ownership transfer workflow between farmers.
-* Offline draft storage and auto-sync queue.
+```mermaid
+flowchart LR
+    P1["1. Prototype Foundation"] --> P2["2. Farmer Workflows"]
+    P2 --> P3["3. Vet Workflows"]
+    P3 --> P4["4. Officer & Admin Workflows"]
+    P4 --> P5["5. Production Infrastructure"]
+    P5 --> P6["6. Validated Intelligence"]
+```
 
-### 🧠 Phase 3 — Validated Intelligence
-* Machine learning inference pipelines trained on validated clinical datasets.
-* Outbreak temporal forecasting models with climate telemetry integration.
-* Model C physiological anomaly detection engine.
-* Automated WhatsApp / SMS gateway integration for rural farmers.
+### 🔹 Phase 1: Prototype Foundation (Immediate Priority)
+* Unified reactive client-side store (`js/store.js`) managing relational entities (Users, Animals, Cases, Appointments, Outbreaks, Audits) in browser storage (`IndexedDB` + `localStorage`).
+* Multilingual navigation shell with instant role-switching between Farmer, Vet, Officer, and Admin views with active mode banners.
+* Global design system, responsive touch controls, and high-contrast styling.
+
+### 🔹 Phase 2: Farmer Workflows
+* Multi-animal herd registry (Pashu Aadhar cards, duplicate tag check, ownership transfer modal).
+* Model A symptom screening workflow with red-flag detection and illustrative triage cards.
+* Case dispatch from farmer to local veterinary dispensary.
+* Model C daily vital logging interface (milk yield, temperature, rumination) and anomaly alerts.
+* Vaccination calendar and food safety withdrawal countdown banner.
+
+### 🔹 Phase 3: Veterinarian Workflows
+* Urgency-sorted Triage Inbox (`CRITICAL` first) displaying symptom vectors, photos, and Model C anomaly curves.
+* Case examination form: physical findings, confirmed diagnosis, Rx documentation, and vet-entered withdrawal periods.
+* Appointment scheduling, acceptance, rescheduling, and visit completion.
+* 14-day case reopening review workflow.
+
+### 🔹 Phase 4: Officer & Admin Workflows
+* Livestock Officer GIS surveillance console with 3-tier disease filtering and cluster markers.
+* Outbreak alert acknowledgment logger (`Acknowledged`, `Field Team Dispatched`).
+* Ring-vaccination campaign planning simulator.
+* Administrator credential verification queue (Vet MSVC licenses and Officer department IDs).
+* Demo audit trail viewer and system health analytics.
+
+### 🔹 Phase 5: Production Infrastructure
+* FastAPI modular monolith backend scaffolding (`app/api`, `app/core`, `app/models`, `app/services`).
+* PostgreSQL 16 + PostGIS spatial database setup with Alembic migrations.
+* Real mobile SMS OTP authentication service and cryptographic JWT session tokens.
+* Server-side role-based access control (RBAC) middleware enforcing privilege boundaries.
+* Automated database backups, TLS configuration, and production monitoring.
+
+### 🔹 Phase 6: Validated Intelligence & Integrations
+* Machine learning pipelines trained on verified clinical datasets (scikit-learn / XGBoost).
+* Outbreak temporal forecasting models with regional climate telemetry integration.
+* Automated SMS / WhatsApp gateway dispatch for appointment alerts and outbreak bulletins.
 
 ---
 
-## 13. Current State Audit & Screen-by-Screen Implementation Plan
+## 13. Current State Audit & Screen-by-Screen Implementation Checklist
 
-### Existing Features That Already Work:
+### Verified Existing Features in Repository:
 * Single-page responsive layout deployed on GitHub Pages and Vercel.
 * Multilingual dictionary engine (Marathi, Hindi, English).
 * Basic rule-based symptom evaluation for cattle, buffalo, goat, sheep, and poultry.
 * Mock animal cards stored in `localStorage`.
 * Static district outbreak information cards and verified vet cards.
 
-### Missing Screens & User Flows to Build:
-1. **Interactive Role Switcher Header:** Toggle between Farmer, Vet, Officer, and Admin with active state indicators.
+### Missing Screens & User Flows to Build in Phase 1-4:
+1. **Interactive Role Switcher Header:** Seamless toggle between Farmer, Vet, Officer, and Admin with active demo indicator.
 2. **Dedicated Farmer Dashboard:** Active cases tracker, vaccination countdown cards, milk withdrawal banner.
-3. **Veterinarian Triage Inbox:** Dynamic list of cases submitted by farmers sorted by urgency score.
-4. **Veterinarian Examination & Rx Modal:** Interactive form to input clinical findings, confirmed diagnosis, and medication withdrawal hours.
-5. **Livestock Officer Surveillance Console:** 3-tier outbreak signal viewer, alert acknowledgment logger, and campaign dispatch simulator.
-6. **Administrator Control Panel:** Pending vet license approvals, disease rule editor, and audit logs.
-7. **Animal Ownership Transfer Modal:** Step-by-step transfer request and confirmation flow.
-
-### Implementation Order:
-1. **Unified Relational Store (`js/store.js` or enhanced `js/app.js`):** Unified reactive data store managing Users, Animals, Cases, Diagnoses, Appointments, Outbreaks, and Audits with foreign-key integrity in `localStorage`.
-2. **Navigation & Role View Controller:** Switch active portal views seamlessly without page reload.
-3. **Farmer Experience Enhancement:** Add Pashu Aadhar detail view, transfer modal, and food safety countdown.
-4. **Veterinarian Portal Implementation:** Build Triage Inbox, Case Details, Diagnosis/Rx submission form.
-5. **Livestock Officer & Admin Portals:** Build GIS signal monitor, alert acknowledgment, and license verification queue.
-6. **End-to-End Verification & Vercel Deployment:** Verify complete journey across all 4 roles and push live.
+3. **Animal Monitoring & Vital Tracking Screen:** Farmer daily log for milk, temp, and rumination with anomaly alert cards.
+4. **Veterinarian Triage Inbox:** Dynamic list of cases submitted by farmers sorted by urgency score.
+5. **Veterinarian Examination & Rx Modal:** Interactive form to input clinical findings, confirmed diagnosis, and medication withdrawal hours.
+6. **Livestock Officer Surveillance Console:** 3-tier outbreak signal viewer, alert acknowledgment logger, and campaign dispatch simulator.
+7. **Administrator Control Panel:** Pending vet license approvals, disease rule editor, and audit logs.
+8. **Animal Ownership Transfer Modal:** Step-by-step transfer request and confirmation flow.
