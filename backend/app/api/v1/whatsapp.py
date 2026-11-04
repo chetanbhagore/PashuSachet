@@ -86,3 +86,4 @@ def send_whatsapp_message(outbound: WhatsAppOutboundMessage):
         "channel": "WHATSAPP_BUSINESS",
         "deliveryStatus": "DELIVERED"
     }
+

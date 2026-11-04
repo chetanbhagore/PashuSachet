@@ -50,3 +50,4 @@ class BroadcastCampaign(Base):
     failed_count = Column(Integer, default=0)
     status = Column(String(32), default="IN_PROGRESS")  # 'IN_PROGRESS', 'COMPLETED'
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+

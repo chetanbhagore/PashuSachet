@@ -76,3 +76,4 @@ def trigger_outbreak_broadcast(req: OutbreakBroadcastRequest):
         disease_name=req.disease_name,
         target_count=req.target_livestock_owners
     )
+
