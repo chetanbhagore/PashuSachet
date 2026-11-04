@@ -14,6 +14,7 @@ from backend.app.models.surveillance import (
 from backend.app.models.animal import Animal, VaccinationRecord
 from backend.app.models.clinical import Consultation, Prescription
 from backend.app.models.audit import AuditLog
+from backend.app.models.automation import WhatsAppSession, TelephonyCallLog, BroadcastCampaign
 
 __all__ = [
     "Base",
@@ -32,6 +33,9 @@ __all__ = [
     "VaccinationRecord",
     "Consultation",
     "Prescription",
-    "AuditLog"
+    "AuditLog",
+    "WhatsAppSession",
+    "TelephonyCallLog",
+    "BroadcastCampaign"
 ]
 

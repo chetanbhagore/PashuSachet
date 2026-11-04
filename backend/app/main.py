@@ -646,47 +646,12 @@ def get_mvu_telematics():
         }
     }
 
-@app.post("/api/v1/whatsapp/webhook")
-def process_whatsapp_message(payload: Dict[str, Any] = Body(...)):
-    sender = payload.get("from", "+919876543210")
-    msg_type = payload.get("type", "text")
-    body = payload.get("body", "").strip()
-    
-    if msg_type == "voice" or any(k in body.lower() for k in ["आवाज", "गाठ", "nodule", "गाठी"]):
-        reply = (
-            "🙏 *पशूसचेत महाराष्ट्र शासन - १९६२ सहाय्यता केंद्र*\n\n"
-            "तुमचा व्हॉइस मेसेज प्राप्त झाला. आम्ही लक्षणांचे विश्लेषण केले आहे:\n"
-            "⚠️ *प्राथमिक संशय:* लंपी त्वचा रोग (LSD) किंवा तोंडखुरी/लाळखुरी.\n"
-            "⏱️ *तातडीची पातळी:* तातडीने तपासणी आवश्यक (RED TIER)\n\n"
-            "👉 *तात्काळ काय करावे:*\n"
-            "१. बाधित जनावराला कळपापासून ताबडतोब वेगळे बांधा.\n"
-            "२. इतर जनावरांवर डास-माशा प्रतिबंधक औषध फवारा.\n"
-            "३. संगमनेर मोबाईल व्हेटर्नरी युनिट (MVU 1962) ला अलर्ट पाठवला आहे. १०-१५ मिनिटांत संपर्क होईल."
-        )
-    elif "status" in body.lower() or "स्थिती" in body:
-        reply = (
-            "📋 *तुमच्या अहवालाची सद्यस्थिती (Report Status)*\n\n"
-            "• गाव: निमगाव जाळी (संगमनेर)\n"
-            "• तपासणी स्थिती: ✅ पॅरा-व्हेट गणेश काळे यांनी पडताळणी पूर्ण केली\n"
-            "• निदान नमुना: #SAM-2026-AHM-0081 (RDDL पुणे लॅबकडे रवाना)\n"
-            "• पुढील कारवाई: ५ किमी परिसरात रिंग लसीकरण सुरू करण्यात आले आहे."
-        )
-    else:
-        reply = (
-            "🙏 *नमस्कार शेतकरी बंधू! पशूसचेत (Gram Signal System) मध्ये आपले स्वागत आहे.*\n\n"
-            "कृपया खालीलपैकी पर्याय निवडा किंवा जनावराचा फोटो/व्हॉइस मेसेज पाठवा:\n"
-            "१️⃣ आजारी जनावराची लक्षणे सांगा\n"
-            "२️⃣ १९६२ फिरते पशुवैद्यकीय पथक बोलवा\n"
-            "३️⃣ लॅब नमुना रिपोर्ट तपासा\n"
-            "४️⃣ पशू आधार कार्ड व लसीकरण माहिती"
-        )
-        
-    return {
-        "status": "SENT",
-        "to": sender,
-        "replyMessage": reply,
-        "timestamp": datetime.now(timezone.utc).isoformat()
-    }
+# 7. WhatsApp & Telephony Multichannel Automation Routers
+from backend.app.api.v1.whatsapp import router as whatsapp_router
+from backend.app.api.v1.telephony import router as telephony_router
+
+app.include_router(whatsapp_router)
+app.include_router(telephony_router)
 
 # 8. ML Triage Engine Evaluation (Phase 3)
 @app.post("/api/v1/triage/evaluate", response_model=TriageOutput)

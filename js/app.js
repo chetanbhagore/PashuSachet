@@ -1694,10 +1694,19 @@ function simulateMissedCallCallback() {
   const statusEl = document.getElementById("ivrCallStatus");
   if (!statusEl) return;
 
-  statusEl.innerHTML = `<span style="color:#d97706;">⏳ शेतकरी क्रमांक +91 98220 18491 कडून 1800-889-1962 वर १ रिंग दिली गेली... कॉल कट झाला.</span>`;
+  statusEl.innerHTML = `<span style="color:#d97706;">[टोल-फ्री १८००-८८९-१९६२] शेतकरी क्रमांक +91 98220 18491 कडून १ रिंग... कॉल कट झाला.</span>`;
+
+  // Trigger backend telephony automation API
+  if (typeof fetch !== 'undefined') {
+    fetch('/api/v1/telephony/missed-call', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ caller_phone: '+919822018491', toll_free_number: '1800-889-1962' })
+    }).catch(() => {});
+  }
 
   setTimeout(() => {
-    statusEl.innerHTML = `<span style="color:#2563eb;">📞 पशूसचेत सर्व्हरकडून त्वरित कॉल-बॅक! कॉल कनेक्ट झाला... मराठी IVR ऑडिओ सुरू आहे.</span>`;
+    statusEl.innerHTML = `<span style="color:#2563eb;">[कॉल-बॅक जोडला] पशूसचेत ऑटोमेटेड कॉलिंग गेटवेकडून त्वरित कॉल-बॅक! २-Way मराठी IVR सुरू...</span>`;
     speakMarathiVoice("नमस्कार शेतकरी बंधू, पशूसचेत कॉल सहाय्यता केंद्रात आपले स्वागत आहे. तुमच्या जनावराची लक्षणे सांगा.");
   }, 1000);
 
@@ -3643,14 +3652,36 @@ function sendWhatsAppUserText() {
   appendWhatsAppBubble(text, 'outgoing');
   input.value = "";
 
-  setTimeout(() => {
-    let reply = `
-      🙏 <strong>पशूसचेत महाराष्ट्र शासन:</strong><br>
-      आपला संदेश नोंदवला आहे: "<em>${text}</em>".<br>
-      १९६२ फिरते पथक आपल्या गावाच्या संपर्कात आहे. आपत्कालीन मदतीसाठी थेट १९६२ वर डायल करा.
-    `;
-    appendWhatsAppBubble(reply, 'incoming');
-  }, 800);
+  if (typeof fetch !== 'undefined') {
+    fetch('/api/v1/whatsapp/webhook', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: '+919822018491', type: 'text', body: text })
+    })
+    .then(r => r.json())
+    .then(data => {
+      const reply = data && data.replyMessage ? data.replyMessage.replace(/\n/g, '<br>') :
+        '🙏 <strong>पशूसचेत महाराष्ट्र शासन:</strong><br>आपला संदेश नोंदवला आहे. १९६२ फिरते पथक संपर्कात आहे.';
+      appendWhatsAppBubble(reply, 'incoming');
+    })
+    .catch(() => {
+      let reply = `
+        🙏 <strong>पशूसचेत महाराष्ट्र शासन:</strong><br>
+        आपला संदेश नोंदवला आहे: "<em>${text}</em>".<br>
+        १९६२ फिरते पथक आपल्या गावाच्या संपर्कात आहे. आपत्कालीन मदतीसाठी थेट १९६२ वर डायल करा.
+      `;
+      appendWhatsAppBubble(reply, 'incoming');
+    });
+  } else {
+    setTimeout(() => {
+      let reply = `
+        🙏 <strong>पशूसचेत महाराष्ट्र शासन:</strong><br>
+        आपला संदेश नोंदवला आहे: "<em>${text}</em>".<br>
+        १९६२ फिरते पथक आपल्या गावाच्या संपर्कात आहे. आपत्कालीन मदतीसाठी थेट १९६२ वर डायल करा.
+      `;
+      appendWhatsAppBubble(reply, 'incoming');
+    }, 800);
+  }
 }
 
 function appendWhatsAppBubble(content, direction) {
@@ -3785,6 +3816,20 @@ function executeSmsBroadcast() {
   if (pBarCont) pBarCont.style.display = "block";
   if (btn) btn.disabled = true;
 
+  // Trigger backend OBD robo-call broadcast API
+  if (typeof fetch !== 'undefined') {
+    fetch('/api/v1/telephony/outbreak-broadcast', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        village_name: currentBroadcastVillage,
+        disease_name: "Foot and Mouth Disease (FMD)",
+        radius_km: 5.0,
+        target_livestock_owners: currentBroadcastCount
+      })
+    }).catch(() => {});
+  }
+
   let progress = 0;
   const interval = setInterval(() => {
     progress += 20;
@@ -3793,7 +3838,7 @@ function executeSmsBroadcast() {
     if (progress >= 100) {
       clearInterval(interval);
       setTimeout(() => {
-        showToast(`✓ ${currentBroadcastCount} SMS यशस्वीरित्या पाठवले! (CDAC Gateway)`);
+        showToast(`✓ ${currentBroadcastCount} SMS व स्वयंचलित व्हॉइस रोबो-कॉल यशस्वीरित्या प्रसारित!`);
         closeVillageSmsModal();
         if (btn) btn.disabled = false;
         if (pBar) pBar.style.width = "0%";
