@@ -1,91 +1,105 @@
 /**
- * PashuSachet (पशूसचेत) — Apple Design System Tokens
- * Grounded in Apple's WWDC Human Interface Guidelines & "Designing Fluid Interfaces"
- * Materials: Liquid Glass, Optical Typography, Critically Damped Springs, Squircle Geometry
+ * PashuSachet (पशूसचेत) — Apple Design System & Rural Village Notebook Tokens
+ * Strict guidelines:
+ * - Full viewport edge-to-edge layout
+ * - Warm "Village Animal-Care Notebook" palette
+ * - Paper: #F7F4EF / #FBF9F5
+ * - Ink: Deep field green #1C3A2E, Secondary #5C6B63
+ * - Primary Action: Turmeric #E4A72D
+ * - Urgency / Critical: Terracotta #B4533A / Deep Red #B91C1C
+ * - Success: Muted Sage #3F6F5A
+ * - Typography: SF Pro / Inter + Noto Sans Devanagari
+ * - Continuous squircle geometry, spring physics, zero-emoji Lucide monochrome lines
  */
 
 :root {
-  /* Apple Canvas & Surfaces */
-  --apple-canvas: #fbfbfd;              /* Pure Apple canvas background */
-  --apple-canvas-subtle: #f5f5f7;       /* Apple soft grouping canvas */
-  --apple-card: #ffffff;                /* Elevated card background */
-  --apple-card-hover: #ffffff;
-  
-  /* Apple Text Hierarchy & Optical Contrast */
-  --apple-text-primary: #1d1d1f;        /* Deep charcoal (highest contrast, 14:1) */
-  --apple-text-secondary: #6e6e73;      /* SF Text muted (5.4:1 contrast, passes AA) */
-  --apple-text-tertiary: #86868b;       /* Caption & metadata */
-  
-  /* Apple Refined Accent Palette */
-  --apple-green: #15803d;               /* Forest Green / Maharashtra Agriculture */
-  --apple-green-hover: #166534;
-  --apple-green-light: rgba(22, 163, 74, 0.09);
-  --apple-green-border: rgba(22, 163, 74, 0.25);
-  
-  --apple-blue: #0071e3;                /* Apple System Blue */
-  --apple-blue-hover: #005bb5;
-  --apple-blue-light: rgba(0, 113, 227, 0.08);
-  --apple-blue-border: rgba(0, 113, 227, 0.24);
+  /* Warm Village Animal-Care Notebook Canvas & Paper */
+  --bg-paper: #F7F4EF;
+  --bg-paper-light: #FBF9F5;
+  --bg-paper-muted: #EFECE5;
+  --bg-surface: #FFFFFF;
+  --bg-surface-elevated: #FFFFFF;
+  --bg-surface-subtle: #F6F3ED;
 
-  --apple-amber: #f59e0b;               /* Apple System Warning / Surge */
-  --apple-amber-hover: #d97706;
-  --apple-amber-light: rgba(245, 158, 11, 0.1);
-  --apple-amber-border: rgba(245, 158, 11, 0.28);
+  /* Subtle Borders */
+  --border-subtle: #E8E4DC;
+  --border-strong: #D6D0C2;
+  --border-focus: #1C3A2E;
 
-  --apple-red: #dc2626;                 /* Apple System Urgent / Biosecurity */
-  --apple-red-hover: #b91c1c;
-  --apple-red-light: rgba(220, 38, 38, 0.09);
-  --apple-red-border: rgba(220, 38, 38, 0.26);
+  /* Ink & Typography */
+  --ink-primary: #1C3A2E;      /* Deep Field Green (Highest Contrast, 13.8:1) */
+  --ink-secondary: #5C6B63;    /* Muted Sage-Green Slate (Readable in harsh sunlight) */
+  --ink-tertiary: #87948C;     /* Captions & Metadata */
+  --ink-inverted: #FFFFFF;
+
+  /* Primary Action & Accents */
+  --accent-turmeric: #E4A72D;          /* Warm Maharashtra Turmeric */
+  --accent-turmeric-hover: #D29522;
+  --accent-turmeric-light: rgba(228, 167, 45, 0.14);
+  --accent-turmeric-border: rgba(228, 167, 45, 0.35);
+
+  /* Urgency & Critical Signals */
+  --urgency-critical: #B4533A;         /* Terracotta Critical Alert */
+  --urgency-critical-hover: #9E452E;
+  --urgency-critical-light: rgba(180, 83, 58, 0.12);
+  --urgency-critical-border: rgba(180, 83, 58, 0.3);
+
+  --urgency-deep-red: #B91C1C;
+  --urgency-deep-red-light: rgba(185, 28, 28, 0.12);
+
+  /* Status Colors */
+  --status-success: #3F6F5A;           /* Muted Sage */
+  --status-success-hover: #335948;
+  --status-success-light: rgba(63, 111, 90, 0.12);
+  --status-success-border: rgba(63, 111, 90, 0.28);
+
+  --status-warning: #D97706;
+  --status-warning-light: rgba(217, 119, 6, 0.12);
+  --status-warning-border: rgba(217, 119, 6, 0.28);
+
+  --status-info: #2B6CB0;
+  --status-info-light: rgba(43, 108, 176, 0.1);
+  --status-info-border: rgba(43, 108, 176, 0.24);
 
   /* Translucent Liquid Glass Materials */
-  --glass-nav: rgba(255, 255, 255, 0.82);
-  --glass-nav-border: rgba(0, 0, 0, 0.08);
-  --glass-highlight: rgba(255, 255, 255, 0.7);
-  --glass-dark: rgba(15, 23, 42, 0.82);
-  --glass-dark-border: rgba(255, 255, 255, 0.12);
-  --glass-blur: blur(20px) saturate(180%);
-  --glass-blur-lg: blur(32px) saturate(200%);
+  --glass-nav: rgba(247, 244, 239, 0.88);
+  --glass-nav-border: rgba(28, 58, 46, 0.08);
+  --glass-modal: rgba(255, 255, 255, 0.94);
+  --glass-blur: blur(28px) saturate(180%);
+  --glass-blur-lg: blur(36px) saturate(200%);
 
-  /* Apple System Typography Stack */
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, "Noto Sans Devanagari", sans-serif;
-  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro", "Segoe UI", sans-serif;
-  --font-mono: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  /* Apple System Typography */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Noto Sans Devanagari", "Segoe UI", Roboto, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Noto Sans Devanagari", "Segoe UI", sans-serif;
+  --font-mono: "SF Mono", Menlo, Consolas, Monaco, "Courier New", monospace;
 
-  /* Continuous Squircle Geometry */
+  /* Continuous Squircle Radii */
   --radius-xs: 8px;
   --radius-sm: 12px;
-  --radius-md: 18px;
-  --radius-lg: 22px;
-  --radius-xl: 28px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 26px;
   --radius-pill: 9999px;
 
-  /* Ambient Apple Elevation & Diffused Shadows */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-  --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
-  --shadow-hover: 0 16px 36px -4px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.03);
-  --shadow-modal: 0 24px 64px -8px rgba(0, 0, 0, 0.22), 0 8px 24px -4px rgba(0, 0, 0, 0.08);
-  --shadow-inner-glow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  /* Ambient Soft Shadows (Field Green tinted) */
+  --shadow-xs: 0 1px 2px rgba(28, 58, 46, 0.04);
+  --shadow-sm: 0 2px 6px rgba(28, 58, 46, 0.05);
+  --shadow-card: 0 6px 20px -2px rgba(28, 58, 46, 0.07), 0 1px 3px rgba(28, 58, 46, 0.04);
+  --shadow-sheet: 0 -8px 32px rgba(28, 58, 46, 0.12);
+  --shadow-modal: 0 24px 48px -12px rgba(28, 58, 46, 0.18), 0 8px 16px rgba(28, 58, 46, 0.08);
 
-  /* Physics Springs & Tactile Response */
-  --spring-default: cubic-bezier(0.25, 1, 0.5, 1);     /* Damping 1.0 Critically Damped */
-  --spring-snappy: cubic-bezier(0.16, 1, 0.3, 1);      /* Fast Interactive Transitions */
-  --spring-press: cubic-bezier(0.2, 0, 0, 1);          /* Instant Touch-Down (Kill Latency) */
-  --transition: all 0.25s var(--spring-default);
+  /* Apple Critically Damped Springs */
+  --ease-spring: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-spring-snappy: cubic-bezier(0.2, 0.9, 0.3, 1);
+  --ease-spring-bouncy: cubic-bezier(0.34, 1.56, 0.64, 1);
+  
+  --duration-fast: 160ms;
+  --duration-normal: 260ms;
+  --duration-slow: 400ms;
 
-  /* Backwards Compatibility Mappings */
-  --primary: var(--apple-green);
-  --primary-hover: var(--apple-green-hover);
-  --primary-light: var(--apple-green-light);
-  --primary-border: var(--apple-green-border);
-  --accent: var(--apple-amber);
-  --accent-light: var(--apple-amber-light);
-  --bg-main: var(--apple-canvas);
-  --bg-card: var(--apple-card);
-  --text-main: var(--apple-text-primary);
-  --text-muted: var(--apple-text-secondary);
-  --text-light: var(--apple-text-tertiary);
-  --border: rgba(0, 0, 0, 0.08);
-  --border-focus: var(--apple-green);
-  --radius: var(--radius-md);
+  /* Touch Target Standard */
+  --touch-target-min: 48px;
+  --header-height: 60px;
+  --bottom-nav-height: 64px;
+  --sidebar-width: 260px;
 }
