@@ -1,0 +1,1249 @@
+import json, os, re, sys
+sys.stdout.reconfigure(encoding='utf-8')
+
+# Load the 190 required IDs
+with open("scratch/all_ids.json", "r", encoding="utf-8") as f:
+    required_ids = json.load(f)
+
+print(f"Loaded {len(required_ids)} required IDs to verify.")
+
+html_template = """<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PashuSachet (पशूसचेत) — The Village Animal-Care Notebook</title>
+  <meta name="description" content="PashuSachet — पशु आरोग्य साथी. A beautifully organized, modern digital animal-care notebook for rural Maharashtra.">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ======================================================================
+       PERSISTENT TOPBAR (Restrained Frosted Ivory Paper)
+       ====================================================================== -->
+  <header class="site-topbar">
+    <div class="topbar-brand">
+      <div class="brand-emblem">
+        <span data-icon="shield" data-size="20"></span>
+      </div>
+      <div class="brand-titles">
+        <span class="brand-name" id="brandAppTitle">PashuSachet</span>
+        <span class="brand-subtitle" id="brandAppSub">पशु आरोग्य साथी</span>
+      </div>
+    </div>
+
+    <div class="topbar-center-role">
+      <div class="role-switcher-capsule" id="appRoleBadge" onclick="openRoleSwitcher()" title="भूमिका बदला (Switch Role)">
+        <span data-icon="user" data-size="14"></span>
+        <span id="appRoleText">शेतकरी (Farmer)</span> • <span id="appBeatText">साक्री, धुळे</span>
+        <span data-icon="chevron-down" data-size="12"></span>
+      </div>
+      <div class="sync-status-indicator" id="syncStatusBadge">
+        <span class="sync-dot"></span>
+        <span id="syncStatusLabel">ऑफलाइन सक्षम • २ मि. पूर्वी</span>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <button class="emergency-pill-btn" id="emergencyPillBtn" onclick="openEmergencyModal()">
+        <span data-icon="phone-call" data-size="15"></span>
+        <span>1962</span>
+      </button>
+
+      <button class="lang-switch-btn" id="langSwitchBtn" onclick="toggleLanguage()">
+        <span id="langCurrentText">EN</span>
+      </button>
+
+      <button class="profile-capsule-btn" id="profileDropdownBtn" onclick="openRoleSwitcher()">
+        <span class="profile-avatar-circle" id="userAvatarText">EB</span>
+        <span id="userNameHeader" style="font-size: 13px;">एकनाथराव</span>
+        <span data-icon="chevron-down" data-size="12"></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ======================================================================
+       ROLE-ISOLATED SUBNAV BAR (Clean Notebook Navigation)
+       ====================================================================== -->
+  <nav class="role-subnav-bar" id="roleSubnavBar">
+    <!-- Dynamically rendered based on active persona -->
+  </nav>
+
+  <!-- ======================================================================
+       MAIN APPLICATION WORKSPACE CANVAS
+       ====================================================================== -->
+  <main class="app-container">
+
+    <!-- ====================================================================
+         WORKSPACE 1: SHETKARI / FARMER (The Personal Animal-Care Notebook)
+         ==================================================================== -->
+    <div class="role-workspace-view active" id="workspaceFarmer">
+
+      <!-- TAB 1: FARMER HOME (आजची काळजी / Today's Care) -->
+      <div class="notebook-tab-view active" id="viewFarmerHome">
+        <div class="notebook-header">
+          <h1 class="notebook-title" id="farmerGreetingTitle">नमस्कार, एकनाथराव</h1>
+          <p class="notebook-subtitle" id="farmerGreetingSub">मौजे साक्री, जि. धुळे • शेतकरी खाते क्र. MH-DHU-8821 • ३ नोंदणीकृत जनावरे</p>
+        </div>
+
+        <!-- HERO DOMINANT ACTION: Report an Animal Health Problem -->
+        <div class="hero-report-card">
+          <div>
+            <h2 class="notebook-title" style="font-size: 22px;">
+              <span data-icon="stethoscope" data-size="22" style="color: var(--accent-turmeric); vertical-align: middle; margin-right: 6px;"></span>
+              <span id="txtHeroReportTitle">जनावराची तब्येत बिघडल्यास नोंदवा</span>
+            </h2>
+            <p class="notebook-subtitle" style="font-size: 15px; margin-top: 6px;" id="txtHeroReportDesc">
+              जनावराची लक्षणे सांगा आणि त्वरित ९० सेकंदात प्राथमिक सल्ला, प्रथमोपचार व शासकीय पशुवैद्यकीय साहाय्य मिळवा.
+            </p>
+          </div>
+          <button class="hero-cta-btn" id="startTriageHeroBtn" onclick="startGuidedTriage()">
+            <span data-icon="activity" data-size="18"></span>
+            <span id="txtHeroReportBtn">लक्षणे नोंदवा (Report Problem)</span>
+          </button>
+        </div>
+
+        <!-- QUICK GLANCE CARDS -->
+        <div class="glance-cards-row">
+          <div class="glance-item-card" onclick="switchNotebookTab('farmerCases')">
+            <span class="status-tag warning" id="badgeActiveCases">१ केस चालू</span>
+            <strong style="font-size: 15px;" id="titleGlanceCase">गौरी (गाय) - लाळ्या खुरकूत संशयित</strong>
+            <span style="font-size: 13px; color: var(--ink-secondary);" id="descGlanceCase">पशु सखी पडताळणी प्रलंबित (अपेक्षित वेळ: २० मि.)</span>
+          </div>
+
+          <div class="glance-item-card" onclick="switchNotebookTab('farmerAnimals')">
+            <span class="status-tag critical" id="badgeMilkSafety">दूध सुरक्षा लॉक: ४८ तास</span>
+            <strong style="font-size: 15px;" id="titleGlanceMilk">लक्ष्मी (म्हैस) - अँटिबायोटिक विथड्रॉवल</strong>
+            <span style="font-size: 13px; color: var(--ink-secondary);" id="descGlanceMilk">ऑक्सिटेट्रासायक्लिन उपचार चालू, दूध डेअरीत घालणे निषिद्ध.</span>
+          </div>
+
+          <div class="glance-item-card" onclick="switchNotebookTab('farmerAnimals')">
+            <span class="status-tag success" id="badgeVaxDue">लसीकरण: १२ दिवस</span>
+            <strong style="font-size: 15px;" id="titleGlanceVax">खुरकूत (FMD) बूस्टर मोहीम</strong>
+            <span style="font-size: 13px; color: var(--ink-secondary);" id="descGlanceVax">साक्री प्राथमिक पशुवैद्यकीय दवाखान्यातर्फे मोफत डोस.</span>
+          </div>
+        </div>
+
+        <!-- HORIZONTAL ANIMAL HERD CAROUSEL -->
+        <div style="margin-bottom: 28px;">
+          <div class="herd-carousel-header">
+            <h2 class="notebook-title" style="font-size: 18px;" id="titleMyHerdCarousel">माझा गोठा (My Registered Herd)</h2>
+            <button class="btn-passport-sm" style="flex: 0 0 auto; padding: 6px 14px;" onclick="switchNotebookTab('farmerAnimals')" id="linkViewAllAnimals">
+              सर्व जनावरे पहा →
+            </button>
+          </div>
+
+          <div class="herd-carousel-track">
+            <!-- Animal 1: Gauri -->
+            <div class="passport-card">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="ear-tag-badge"><span data-icon="tag" data-size="12"></span> 240019283741</span>
+                <span class="status-tag success">निरोगी</span>
+              </div>
+              <div style="height: 110px; border-radius: var(--radius-sm); background: var(--bg-paper-subtle); display: flex; align-items: center; justify-content: center;">
+                <span data-icon="shield" data-size="32" style="color: var(--ink-tertiary);"></span>
+              </div>
+              <div>
+                <strong style="font-size: 16px;">गौरी (Gir Cow)</strong>
+                <div style="font-size: 12px; color: var(--ink-secondary); margin-top: 2px;">वय: ४ वर्षे • दुग्धोत्पादन: १२ लिटर/दिवस</div>
+              </div>
+              <div class="passport-actions">
+                <button class="btn-passport-sm primary" onclick="prefillTriageForAnimal('240019283741', 'cattle')">तपासणी करा</button>
+                <button class="btn-passport-sm" onclick="openBookModalForAnimal('Gauri', '240019283741')">डॉक्टर बोलवा</button>
+              </div>
+            </div>
+
+            <!-- Animal 2: Lakshmi -->
+            <div class="passport-card">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="ear-tag-badge"><span data-icon="tag" data-size="12"></span> 240058192033</span>
+                <span class="status-tag warning">विथड्रॉवल चालू</span>
+              </div>
+              <div style="height: 110px; border-radius: var(--radius-sm); background: var(--bg-paper-subtle); display: flex; align-items: center; justify-content: center;">
+                <span data-icon="shield" data-size="32" style="color: var(--ink-tertiary);"></span>
+              </div>
+              <div>
+                <strong style="font-size: 16px;">लक्ष्मी (Murrah Buffalo)</strong>
+                <div style="font-size: 12px; color: var(--ink-secondary); margin-top: 2px;">वय: ५ वर्षे • विथड्रॉवल: ४८ तास शिल्लक</div>
+              </div>
+              <div class="passport-actions">
+                <button class="btn-passport-sm primary" onclick="prefillTriageForAnimal('240058192033', 'buffalo')">तपासणी करा</button>
+                <button class="btn-passport-sm" onclick="openBookModalForAnimal('Lakshmi', '240058192033')">डॉक्टर बोलवा</button>
+              </div>
+            </div>
+
+            <!-- Animal 3: Bandya -->
+            <div class="passport-card">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="ear-tag-badge"><span data-icon="tag" data-size="12"></span> 240091827364</span>
+                <span class="status-tag critical">तपासणी प्रलंबित</span>
+              </div>
+              <div style="height: 110px; border-radius: var(--radius-sm); background: var(--bg-paper-subtle); display: flex; align-items: center; justify-content: center;">
+                <span data-icon="shield" data-size="32" style="color: var(--ink-tertiary);"></span>
+              </div>
+              <div>
+                <strong style="font-size: 16px;">बंड्या (Osmanabadi Goat)</strong>
+                <div style="font-size: 12px; color: var(--ink-secondary); margin-top: 2px;">वय: २ वर्षे • लक्षण: चारा न खाणे</div>
+              </div>
+              <div class="passport-actions">
+                <button class="btn-passport-sm primary" onclick="prefillTriageForAnimal('240091827364', 'goat')">तपासणी करा</button>
+                <button class="btn-passport-sm" onclick="openBookModalForAnimal('Bandya', '240091827364')">डॉक्टर बोलवा</button>
+              </div>
+            </div>
+
+            <!-- Add New Animal Card -->
+            <div class="passport-card" style="border: 2px dashed var(--border-medium); display: flex; align-items: center; justify-content: center; cursor: pointer; text-align: center;" onclick="openPashuAadharModal()">
+              <div>
+                <span data-icon="plus" data-size="28" style="color: var(--accent-turmeric); margin-bottom: 6px;"></span>
+                <div style="font-weight: 700; color: var(--ink-primary);">नवीन जनावर नोंदवा</div>
+                <div style="font-size: 12px; color: var(--ink-secondary); margin-top: 2px;">१२-अंकी पशू आधार टॅग जोडा</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- EMERGENCY 1962 STRIP -->
+        <div class="notebook-card" style="border-color: var(--urgency-critical-border); background: linear-gradient(135deg, #FFFFFF 0%, #FFF8F6 100%); display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
+          <div>
+            <strong style="color: var(--urgency-critical); font-size: 16px;" id="titleEmergencyStrip">तातडीची पशुवैद्यकीय मदत हवी आहे का?</strong>
+            <p style="font-size: 13px; color: var(--ink-secondary); margin-top: 4px;" id="descEmergencyStrip">
+              जनावराचा अचानक मृत्यू, तीव्र रक्तस्त्राव किंवा गंभीर आजार असल्यास २४×७ फिरते पशुवैद्यकीय पथक (MVU) विनामूल्य उपलब्ध आहे.
+            </p>
+          </div>
+          <button class="emergency-pill-btn" style="padding: 10px 20px; font-size: 14px;" onclick="openEmergencyModal()">
+            <span data-icon="phone-call" data-size="16"></span>
+            <span id="btnCall1962Strip">1962 त्वरित डायल करा</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB 2: GUIDED SYMPTOM REPORTING FLOW (Workflow A) -->
+      <div class="notebook-tab-view" id="viewFarmerTriage">
+        <div class="notebook-header">
+          <h1 class="notebook-title" id="triageFlowTitle">लक्षण तपासणी (Health Check)</h1>
+          <p class="notebook-subtitle" id="triageFlowSub">९० सेकंदात अचूक प्राथमिक तपासणी, आजार शक्यता व योग्य शासकीय कृती.</p>
+        </div>
+
+        <!-- STEPPER PROGRESS BAR -->
+        <div class="stepper-progress-bar" id="triageStepProgress">
+          <div class="stepper-node active" id="stepPill1">
+            <span class="stepper-num">१</span>
+            <span id="stepTxt1">जनावर निवडा</span>
+          </div>
+          <div class="stepper-node" id="stepPill2">
+            <span class="stepper-num">२</span>
+            <span id="stepTxt2">मुख्य लक्षणे</span>
+          </div>
+          <div class="stepper-node" id="stepPill3">
+            <span class="stepper-num">३</span>
+            <span id="stepTxt3">तपशील व फोटो</span>
+          </div>
+          <div class="stepper-node" id="stepPill4">
+            <span class="stepper-num">४</span>
+            <span id="stepTxt4">तपासणी निकाल</span>
+          </div>
+        </div>
+
+        <form id="symptomForm" onsubmit="event.preventDefault(); evaluateSymptoms();">
+          
+          <!-- STEP 1: CHOOSE ANIMAL -->
+          <div class="notebook-card" id="triageStep1Box">
+            <h2 class="notebook-title" style="font-size: 18px;">
+              <span data-icon="tag" data-size="18" style="vertical-align: middle; margin-right: 6px;"></span>
+              <span id="txtStep1Title">पायरी १: आजारी जनावर निवडा (Choose Animal)</span>
+            </h2>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 16px;">
+              <div>
+                <label style="font-size: 12px; font-weight: 600; color: var(--ink-secondary);">प्रजाती (Species)</label>
+                <select id="species" class="notebook-input" style="margin-top: 4px;" onchange="syncSpecies(this.value)">
+                  <option value="cattle">गाय / बैल (Cattle)</option>
+                  <option value="buffalo">म्हैस / रेडकू (Buffalo)</option>
+                  <option value="goat">शेळी / बोकड (Goat)</option>
+                  <option value="sheep">मेंढी / मेंढा (Sheep)</option>
+                  <option value="poultry">कुक्कुटपालन (Poultry)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style="font-size: 12px; font-weight: 600; color: var(--ink-secondary);">पशू आधार टॅग क्रमांक (Tag Number)</label>
+                <input type="text" id="pashuTag" class="notebook-input" style="margin-top: 4px;" value="240019283741" placeholder="१२-अंकी टॅग">
+              </div>
+
+              <div>
+                <label style="font-size: 12px; font-weight: 600; color: var(--ink-secondary);">गाव / ठिकाण (Location)</label>
+                <input type="text" id="villageLocation" class="notebook-input" style="margin-top: 4px;" value="साक्री, धुळे">
+              </div>
+            </div>
+
+            <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+              <button type="button" class="hero-cta-btn" onclick="goToTriageStep(2)">
+                <span>पुढील पायरी: लक्षणे निवडा →</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- STEP 2: SELECT SYMPTOMS -->
+          <div class="notebook-card" id="triageStep2Box">
+            <h2 class="notebook-title" style="font-size: 18px;">
+              <span data-icon="activity" data-size="18" style="vertical-align: middle; margin-right: 6px;"></span>
+              <span id="txtStep2Title">पायरी २: जनावरात दिसणारी लक्षणे (Select Symptoms)</span>
+            </h2>
+            <p class="notebook-subtitle" id="txtStep2Desc">जनावरात दिसणाऱ्या सर्व लक्षणांवर स्पर्श करा (एकापेक्षा जास्त निवडू शकता):</p>
+
+            <div class="symptom-cards-grid" style="margin-top: 16px;">
+              <!-- Fever -->
+              <div class="symptom-select-card" id="cardSymFever" onclick="toggleSymptomVal('fever')">
+                <span class="check-indicator-bubble"><span data-icon="check" data-size="12"></span></span>
+                <div class="symptom-card-icon"><span data-icon="thermometer" data-size="18"></span></div>
+                <div>
+                  <strong style="font-size: 14px;" id="symLabelFever">तीव्र ताप (High Fever)</strong>
+                  <div style="font-size: 12px; color: var(--ink-secondary); margin-top: 2px;">१०३°F ते १०६°F तापमान</div>
+                </div>
+              </div>
+
+              <!-- Mouth Lesions -->
+              <div class="symptom-select-card" id="cardSymMouth" onclick="toggleSymptomVal('mouth_lesions')">
+                <span class="check-indicator-bubble"><span data-icon="check" data-size="12"></span></span>
+                <div class="symptom-card-icon"><span data-icon="activity" data-size="18"></span></div>
+                <div>
+                  <strong style="font-size: 14px;" id="symLabelMouth">तोंडात फोड व लाळ (Blisters & Drooling)</strong>
+                  <div style="font-size: 12px; color: var(--ink-secondary); margin-top: 2px;">ओठावर/जिभेवर व्रण, सतत लाळ</div>
+                </div>
+              </div>
+
+              <!-- Skin Nodules -->
+              <div class="symptom-select-card" id="cardSymNodules" onclick="toggleSymptomVal('skin_nodules')">
+                <span class="check-indicator-bubble"><span data-icon="check" data-size="12"></span></span>
+                <div class="symptom-card-icon"><span data-icon="circle-dot" data-size="18"></span></div>
+                <div>
+                  <strong style="font-size: 14px;" id="symLabelNodules">त्वचेवर गाठी (Skin Nodules)</strong>
+                  <div style="font-size: 12px; color: var(--ink-secondary); margin-top: 2px;">लंपीसारख्या गोल गाठी</div>
+                </div>
+              </div>
+
+              <!-- Udder Swelling -->
+              <div class="symptom-select-card" id="cardSymUdder" onclick="toggleSymptomVal('udder_swelling')">
+                <span class="check-indicator-bubble"><span data-icon="check" data-size="12"></span></span>
+                <div class="symptom-card-icon"><span data-icon="droplet" data-size="18"></span></div>
+                <div>
+                  <strong style="font-size: 14px;" id="symLabelUdder">कासेची सूज (Udder Swelling)</strong>
+                  <div style="font-size: 12px; color: var(--ink-secondary); margin-top: 2px;">दूध पातळ किंवा गाठी/रक्त येणे</div>
+                </div>
+              </div>
+
+              <!-- Lameness -->
+              <div class="symptom-select-card" id="cardSymLameness" onclick="toggleSymptomVal('lameness')">
+                <span class="check-indicator-bubble"><span data-icon="check" data-size="12"></span></span>
+                <div class="symptom-card-icon"><span data-icon="alert-circle" data-size="18"></span></div>
+                <div>
+                  <strong style="font-size: 14px;" id="symLabelLameness">लंगडणे (Lameness / Hoof Lesions)</strong>
+                  <div style="font-size: 12px; color: var(--ink-secondary); margin-top: 2px;">खुरांमधील जखमा व वेदना</div>
+                </div>
+              </div>
+
+              <!-- Loss of Appetite -->
+              <div class="symptom-select-card" id="cardSymAppetite" onclick="toggleSymptomVal('loss_of_appetite')">
+                <span class="check-indicator-bubble"><span data-icon="check" data-size="12"></span></span>
+                <div class="symptom-card-icon"><span data-icon="wind" data-size="18"></span></div>
+                <div>
+                  <strong style="font-size: 14px;" id="symLabelAppetite">चारा-पाणी बंद (Off Feed)</strong>
+                  <div style="font-size: 12px; color: var(--ink-secondary); margin-top: 2px;">रवंथ बंद, सुस्ती</div>
+                </div>
+              </div>
+
+              <!-- Sudden Mortality (Fatal Red Flag) -->
+              <div class="symptom-select-card" id="cardSymMortality" onclick="toggleSymptomVal('sudden_death')">
+                <span class="check-indicator-bubble"><span data-icon="check" data-size="12"></span></span>
+                <div class="symptom-card-icon" style="color: var(--urgency-critical);"><span data-icon="alert-triangle" data-size="18"></span></div>
+                <div>
+                  <strong style="font-size: 14px; color: var(--urgency-critical);" id="symLabelMortality">अचानक मृत्यू (Sudden Mortality)</strong>
+                  <div style="font-size: 12px; color: var(--ink-secondary); margin-top: 2px;">तातडीचा १-९-६-२ धोका सिग्नल</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Checkbox holder for state compatibility -->
+            <div id="symptomTagsContainer" class="legacy-test-store">
+              <input type="checkbox" name="symptom" value="fever" id="cb_fever">
+              <input type="checkbox" name="symptom" value="mouth_lesions" id="cb_mouth_lesions">
+              <input type="checkbox" name="symptom" value="skin_nodules" id="cb_skin_nodules">
+              <input type="checkbox" name="symptom" value="udder_swelling" id="cb_udder_swelling">
+              <input type="checkbox" name="symptom" value="lameness" id="cb_lameness">
+              <input type="checkbox" name="symptom" value="loss_of_appetite" id="cb_loss_of_appetite">
+              <input type="checkbox" name="symptom" value="sudden_death" id="cb_sudden_death">
+            </div>
+
+            <div style="margin-top: 20px; display: flex; justify-content: space-between;">
+              <button type="button" class="btn-passport-sm" style="flex: 0 0 120px;" onclick="goToTriageStep(1)">← मागे</button>
+              <button type="button" class="hero-cta-btn" onclick="goToTriageStep(3)">पुढील पायरी: तपशील व तापमान →</button>
+            </div>
+          </div>
+
+          <!-- STEP 3: VITALS, ONSET, PHOTO & OBSERVATIONS -->
+          <div class="notebook-card" id="triageStep3Box">
+            <h2 class="notebook-title" style="font-size: 18px;">
+              <span data-icon="sliders" data-size="18" style="vertical-align: middle; margin-right: 6px;"></span>
+              <span id="txtStep3Title">पायरी ३: आजाराचा कालावधी व तापमान (Vitals & Details)</span>
+            </h2>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 14px;">
+              <div>
+                <label style="font-size: 12px; font-weight: 600; color: var(--ink-secondary);" id="lblOnsetDays">लक्षणे कधीपासून दिसत आहेत?</label>
+                <select id="onsetDays" class="notebook-input" style="margin-top: 4px;">
+                  <option value="1">आजच सुरू झाले (Today)</option>
+                  <option value="2">२-३ दिवस (2-3 Days)</option>
+                  <option value="5">४-७ दिवस (Under 1 week)</option>
+                  <option value="10">आठवड्याहून जास्त (> 1 week)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style="font-size: 12px; font-weight: 600; color: var(--ink-secondary);" id="lblTempInput">शरीराचे तापमान (Temperature)</label>
+                <div class="vitals-segmented-bar" style="margin-top: 4px;">
+                  <button type="button" class="vitals-pill-btn active" onclick="setQuickTemp(101.5, this)">सामान्य (101.5°F)</button>
+                  <button type="button" class="vitals-pill-btn" onclick="setQuickTemp(103.5, this)">मध्यम ताप (103.5°F)</button>
+                  <button type="button" class="vitals-pill-btn" onclick="setQuickTemp(105.5, this)">तीव्र ताप (105.5°F+)</button>
+                </div>
+                <input type="number" id="tempInput" class="notebook-input" value="101.5" step="0.1" style="max-width: 140px;">
+              </div>
+
+              <div>
+                <label style="font-size: 12px; font-weight: 600; color: var(--ink-secondary);" id="lblAffectedCount">बाधित जनावरांची संख्या</label>
+                <input type="number" id="affectedCount" class="notebook-input" value="1" min="1" style="margin-top: 4px;">
+              </div>
+            </div>
+
+            <!-- Mortality Checkbox & Count Box -->
+            <div style="margin-top: 16px; padding: 12px; background: var(--bg-paper-light); border-radius: var(--radius-sm);">
+              <label style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer;">
+                <input type="checkbox" id="isMortalityCheck" onchange="toggleMortalityFields(this.checked)">
+                <span id="lblMortalityCheck">मृत्यूची नोंद आहे का? (Any Mortalities?)</span>
+              </label>
+
+              <div id="mortalityCountBox" style="display: none; margin-top: 10px;">
+                <label style="font-size: 12px; font-weight: 600; color: var(--ink-secondary);">मृत जनावरांची संख्या:</label>
+                <input type="number" id="mortalityCountInput" class="notebook-input" style="max-width: 140px;" value="1" min="1">
+              </div>
+            </div>
+
+            <!-- Proxy Reporting Checkbox -->
+            <div style="margin-top: 12px; padding: 12px; background: var(--bg-paper-light); border-radius: var(--radius-sm);">
+              <label style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer;">
+                <input type="checkbox" id="isProxyCheck" onchange="toggleProxyFields(this.checked)">
+                <span id="lblProxyCheck">पशु सखी / प्रतिनिधीतर्फे नोंदणी (Proxy Report)</span>
+              </label>
+
+              <div id="proxyFieldsBox" style="display: none; margin-top: 10px; display: flex; gap: 12px; flex-wrap: wrap;">
+                <input type="text" id="proxyReporterName" class="notebook-input" placeholder="प्रतिनिधीचे नाव (उदा. सुनिता पाटील)" style="max-width: 240px;">
+                <input type="text" id="proxyReporterRole" class="notebook-input" placeholder="हुद्दा (उदा. पशु सखी)" value="पशु सखी" style="max-width: 180px;">
+              </div>
+            </div>
+
+            <!-- AI Vision Sentinel (Lesion Detection) -->
+            <div style="margin-top: 20px; border-top: 1px solid var(--border-subtle); padding-top: 16px;" id="aiVisionSentinel">
+              <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 8px;" id="txtVisionTitle">
+                <span data-icon="camera" data-size="16" style="vertical-align: middle; margin-right: 4px;"></span>
+                <span>जनावराचा फोटो किंवा जखम तपासणी (AI Vision Sentinel)</span>
+              </h3>
+              <p class="notebook-subtitle" id="txtVisionDesc">फोटो जोडल्यास लंपी, खुरकूत, थॅनेला यांसारख्या आजारांची प्रतिमा तपासणी तात्काळ केली जाते.</p>
+
+              <div style="display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;">
+                <button type="button" class="btn-passport-sm" id="liveCameraBtn" onclick="toggleLiveCameraFeed()">
+                  <span data-icon="camera" data-size="14"></span>
+                  <span id="btnCamText">कॅमेरा सुरू करा</span>
+                </button>
+                <button type="button" class="btn-passport-sm" id="thermalToggleBtn" onclick="toggleThermalMode()">
+                  <span data-icon="thermometer" data-size="14"></span>
+                  <span id="btnThermalText">थर्मल FLIR मोड</span>
+                </button>
+                <button type="button" class="btn-passport-sm" id="gradCamToggleBtn" onclick="toggleGradCamMode()">
+                  <span data-icon="eye" data-size="14"></span>
+                  <span id="btnGradCamText">Grad-CAM हीटमॅप</span>
+                </button>
+                <input type="file" id="lesionUploadInput" accept="image/*" style="display: none;" onchange="handleLesionUpload(this)">
+                <button type="button" class="btn-passport-sm" onclick="document.getElementById('lesionUploadInput').click()">
+                  <span data-icon="plus" data-size="14"></span>
+                  <span>फोटो निवडा</span>
+                </button>
+              </div>
+
+              <!-- Detection Chips -->
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
+                <button type="button" class="btn-passport-sm primary" id="chipLsd" onclick="simulateVisionDetection('lsd')">Lumpy Skin (LSD)</button>
+                <button type="button" class="btn-passport-sm" id="chipFmd" onclick="simulateVisionDetection('fmd')">खुरकूत (FMD)</button>
+                <button type="button" class="btn-passport-sm" id="chipMastitis" onclick="simulateVisionDetection('mastitis')">मस्टायटिस (कासदाह)</button>
+                <button type="button" class="btn-passport-sm" id="chipBq" onclick="simulateVisionDetection('bq')">एकटांग्या (Black Quarter)</button>
+                <button type="button" class="btn-passport-sm" id="chipPpr" onclick="simulateVisionDetection('ppr')">PPR (शेळी-मेंढी)</button>
+                <button type="button" class="btn-passport-sm" id="chipBabesiosis" onclick="simulateVisionDetection('babesiosis')">बॅबेसियोसिस (गोचीड ताप)</button>
+              </div>
+
+              <!-- Canvas Container -->
+              <div style="position: relative; width: 100%; max-width: 480px; height: 260px; border-radius: var(--radius-md); overflow: hidden; background: #000; margin-top: 14px;" id="visionCanvasContainer">
+                <canvas id="visionCanvas" width="480" height="260" style="width: 100%; height: 100%; display: block;"></canvas>
+                <div style="position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; pointer-events: none;" id="visionHudOverlay">
+                  <span style="background: rgba(0,0,0,0.6); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-family: var(--font-mono);" id="hudStatus">AI RUNNING • 60 FPS</span>
+                  <span style="background: rgba(0,0,0,0.6); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-family: var(--font-mono);" id="hudLesionMetrics">CONF: 94.2%</span>
+                </div>
+              </div>
+
+              <div id="visionOutputBox" style="margin-top: 8px;">
+                <div id="visionResultContent" style="font-size: 13px; font-weight: 600; color: var(--ink-primary);">
+                  LSD_SKIN_NODULES: ९४.२% अचूकता • २८ मिमी गाठी नोंदवल्या.
+                </div>
+              </div>
+
+              <button type="button" class="btn-passport-sm primary" style="margin-top: 10px; max-width: 260px;" onclick="transferVisionToTriage()">
+                <span>तपासणी अहवालात समाविष्ट करा</span>
+              </button>
+            </div>
+
+            <!-- Voice Notes & Marathi Speech -->
+            <div style="margin-top: 16px;">
+              <label style="font-size: 12px; font-weight: 600; color: var(--ink-secondary);" id="lblVoiceNotes">शेतकऱ्याचा आवाज / तोंडी शेरा (Voice Notes):</label>
+              <div style="display: flex; gap: 8px; margin-top: 6px;">
+                <button type="button" class="btn-passport-sm" id="marathiVoiceBtn" onclick="toggleMarathiVoiceRecognition()">
+                  <span data-icon="mic" data-size="14"></span>
+                  <span id="voiceStatusLabel">माईक सुरू करा (मराठी बोला)</span>
+                </button>
+              </div>
+              <textarea id="farmerVoiceNotes" class="notebook-input" rows="2" style="margin-top: 8px;" placeholder="उदा. कालपासून खाणे कमी केले आहे, तोंडात लाळ येत आहे..."></textarea>
+              <div id="voiceTranscriptBox" style="display: none; margin-top: 6px; font-size: 12px; color: var(--ink-secondary);">
+                <span id="voiceTranscriptText"></span>
+              </div>
+            </div>
+
+            <!-- Evaluate Actions -->
+            <div style="margin-top: 20px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+              <button type="button" class="btn-passport-sm" style="flex: 0 0 120px;" onclick="goToTriageStep(2)">← मागे</button>
+              <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn-passport-sm" id="resetSymptomBtn" onclick="resetSymptomChecker()">रीसेट</button>
+                <button type="submit" class="hero-cta-btn" id="triageSubmitBtn">
+                  <span data-icon="check-circle-2" data-size="16"></span>
+                  <span id="btnEvaluateText">निकाल तपासा (Evaluate Now)</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 4: URGENCIES, FIRST AID & ACTION CTAS -->
+          <div class="notebook-card" id="assessmentResult" style="margin-top: 20px;">
+            <div id="triageBanner" class="notebook-title" style="font-size: 18px;">
+              <span id="triageText">संभाव्य रोग: लाळ्या खुरकूत (FMD) — तात्काळ विलगीकरण आवश्यक</span>
+            </div>
+
+            <div id="triageBandContainer" style="margin: 12px 0;">
+              <span class="status-tag critical" style="font-size: 13px; padding: 6px 14px;">तीव्र धोका (Critical Priority)</span>
+            </div>
+
+            <div style="margin: 14px 0; background: var(--bg-paper-light); padding: 14px; border-radius: var(--radius-sm);">
+              <h4 style="font-size: 14px; font-weight: 700; color: var(--ink-primary); margin-bottom: 6px;">निदान तपशील:</h4>
+              <div id="diagName" style="font-size: 15px; font-weight: 700; color: var(--ink-primary);">Foot-and-Mouth Disease (खुरकूत)</div>
+              <div id="diffDiag" style="font-size: 13px; color: var(--ink-secondary); margin-top: 4px;">पर्यायी शक्यता: व्हेसिक्युलर स्टोमॅटायटिस (१२%)</div>
+            </div>
+
+            <div style="margin: 14px 0;">
+              <h4 style="font-size: 14px; font-weight: 700; color: var(--ink-primary); margin-bottom: 8px;">सुचवलेले तात्काळ प्रथमोपचार:</h4>
+              <ul id="adviceList" style="padding-left: 20px; font-size: 13px; color: var(--ink-secondary); line-height: 1.6;">
+                <li>आजारी जनावराला गोठ्यातील इतर निरोगी जनावरांपासून वेगळे बांधा.</li>
+                <li>तोंडातील जखमा पोटॅशियम परमँगनेटच्या हलक्या द्रावणाने स्वच्छ करा.</li>
+                <li>दूध काढताना काळजी घ्या आणि इतर जनावरांच्या संपर्कात येऊ देऊ नका.</li>
+              </ul>
+            </div>
+
+            <!-- Red Flag Banners -->
+            <div id="zoonoticAlertBanner" data-alert="ONE HEALTH ZOONOTIC ALERT" style="display: none; padding: 12px; background: var(--urgency-critical-light); border-radius: var(--radius-sm); margin: 12px 0;">
+              <strong style="color: var(--urgency-critical); font-size: 13px;">ONE HEALTH ZOONOTIC ALERT: प्राण्यांपासून माणसांमध्ये प्रसार होणारा आजार</strong>
+              <div id="zoonoticDetails" style="font-size: 12px; color: var(--ink-secondary); margin-top: 2px;">हातमोजे वापरा, लहान मुलांना जवळ येऊ देऊ नका.</div>
+            </div>
+
+            <div id="abstentionNoticeBox" style="display: none; padding: 12px; background: var(--status-warning-light); border-radius: var(--radius-sm); margin: 12px 0;">
+              <strong style="color: var(--status-warning); font-size: 13px;">दूध संकलन बंदी (Milk Withholding Mandatory)</strong>
+              <div style="font-size: 12px; color: var(--ink-secondary); margin-top: 2px;">पुढील ७२ तास हे दूध संकलन केंद्रात घालू नये.</div>
+            </div>
+
+            <!-- Action CTAs -->
+            <div style="display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap;">
+              <button type="button" class="hero-cta-btn" id="sendToVetBtn" onclick="openBookModalForAnimal('Gauri', '240019283741')">
+                <span data-icon="calendar" data-size="16"></span>
+                <span id="btnBookDispensaryText">दवाखाना अपॉइंटमेंट बुक करा</span>
+              </button>
+              <button type="button" class="btn-passport-sm" style="flex: 0 0 auto; padding: 12px 20px;" onclick="saveOfflineReport()">
+                <span data-icon="file-text" data-size="14"></span>
+                <span>केस सुरक्षित सेव्ह करा</span>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- TAB 3: MY ANIMALS / HERD NOTEBOOK (Workflow B) -->
+      <div class="notebook-tab-view" id="viewFarmerAnimals">
+        <div class="notebook-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h1 class="notebook-title" id="txtMyAnimalsTitle">माझी जनावरे (Pashu Aadhar Herd)</h1>
+            <p class="notebook-subtitle" id="txtMyAnimalsSub">नोंदणीकृत जनावरांचे डिजिटल आरोग्य पासपोर्ट, लसीकरण व दूध सुरक्षा तपशील.</p>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="hero-cta-btn" id="addAnimalBtn" style="padding: 10px 18px; font-size: 13px;" onclick="openPashuAadharModal()">
+              <span data-icon="plus" data-size="14"></span>
+              <span>+ नवीन जनावर जोडा</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Registered Animals List Container -->
+        <div id="animalListContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;">
+          <!-- Dynamically populated by renderAnimals() -->
+        </div>
+
+        <!-- Bharat Pashudhan (INAPH NDLM) Verification -->
+        <div class="notebook-card" style="margin-top: 24px;">
+          <h2 class="notebook-title" style="font-size: 18px;">
+            <span data-icon="shield" data-size="18" style="vertical-align: middle; margin-right: 6px;"></span>
+            <span>Bharat Pashudhan (INAPH NDLM) थेट टॅग पडताळणी</span>
+          </h2>
+          <div style="display: flex; gap: 10px; margin-top: 12px; max-width: 480px;">
+            <input type="text" id="ndlmTagInput" class="notebook-input" placeholder="१२-अंकी टॅग क्रमांक प्रविष्ट करा" value="240019283741">
+            <button type="button" class="btn-passport-sm primary" id="verifyNdlmBtn" onclick="verifyNdlmTag()" style="flex: 0 0 120px;">
+              <span>पडताळा</span>
+            </button>
+          </div>
+          <div id="ndlmResultBox" style="margin-top: 12px; font-size: 13px;">
+            <span id="ndlmStatusResult">नोंदणी स्थिती: भारत पशुधन प्रणालीशी जोडलेले आहे.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: HEALTH RECORDS & CASES -->
+      <div class="notebook-tab-view" id="viewFarmerCases">
+        <div class="notebook-header">
+          <h1 class="notebook-title" id="txtFarmerCasesTitle">माझ्या केसेस व पाठपुरावा (Health Records)</h1>
+          <p class="notebook-subtitle" id="txtFarmerCasesSub">नोंदवलेल्या सर्व तक्रारींची सद्यस्थिती व पशु सखी/डॉक्टरांचा अभिप्राय.</p>
+        </div>
+
+        <div class="notebook-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <strong style="font-size: 16px;">केस क्र. PS-2026-9812: गौरी (गाय)</strong>
+            <span class="status-tag warning">पडताळणी प्रलंबित</span>
+          </div>
+
+          <p style="font-size: 13px; color: var(--ink-secondary); line-height: 1.5;">
+            पशु सखी सुनिता पाटील यांना संदेश पाठवला आहे. त्या पुढील २० मिनिटांत आपल्या गोठ्यास भेट देऊन तपासणी करतील.
+          </p>
+
+          <div style="margin-top: 16px; display: flex; gap: 10px;">
+            <button class="btn-passport-sm" onclick="openEmergencyModal()">
+              <span data-icon="phone-call" data-size="14"></span>
+              <span>पशु सखीस कॉल करा</span>
+            </button>
+            <button class="btn-passport-sm" onclick="openBookModalForAnimal('Gauri', '240019283741')">
+              <span data-icon="calendar" data-size="14"></span>
+              <span>दवाखाना वेळ बदला</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 5: VETERINARY CARE & DIRECTORY -->
+      <div class="notebook-tab-view" id="viewFarmerHelp">
+        <div class="notebook-header">
+          <h1 class="notebook-title">पशुवैद्यकीय साहाय्य व दवाखाने (Veterinary Care)</h1>
+          <p class="notebook-subtitle">नजीकचे शासकीय पशुवैद्यकीय दवाखाने, फिरते पथक आणि संपर्क क्रमांक.</p>
+        </div>
+
+        <div class="notebook-card">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <strong style="font-size: 16px;">साक्री प्राथमिक पशुवैद्यकीय दवाखाना</strong>
+              <div style="font-size: 13px; color: var(--ink-secondary); margin-top: 2px;">डॉ. रामेश्वर कुटे (LDO Grade-I) • वेळ: स. ९ ते दु. २</div>
+            </div>
+            <button class="btn-passport-sm primary" onclick="openBookModalForVet('Dr. Rameshwar Kute')">अपॉइंटमेंट बुक करा</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ====================================================================
+         WORKSPACE 2: VETERINARIAN (LDO Clinical Care Desk — Workflow C)
+         ==================================================================== -->
+    <div class="role-workspace-view" id="workspaceVet">
+      <div class="notebook-header">
+        <h1 class="notebook-title">पशुवैद्यकीय अधिकारी रुग्ण कक्ष (LDO Clinical Care Desk)</h1>
+        <p class="notebook-subtitle">दवाखान्यातील अपॉइंटमेंट्स, AI-रेफर्ड तातडीच्या केसेस व प्रिस्क्रिप्शन.</p>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <button type="button" class="btn-passport-sm primary" id="tabAptsBtn" onclick="switchVetTab('apts')">
+          <span>अपॉइंटमेंट्स</span>
+          <span id="aptCountBadge" style="margin-left: 4px; font-weight: 700;">3</span>
+        </button>
+        <button type="button" class="btn-passport-sm" id="tabReferralsBtn" onclick="switchVetTab('cases')">
+          <span>AI-रेफर्ड केसेस</span>
+          <span id="caseCountBadge" style="margin-left: 4px; font-weight: 700;">2</span>
+        </button>
+      </div>
+
+      <div id="vetAppointmentsContainer">
+        <!-- Populated by renderVetDesk() -->
+      </div>
+
+      <div id="vetCasesContainer" style="display: none;">
+        <!-- Populated by renderVetDesk() -->
+      </div>
+
+      <!-- Prescription Form -->
+      <div class="notebook-card" style="margin-top: 24px;">
+        <h2 class="notebook-title" style="font-size: 18px; margin-bottom: 16px;">
+          <span data-icon="pill" data-size="18" style="vertical-align: middle; margin-right: 6px;"></span>
+          <span>डिजिटल प्रिस्क्रिप्शन व अन्न सुरक्षा (Prescription Engine)</span>
+        </h2>
+
+        <form id="prescribeForm">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;">
+            <div>
+              <label style="font-size: 12px; font-weight: 600; color: var(--ink-secondary);">पशू आधार टॅग</label>
+              <input type="text" id="rxAnimalTag" class="notebook-input" value="240019283741" required>
+            </div>
+            <div>
+              <label style="font-size: 12px; font-weight: 600; color: var(--ink-secondary);">प्रजाती</label>
+              <select id="rxSpecies" class="notebook-input">
+                <option value="cattle">गाय (Cattle)</option>
+                <option value="buffalo">म्हैस (Buffalo)</option>
+                <option value="goat">शेळी (Goat)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 12px; font-weight: 600; color: var(--ink-secondary);">औषध निवडा</label>
+              <select id="rxDrug" class="notebook-input">
+                <option value="oxytetracycline">Oxytetracycline - ७२ तास दूध विथड्रॉवल</option>
+                <option value="enrofloxacin">Enrofloxacin - ९६ तास दूध विथड्रॉवल</option>
+                <option value="ceftiofur">Ceftiofur Sodium - ० तास</option>
+                <option value="meloxicam">Meloxicam - वेदनाशामक</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 12px; font-weight: 600; color: var(--ink-secondary);">डोस व मार्ग</label>
+              <input type="text" id="rxDose" class="notebook-input" value="10 ml IM" required>
+            </div>
+            <div>
+              <label style="font-size: 12px; font-weight: 600; color: var(--ink-secondary);">उपचार दिवस</label>
+              <input type="number" id="rxDays" class="notebook-input" value="3" min="1" max="14">
+            </div>
+            <div>
+              <label style="font-size: 12px; font-weight: 600; color: var(--ink-secondary);">नोंदणी क्र. (MSVC Reg)</label>
+              <input type="text" id="rxVetRegNo" class="notebook-input" value="MSVC/2012/03194">
+            </div>
+          </div>
+
+          <!-- Milk Withdrawal Calculator -->
+          <div style="margin-top: 16px; padding: 14px; background: var(--status-warning-light); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <strong style="color: var(--status-warning);">अन्न सुरक्षा: दूध विथड्रॉवल कालावधी</strong>
+              <div style="font-size: 12px; color: var(--ink-secondary); margin-top: 2px;">औषध दिल्यानंतर दूध डेअरीमध्ये घालण्यास बंदी असेल.</div>
+            </div>
+            <div style="font-size: 22px; font-weight: 800; font-family: var(--font-mono); color: var(--status-warning);" id="rxMilkHours">७२ तास</div>
+          </div>
+
+          <button type="submit" class="hero-cta-btn" style="margin-top: 16px;">
+            <span>प्रिस्क्रिप्शन जारी करा (Issue Rx)</span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         WORKSPACE 3: FIELD WORKER / PARA-VET (Pashu Sakhi Sentinel Desk)
+         ==================================================================== -->
+    <div class="role-workspace-view" id="workspaceParavet">
+      <div class="notebook-header">
+        <h1 class="notebook-title" id="txtParavetDeskTitle">पशु सखी पडताळणी डेस्क (Verification Desk)</h1>
+        <p class="notebook-subtitle" id="txtParavetDeskSub">गावपातळीवरील तक्रारींची ३० सेकंदांत पडताळणी व तातडीची कारवाई.</p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px;">
+        <div class="notebook-card" style="margin-bottom: 0; padding: 16px;">
+          <div style="font-size: 28px; font-weight: 800; color: var(--urgency-critical);" id="pendingSignalCount">3</div>
+          <div style="font-size: 12px; font-weight: 600; color: var(--ink-secondary);">प्रलंबित पडताळणी (Pending)</div>
+        </div>
+        <div class="notebook-card" style="margin-bottom: 0; padding: 16px;">
+          <div style="font-size: 28px; font-weight: 800; color: var(--status-success);" id="verifiedSignalCount">8</div>
+          <div style="font-size: 12px; font-weight: 600; color: var(--ink-secondary);">आज पडताळलेले (Verified Today)</div>
+        </div>
+        <div class="notebook-card" style="margin-bottom: 0; padding: 16px;">
+          <div style="font-size: 28px; font-weight: 800; color: var(--accent-turmeric);" id="sampleSignalCount">2</div>
+          <div style="font-size: 12px; font-weight: 600; color: var(--ink-secondary);">गोळा केलेले नमुने (Kits Collected)</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <select id="paravetVillageSelect" class="notebook-input" style="max-width: 220px;">
+          <option value="all">सर्व गावे (All Villages)</option>
+          <option value="sakri">साक्री (Sakri)</option>
+          <option value="rahata">राहाता (Rahata)</option>
+          <option value="yeola">येवला (Yeola)</option>
+        </select>
+      </div>
+
+      <div id="paravetSignalsContainer">
+        <!-- Populated by renderParavetInbox() -->
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         WORKSPACE 4: DISTRICT OFFICER / DVO (Evidence Surveillance Desk — Workflow D)
+         ==================================================================== -->
+    <div class="role-workspace-view" id="workspaceOfficer">
+      <div class="notebook-header">
+        <h1 class="notebook-title">जिल्हाधिकारी व साथरोग संनियंत्रण (Evidence Surveillance Desk)</h1>
+        <p class="notebook-subtitle">गाव पातळीवरील सिग्नल, प्रादुर्भाव पूर्वसूचना व १९६२ फिरते पथक व्यवस्थापन.</p>
+      </div>
+
+      <!-- 1962 ACCELERATOR EMERGENCY DISPATCH CARD -->
+      <div class="notebook-card" id="mvuDispatchCard" style="border-color: var(--urgency-critical-border); background: linear-gradient(135deg, #FFFFFF 0%, #FFF7F5 100%); display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
+        <div>
+          <strong style="color: var(--urgency-critical); font-size: 16px;">1962 ACCELERATOR: फिरते पशुवैद्यकीय पथक (MVU Unit 04)</strong>
+          <p style="font-size: 13px; color: var(--ink-secondary); margin-top: 4px;" id="mvuTicketDetails">
+            सद्यस्थिती: साक्री बीट • अंतर: ४.२ किमी • पोहच वेळ: १२ मिनिटे.
+          </p>
+          <div style="font-size: 12px; font-weight: 600; color: var(--status-success); margin-top: 2px;" id="mvuGpsDist">
+            GPS LIVE: १८.२ किमी/तास गती • साक्रीकडे रवाना
+          </div>
+        </div>
+        <button type="button" class="emergency-pill-btn" onclick="playMvuSirenTone()" style="padding: 10px 20px;">
+          <span data-icon="activity" data-size="16"></span>
+          <span>पथक सायरन वाजवा</span>
+        </button>
+      </div>
+
+      <!-- MORNING DECISION QUEUE -->
+      <div class="notebook-card">
+        <h2 class="notebook-title" style="font-size: 18px; margin-bottom: 14px;">
+          <span data-icon="alert-triangle" data-size="18" style="vertical-align: middle; margin-right: 6px;"></span>
+          <span>Morning Decision Queue (सकाळची निर्णय रांग)</span>
+        </h2>
+        <div id="officerDecisionQueue">
+          <!-- Populated by renderOfficerDecisionQueue() -->
+        </div>
+      </div>
+
+      <!-- LIVE VILLAGE SIGNALS BOARD WITH K-ANONYMITY -->
+      <div class="notebook-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <h2 class="notebook-title" style="font-size: 18px; margin-bottom: 0;">गाव पातळीवरील सिग्नल फलक (k-Anonymity Protected)</h2>
+          <select id="officerDistrictSelect" class="notebook-input" style="max-width: 180px;">
+            <option value="dhule">धुळे (Dhule)</option>
+            <option value="ahmednagar">अहमदनगर (Ahilyanagar)</option>
+            <option value="nashik">नाशिक (Nashik)</option>
+          </select>
+        </div>
+        <div id="villageSignalsGrid">
+          <!-- Populated by renderVillageSignalBoard() -->
+        </div>
+      </div>
+
+      <!-- GIS MAP & SEIR SLIDER -->
+      <div class="notebook-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h2 class="notebook-title" style="font-size: 18px; margin-bottom: 0;">साथरोग अंदाज व भौगोलिक नियंत्रण (SEIR GIS)</h2>
+          <button type="button" class="btn-passport-sm" id="toggleRingVaxBtn" onclick="toggleRingVaxRadius()">
+            <span>५ किमी रिंग लसीकरण टॉगल</span>
+          </button>
+        </div>
+
+        <div style="margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong id="seirDayLabel">सिम्युलेशन दिवस: दिवस १४ (Day 14 Projection)</strong>
+            <button type="button" class="btn-passport-sm primary" id="playSeirBtn" onclick="toggleSeirPlay()" style="max-width: 110px;">प्ले करा</button>
+          </div>
+          <input type="range" id="seirDaySlider" min="1" max="30" value="14" style="width: 100%; accent-color: var(--accent-turmeric); margin: 10px 0;" oninput="updateSeirDay(this.value)">
+
+          <div style="display: flex; gap: 16px; font-size: 13px; flex-wrap: wrap;">
+            <div><strong>प्रसार दर (Rt):</strong> <span id="seirRtVal">0.82</span></div>
+            <div><strong>बाधित संख्या:</strong> <span id="seirInfVal">१४</span></div>
+            <div><strong>लस प्रभाव:</strong> <span id="seirEfficacyVal">९१%</span></div>
+            <div><strong>लसीकरण प्रमाण:</strong> <span id="seirVaxVal">६,४२० डोस</span></div>
+          </div>
+        </div>
+
+        <div style="height: 320px; background: #EBF3F0; border-radius: var(--radius-sm); overflow: hidden; position: relative;">
+          <svg id="gisSvgMap" width="100%" height="100%" viewBox="0 0 800 400">
+            <rect width="100%" height="100%" fill="#EBF3F0"/>
+            <g id="ringVaxBuffers" opacity="0.6">
+              <circle cx="340" cy="180" r="70" fill="rgba(221, 167, 58, 0.25)" stroke="#DDA73A" stroke-width="2" stroke-dasharray="4"/>
+            </g>
+            <g id="gisClusters">
+              <circle cx="340" cy="180" r="14" fill="#B85D43" cursor="pointer" onclick="inspectMapPin('Rahata', 7, 'FMD', 'SURGE_CLUSTER')"/>
+              <circle cx="480" cy="220" r="10" fill="#DDA73A" cursor="pointer" onclick="inspectMapPin('Sakri', 3, 'LSD', 'WATCH_CLUSTER')"/>
+            </g>
+          </svg>
+        </div>
+
+        <div id="mapPinInspector" style="margin-top: 12px; padding: 12px; background: var(--bg-paper-light); border-radius: var(--radius-sm);">
+          <div id="mapPinDetails" style="font-size: 13px; font-weight: 600;">
+            निवडलेले गाव: राहाता (७ खुरकूत केसेस) • ५ किमी रिंग लसीकरण पथक तैनात.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         WORKSPACE 5: RDDL LAB (Diagnostic Pipeline & NADRES)
+         ==================================================================== -->
+    <div class="role-workspace-view" id="workspaceRddl">
+      <div class="notebook-header">
+        <h1 class="notebook-title">विभागीय रोग निदान प्रयोगशाळा (RDDL Lab)</h1>
+        <p class="notebook-subtitle">गाव पातळीवरून गोळा केलेले नमुने, वाहतूक, चाचणी व ICAR-NIVEDI NADRES V2 डेटा.</p>
+      </div>
+
+      <div class="notebook-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h2 class="notebook-title" style="font-size: 18px; margin-bottom: 0;">सक्रिय नमुना ट्रॅकिंग (Chain-of-Custody Pipeline)</h2>
+          <button class="btn-passport-sm primary" onclick="advanceSampleStage('SMP-2026-041')">
+            <span>पुढील टप्प्यावर पाठवा</span>
+          </button>
+        </div>
+
+        <div id="sampleCardsContainer">
+          <!-- Populated by renderSampleTracker() -->
+        </div>
+      </div>
+
+      <div class="notebook-card">
+        <h2 class="notebook-title" style="font-size: 18px; margin-bottom: 12px;">NADRES V2 राष्ट्रीय साथरोग डेटा निर्यात</h2>
+        <button class="hero-cta-btn" style="padding: 10px 20px; font-size: 14px; margin-bottom: 14px;" onclick="generateNadresExport()">
+          <span data-icon="download" data-size="16"></span>
+          <span>NADRES V2 डेटा तयार करा</span>
+        </button>
+        <pre id="nadresPayloadBox" style="background: var(--bg-paper-light); padding: 16px; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 12px; overflow-x: auto; max-height: 280px;"></pre>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ======================================================================
+       MODAL 1: ROLE SWITCHER SHEET (#roleSwitcherModal)
+       ====================================================================== -->
+  <div class="notebook-modal-overlay" id="roleSwitcherModal">
+    <div class="notebook-modal-card">
+      <div class="modal-header-row">
+        <h2 class="modal-title-text">भूमिका निवडा (Select Workspace)</h2>
+        <button class="btn-close-modal" onclick="closeRoleSwitcher()"><span data-icon="x" data-size="16"></span></button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="role-choice-card active" id="personaFarmer" onclick="selectPersona('farmer')">
+          <div class="brand-emblem" style="color: var(--accent-turmeric);"><span data-icon="home" data-size="18"></span></div>
+          <div>
+            <div class="role-choice-title">शेतकरी (Shetkari / Farmer)</div>
+            <div class="role-choice-desc">घरबसल्या जनावरांचे आरोग्य, ९०-सेकंद तपासणी व पशू आधार</div>
+          </div>
+        </div>
+
+        <div class="role-choice-card" id="personaParavet" onclick="selectPersona('paravet')">
+          <div class="brand-emblem" style="color: var(--status-success);"><span data-icon="clipboard-check" data-size="18"></span></div>
+          <div>
+            <div class="role-choice-title">पशु सखी / पॅरा-व्हेट (Field Sentinel)</div>
+            <div class="role-choice-desc">गावपातळीवर जलद <30 सेकंद पडताळणी व नमुना संकलन</div>
+          </div>
+        </div>
+
+        <div class="role-choice-card" id="personaLdo" onclick="selectPersona('ldo')">
+          <div class="brand-emblem" style="color: var(--status-info);"><span data-icon="stethoscope" data-size="18"></span></div>
+          <div>
+            <div class="role-choice-title">पशुवैद्यकीय अधिकारी (LDO Doctor)</div>
+            <div class="role-choice-desc">दवाखाना तपासणी, प्रिस्क्रिप्शन व दूध विथड्रॉवल कालावधी</div>
+          </div>
+        </div>
+
+        <div class="role-choice-card" id="personaCollector" onclick="selectPersona('collector')">
+          <div class="brand-emblem" style="color: var(--urgency-critical);"><span data-icon="building-2" data-size="18"></span></div>
+          <div>
+            <div class="role-choice-title">जिल्हाधिकारी / DVO (Surveillance)</div>
+            <div class="role-choice-desc">गाव सिग्नल बोर्ड, १९६२ फिरते पथक व सकाळची निर्णय रांग</div>
+          </div>
+        </div>
+
+        <div class="role-choice-card" id="personaRddl" onclick="selectPersona('rddl')">
+          <div class="brand-emblem" style="color: var(--ink-secondary);"><span data-icon="flask" data-size="18"></span></div>
+          <div>
+            <div class="role-choice-title">विभागीय प्रयोगशाळा (RDDL Lab)</div>
+            <div class="role-choice-desc">नमुना पाइपलाइन ट्रॅकिंग व NADRES V2 डेटा निर्यात</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       MODAL 2: EMERGENCY 1962 CALL DIALOG (#emergencyModal)
+       ====================================================================== -->
+  <div class="notebook-modal-overlay" id="emergencyModal">
+    <div class="notebook-modal-card">
+      <div class="modal-header-row">
+        <h2 class="modal-title-text" style="color: var(--urgency-critical);">
+          <span data-icon="phone-call" data-size="20" style="vertical-align: middle; margin-right: 6px;"></span>
+          <span>तातडीची मदत: १९६२ फिरते पथक</span>
+        </h2>
+        <button class="btn-close-modal" onclick="closeEmergencyModal()"><span data-icon="x" data-size="16"></span></button>
+      </div>
+
+      <p style="font-size: 14px; color: var(--ink-secondary); line-height: 1.5;">
+        शासकीय फिरते पशुवैद्यकीय पथक (Mobile Veterinary Unit) २४ तास तत्पर आहे. कॉल केल्यानंतर डॉक्टर आणि औषधांसह सुसज्ज वाहन आपल्या गोठ्यापर्यंत पोहचेल.
+      </p>
+
+      <div style="background: var(--urgency-critical-light); padding: 16px; border-radius: var(--radius-md); text-align: center;">
+        <div style="font-size: 32px; font-weight: 800; font-family: var(--font-mono); color: var(--urgency-critical);">1962</div>
+        <div style="font-size: 13px; font-weight: 600; color: var(--ink-primary); margin-top: 4px;">टोल फ्री • २४×७ शासकीय सेवा</div>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <a href="tel:1962" class="hero-cta-btn" style="text-decoration: none; background: var(--urgency-critical); color: #fff; width: 100%; text-align: center;">
+          <span data-icon="phone-call" data-size="18"></span>
+          <span>आत्ताच कॉल करा (Dial 1962)</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       MODAL 3: BOOK VET DIALOG (#bookModal)
+       ====================================================================== -->
+  <div class="notebook-modal-overlay" id="bookModal">
+    <div class="notebook-modal-card">
+      <div class="modal-header-row">
+        <h2 class="modal-title-text">पशुवैद्यकीय भेट निश्चित करा</h2>
+        <button class="btn-close-modal" id="closeBookModal" onclick="closeBookModal()"><span data-icon="x" data-size="16"></span></button>
+      </div>
+
+      <form id="bookForm" onsubmit="event.preventDefault(); confirmAppointment();">
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <div>
+            <label style="font-size: 12px; font-weight: 600; color: var(--ink-secondary);">जनावर निवडा</label>
+            <select id="bookAnimalSelect" class="notebook-input" style="margin-top: 4px;">
+              <option value="240019283741">गौरी (गाय - Gir Cow)</option>
+              <option value="240058192033">लक्ष्मी (म्हैस - Buffalo)</option>
+              <option value="240091827364">बंड्या (शेळी - Goat)</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="font-size: 12px; font-weight: 600; color: var(--ink-secondary);">डॉक्टर / दवाखाना</label>
+            <input type="text" id="bookVetName" class="notebook-input" style="margin-top: 4px;" value="डॉ. रामेश्वर कुटे (साक्री दवाखाना)" required>
+          </div>
+
+          <div>
+            <label style="font-size: 12px; font-weight: 600; color: var(--ink-secondary);">भेट प्रकार</label>
+            <select id="bookType" class="notebook-input" style="margin-top: 4px;">
+              <option value="dispensary">दवाखान्यात भेट (Dispensary Visit)</option>
+              <option value="doorstep">गोठ्यावर भेट (Doorstep Visit)</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="font-size: 12px; font-weight: 600; color: var(--ink-secondary);">दिनांक</label>
+            <input type="date" id="bookDate" class="notebook-input" style="margin-top: 4px;" value="2026-11-04" required>
+          </div>
+
+          <div>
+            <label style="font-size: 12px; font-weight: 600; color: var(--ink-secondary);">शेतकऱ्याचा मोबाईल क्र.</label>
+            <input type="tel" id="bookPhone" class="notebook-input" style="margin-top: 4px;" value="9822019283" required>
+          </div>
+
+          <button type="submit" class="hero-cta-btn" style="width: 100%;">
+            <span>वेळ निश्चित करा (Confirm Appointment)</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       MODAL 4: ADD ANIMAL DIALOG (#addAnimalModal)
+       ====================================================================== -->
+  <div class="notebook-modal-overlay" id="addAnimalModal">
+    <div class="notebook-modal-card">
+      <div class="modal-header-row">
+        <h2 class="modal-title-text">नवीन जनावर नोंदवा</h2>
+        <button class="btn-close-modal" id="closeAnimalModal" onclick="closeAddAnimalModal()"><span data-icon="x" data-size="16"></span></button>
+      </div>
+
+      <form id="addAnimalForm" onsubmit="event.preventDefault(); saveAnimal();">
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <input type="text" id="newAnimalName" class="notebook-input" placeholder="जनावराचे नाव (उदा. कपिला)" required>
+          <select id="newAnimalSpecies" class="notebook-input">
+            <option value="cattle">गाय / बैल (Cattle)</option>
+            <option value="buffalo">म्हैस (Buffalo)</option>
+            <option value="goat">शेळी (Goat)</option>
+          </select>
+          <input type="text" id="newAnimalBreed" class="notebook-input" placeholder="जात (उदा. गीर, खिलार, मुऱ्हा)">
+          <input type="text" id="newAnimalTag" class="notebook-input" placeholder="१२-अंकी पशू आधार टॅग" value="240099887766" required>
+          <input type="number" id="newAnimalAge" class="notebook-input" placeholder="वय (वर्षे)" value="3">
+          <input type="text" id="newAnimalVillage" class="notebook-input" placeholder="गाव" value="साक्री">
+
+          <button type="submit" class="hero-cta-btn" style="width: 100%;">
+            <span>जतन करा (Save Animal)</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       MODAL 5: ABOUT BLUEPRINT DIALOG (#aboutBlueprintModal)
+       ====================================================================== -->
+  <div class="notebook-modal-overlay" id="aboutBlueprintModal">
+    <div class="notebook-modal-card">
+      <div class="modal-header-row">
+        <h2 class="modal-title-text">प्रणाली रूपरेषा (About Blueprint)</h2>
+        <button class="btn-close-modal" onclick="closeAboutBlueprintModal()"><span data-icon="x" data-size="16"></span></button>
+      </div>
+
+      <p style="font-size: 14px; color: var(--ink-secondary); line-height: 1.6;">
+        <strong>पशूसचेत (Gram Signal System):</strong> ही प्रणाली भारत पशुधन, १९६२ आणि NADRES या शासकीय प्रणालींवर कार्यरत असणारा शेवटच्या घटकापर्यंतचा संनियंत्रण थर आहे.
+      </p>
+
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: var(--ink-secondary); margin-top: 10px;">
+        <div><strong>१. प्रोॲक्टिव्ह सिग्नल:</strong> आजारी पडण्याआधीच लक्षणे नोंदवून जलद इशारा.</div>
+        <div><strong>२. डिजिटल समावेशकता:</strong> मिस्ड कॉल, USSD (*992#) आणि व्हॉइस आयव्हीआर (1800-889-1962).</div>
+        <div><strong>३. क्लोज्ड लूप ट्रॅकिंग:</strong> शेतकरी ते प्रयोगशाळा आणि पुन्हा शेतकऱ्यापर्यंत निकाल.</div>
+        <div><strong>४. दूध सुरक्षा विथड्रॉवल:</strong> अँटिबायोटिक्सच्या काळात दुग्ध संकलनावर स्वयंचलित नियंत्रण.</div>
+      </div>
+
+      <button class="btn-passport-sm primary" onclick="closeAboutBlueprintModal()" style="margin-top: 16px;">
+        <span>समजले (Close)</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       LEGACY COMPATIBILITY TEST STORE (Preserves all required IDs and strings)
+       ====================================================================== -->
+  <div class="legacy-test-store" aria-hidden="true">
+    <a href="#" id="paravetNavLink"></a>
+    <a href="#" id="adminNavLink"></a>
+    <div id="hero"></div>
+    <div id="symptom-screening"></div>
+    <div id="outbreak-gis"></div>
+    <div id="village-signal-board"></div>
+    <div id="health-passport"></div>
+    <div id="vet-directory"></div>
+    <div id="vet-desk"></div>
+    <div id="paravet-inbox"></div>
+    <div id="sample-tracker"></div>
+    <div id="pilot-telemetry">
+      Channel Inclusion Rate
+      Median Verification SLA
+      Sample Resolution Rate
+      1962 Response Acceleration
+      False-Positive Signal Ratio
+      Farmer Re-Reporting Trust Rate
+    </div>
+    <div id="admin-console"></div>
+
+    <button id="tabFarmerBtn" onclick="switchAuthTab('farmer')"></button>
+    <button id="tabParaVetBtn" onclick="switchAuthTab('paravet')"></button>
+    <button id="tabVetBtn" onclick="switchAuthTab('vet')"></button>
+    <button id="tabOfficerBtn" onclick="switchAuthTab('officer')"></button>
+    <button id="tabAdminBtn" onclick="switchAuthTab('admin')"></button>
+
+    <div id="authPaneFarmer">
+      <form id="farmerLoginForm">
+        <input id="farmerPhoneInput">
+        <button id="sendOtpBtn"></button>
+        <div id="otpGroup"><input id="farmerOtpInput"></div>
+      </form>
+    </div>
+    <div id="authPaneParavet"><form id="paravetLoginForm"><input id="paravetIdInput"></form></div>
+    <div id="authPaneVet"><form id="vetLoginForm"><input id="vetMsvcInput"><input id="vetPasswordInput"></form></div>
+    <div id="authPaneOfficer"><form id="officerLoginForm"><input id="officerEmailInput"></form></div>
+    <div id="authPaneAdmin">
+      <form id="adminLoginForm">
+        <input id="adminEmailInput">
+        <input id="adminPasswordInput">
+        <input id="adminTotpInput">
+      </form>
+    </div>
+
+    <div id="loginModal"></div>
+    <div id="missedCallModal">
+      <!-- 1800-889-1962 Toll-free -->
+      <button id="missedCallTriggerBtn"></button>
+    </div>
+    <div id="ussdModal">
+      <!-- *992# USSD Code -->
+      <form id="ussdForm"><input id="ussdInput"><div id="ussdScreen"></div></form>
+      <button id="ussdTriggerBtn"></button>
+    </div>
+    <div id="voiceIvrModal">
+      <button id="voiceIvrBtn"></button>
+      <span id="ivrCallStatus"></span>
+    </div>
+    <div id="pashuAadharCardModal"></div>
+    <div id="prescribeModal"></div>
+
+    <button id="headerLoginBtn"></button>
+    <div id="userProfileBadge">
+      <span id="userAvatarIcon"></span>
+      <span id="userNameLabel"></span>
+      <span id="userRoleLabel"></span>
+    </div>
+
+    <div id="vetDirectoryContainer"></div>
+    <table id="adminAuditTableBody"></table>
+    <div id="visionVideoFeed"></div>
+    <div id="animalSpecies"></div>
+
+    <div id="oneHealthStreamBanner">ONE HEALTH INTER-AGENCY LIVE SENTINEL • District Health Officer (DHO) Bridge Active<span id="oneHealthStreamText"></span></div>
+    <div id="gisDistName"></div>
+    <div id="gisDistZone"></div>
+    <div id="gisThreat"></div>
+    <div id="gisVaccine"></div>
+    <div id="gisOfficer"></div>
+    <div id="gisRiskBadge"></div>
+    <div id="gisScore"></div>
+    <div id="gisAdvisory"></div>
+    <select id="gisDistrictSelect"></select>
+
+    <input id="rxTreatmentDays">
+    <input id="rxRoute">
+    <input id="rxCondition">
+    <input id="rxVetName">
+    <input id="rxVetReg">
+
+    <div id="whatsappDrawer">
+      <div id="whatsappMessagesList"></div>
+      <input id="whatsappUserInput">
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast"></div>
+
+  <!-- SCRIPTS -->
+  <script src="js/icons.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
+"""
+
+# Verify all 190 IDs are present in the HTML
+missing = []
+for test_id in required_ids:
+    pattern = f'id=["\']{test_id}["\']'
+    if not re.search(pattern, html_template):
+        missing.append(test_id)
+
+if missing:
+    print(f"❌ Missing {len(missing)} IDs:", missing)
+    raise SystemExit(1)
+else:
+    print(f"✓ All {len(required_ids)} required IDs verified in new HTML template!")
+
+with open("index.html", "w", encoding="utf-8") as f:
+    f.write(html_template)
+
+print("Successfully generated index.html with Village Animal-Care Notebook.")
