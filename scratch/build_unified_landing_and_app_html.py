@@ -695,3 +695,4 @@ with open("index.html", "w", encoding="utf-8") as f:
     f.write(landing_html)
 
 print("Successfully written index.html with Landing Page + Role Selector + Authenticated App Shell!")
+

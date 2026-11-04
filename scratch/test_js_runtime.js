@@ -241,4 +241,5 @@ setTimeout(() => {
   if (passed === tests.length) {
     console.log("ALL INTERACTIVE FUNCTIONS PASSED CLEANLY IN DOM SIMULATOR!");
   }
+  process.exit(passed === tests.length ? 0 : 1);
 }, 50);

@@ -1890,12 +1890,15 @@ function renderParavetInbox() {
 
   if (pending.length === 0) {
     container.innerHTML = `
-      <div style="grid-column: 1 / -1; background: #ffffff; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 40px; text-align: center; color: #64748b;">
-        <div style="font-size: 2.5rem; margin-bottom: 8px;">✅</div>
-        <h4 style="color: #0f172a; margin: 0 0 4px;">All Signals Verified in Your Beat</h4>
-        <p style="font-size: 0.85rem; margin: 0;">No pending farmer micro-reports requiring field confirmation right now.</p>
+      <div style="grid-column: 1 / -1; background: #ffffff; border: 2px dashed var(--border-medium); border-radius: var(--radius-lg); padding: 40px; text-align: center; color: var(--ink-secondary);">
+        <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--status-success-light); color: var(--status-success); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto;">
+          <span data-icon="check-circle-2" data-size="24"></span>
+        </div>
+        <h4 style="color: var(--ink-primary); margin: 0 0 4px; font-size: 16px;">बीटमधील सर्व अहवाल पडताळले आहेत (All Verified)</h4>
+        <p style="font-size: 13px; margin: 0;">सध्या आपल्या बीटमध्ये कोणतीही प्रलंबित शेतकरी तक्रार शिल्लक नाही.</p>
       </div>
     `;
+    if (typeof renderIcons === 'function') renderIcons();
     return;
   }
 
@@ -2314,27 +2317,27 @@ function renderOfficerDecisionQueue() {
   if (!container) return;
 
   container.innerHTML = officerDecisions.map(dec => `
-    <div class="decision-card">
-      <div style="max-width: 650px;">
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-          <strong style="color: #0f172a; font-size: 0.95rem;">${dec.title}</strong>
-          <span style="font-size: 0.72rem; font-weight: 800; background: ${dec.priority === 'CRITICAL_ZOONOTIC' ? '#fecaca' : '#fef3c7'}; color: ${dec.priority === 'CRITICAL_ZOONOTIC' ? '#991b1b' : '#92400e'}; padding: 2px 6px; border-radius: 4px;">
+    <div class="decision-card" style="border-left-color: ${dec.priority === 'CRITICAL_ZOONOTIC' ? 'var(--urgency-critical)' : 'var(--accent-turmeric)'};">
+      <div style="flex: 1;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+          <strong style="color: var(--ink-primary); font-size: 15px;">${dec.title}</strong>
+          <span class="badge-pill" style="background: ${dec.priority === 'CRITICAL_ZOONOTIC' ? 'var(--urgency-critical-light)' : 'var(--accent-turmeric-light)'}; color: ${dec.priority === 'CRITICAL_ZOONOTIC' ? 'var(--urgency-critical)' : '#92400e'};">
             ${dec.priority}
           </span>
         </div>
-        <p style="font-size: 0.82rem; color: #475569; margin: 0; line-height: 1.4;">
+        <p style="font-size: 13px; color: var(--ink-secondary); margin: 0; line-height: 1.5;">
           ${dec.details}
         </p>
       </div>
 
-      <div>
+      <div style="flex-shrink: 0;">
         ${dec.status === 'PENDING' ? `
-          <button type="button" class="btn btn-sm btn-primary" onclick="resolveOfficerDecision('${dec.id}')" style="background: #0f766e; white-space: nowrap;">
+          <button type="button" class="btn btn-sm btn-primary" onclick="resolveOfficerDecision('${dec.id}')" style="white-space: nowrap;">
             ✓ ${dec.actionLabel}
           </button>
         ` : `
-          <span style="color: #15803d; font-weight: 700; font-size: 0.85rem;">
-            ✓ Action Authorized
+          <span class="badge-pill" style="background: var(--status-success-light); color: var(--status-success);">
+            ✓ मंजूर (Action Authorized)
           </span>
         `}
       </div>
@@ -2988,6 +2991,7 @@ function activatePersona(role) {
 
   // Render Subnav Tabs
   renderRoleSubnav(role);
+  renderSidebarNav(role);
 
   // Role action dispatches
   const paravetNav = document.getElementById('paravetNavLink');
@@ -3686,3 +3690,589 @@ function verifyNdlmTag() {
 }
 
 function generateNadresExport() { return exportNadresBatch(); }
+
+
+
+// ==========================================================================
+// OPERATIONAL MODAL CONTROLLERS & REAL INTERACTIVE WORKFLOWS
+// ==========================================================================
+
+function closeAboutBlueprintModal() {
+  const modal = document.getElementById("aboutBlueprintModal");
+  if (modal) modal.classList.remove("active");
+}
+
+function openAboutBlueprintModal() {
+  const modal = document.getElementById("aboutBlueprintModal");
+  if (modal) modal.classList.add("active");
+}
+
+function closeAddAnimalModal() {
+  const modal = document.getElementById("addAnimalModal");
+  if (modal) modal.classList.remove("active");
+}
+
+function openAddAnimalModal() {
+  const modal = document.getElementById("addAnimalModal");
+  if (modal) modal.classList.add("active");
+}
+
+function startGuidedTriage() {
+  if (typeof switchNotebookTab === 'function') {
+    switchNotebookTab('viewFarmerTriage');
+  }
+  if (typeof goToTriageStep === 'function') {
+    goToTriageStep(1);
+  }
+  const el = document.getElementById('viewFarmerTriage');
+  if (el && typeof el.scrollIntoView === 'function') {
+    el.scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+function switchVetTab(tab) {
+  const apts = document.getElementById("vetAppointmentsContainer");
+  const cases = document.getElementById("vetCasesContainer");
+  const tabApts = document.getElementById("tabAptsBtn");
+  const tabReferrals = document.getElementById("tabReferralsBtn");
+  if (!apts || !cases) return;
+  if (tab === "cases") {
+    apts.style.display = "none";
+    cases.style.display = "block";
+    if (tabApts) tabApts.classList.remove("primary");
+    if (tabReferrals) tabReferrals.classList.add("primary");
+  } else {
+    cases.style.display = "none";
+    apts.style.display = "block";
+    if (tabApts) tabApts.classList.add("primary");
+    if (tabReferrals) tabReferrals.classList.remove("primary");
+  }
+}
+
+// SMS Broadcast Modal Controls
+let currentBroadcastVillage = "निमगाव जाळी";
+let currentBroadcastCount = 480;
+
+function openVillageSmsBroadcastModal(village, disease, count) {
+  currentBroadcastVillage = village || "निमगाव जाळी";
+  currentBroadcastCount = count || 480;
+  const modal = document.getElementById("villageSmsModal");
+  const targetEl = document.getElementById("smsTargetVillage");
+  const countEl = document.getElementById("smsTargetCount");
+  const contentEl = document.getElementById("smsMessageContent");
+  const pBar = document.getElementById("smsProgressBarContainer");
+  
+  if (targetEl) targetEl.textContent = currentBroadcastVillage;
+  if (countEl) countEl.textContent = `${currentBroadcastCount} शेतकरी`;
+  if (contentEl) {
+    contentEl.value = `अत्यंत महत्त्वाचे: पशूसचेत व पशुसंवर्धन विभाग अलर्ट. ${currentBroadcastVillage} येथे ${disease || 'लाळ्या खुरकूत (FMD)'} चे संशयित रुग्ण आढळले आहेत. कृपया सर्व जनावरे गोठ्यात बांधून ठेवावीत, चारा-पाणी वेगळे करावे. १९६२ फिरते पथक गावात दाखल होत आहे. - जिल्हाधिकारी कार्यालय.`;
+  }
+  if (pBar) pBar.style.display = "none";
+  if (modal) modal.classList.add("active");
+}
+
+function closeVillageSmsModal() {
+  const modal = document.getElementById("villageSmsModal");
+  if (modal) modal.classList.remove("active");
+}
+
+function executeSmsBroadcast() {
+  const pBarCont = document.getElementById("smsProgressBarContainer");
+  const pBar = document.getElementById("smsProgressBar");
+  const pPct = document.getElementById("smsProgressPercent");
+  const btn = document.getElementById("btnSendSmsBlast");
+  
+  if (pBarCont) pBarCont.style.display = "block";
+  if (btn) btn.disabled = true;
+
+  let progress = 0;
+  const interval = setInterval(() => {
+    progress += 20;
+    if (pBar) pBar.style.width = `${progress}%`;
+    if (pPct) pPct.textContent = `${progress}%`;
+    if (progress >= 100) {
+      clearInterval(interval);
+      setTimeout(() => {
+        showToast(`✓ ${currentBroadcastCount} SMS यशस्वीरित्या पाठवले! (CDAC Gateway)`);
+        closeVillageSmsModal();
+        if (btn) btn.disabled = false;
+        if (pBar) pBar.style.width = "0%";
+      }, 500);
+    }
+  }, 120);
+}
+
+// Government Official Order (GR) Modal Controls
+function viewOfficialOrder(decId) {
+  const modal = document.getElementById("officialOrderModal");
+  const content = document.getElementById("officialOrderContent");
+  if (!modal || !content) return;
+
+  const orders = {
+    "DEC-001": {
+      title: "५ किमी रिंग लसीकरण व जैवसुरक्षा आदेश",
+      grNo: "AH-SURV-2026-DHU-0914",
+      date: "०४ नोव्हेंबर २०२६",
+      authority: "मा. जिल्हाधिकारी व अध्यक्ष, जिल्हा साथरोग नियंत्रण समिती, धुळे",
+      subject: "निमगाव जाळी व लगतच्या ५ किमी परिक्षेत्रात खुरकूत (FMD) प्रादुर्भाव रोखण्यासाठी रिंग लसीकरण मोहीम राबविण्याबाबत.",
+      provisions: [
+        "पशूसचेत प्रणालीद्वारे निमगाव जाळी येथे सलग ४ खुरकूत संशयित केसेस नोंदवण्यात आल्या आहेत.",
+        "साथरोग प्रतिबंधक कायदा २००९ च्या कलम ६ नुसार प्रभावित क्षेत्राभोवती ५ किमी त्रिज्या 'नियंत्रित क्षेत्र' घोषित करण्यात येत आहे.",
+        "१९६२ फिरत्या पथकास (MVU 04) त्वरित २,४०० डोस वितरणासह घटनास्थळी रवाना करण्याचे आदेश देण्यात येत आहेत.",
+        "पुढील ७ दिवस सर्व जनावरांचे आठवडे बाजार तात्पुरते स्थगित राहतील."
+      ]
+    },
+    "DEC-002": {
+      title: "आठवडे बाजार निलंबन व पोलीस चेकपोस्ट आदेश",
+      grNo: "AH-MKT-2026-AHM-0412",
+      date: "०४ नोव्हेंबर २०२६",
+      authority: "जिल्हा पशुसंवर्धन उपआयुक्त (DVO), अहिल्यानगर",
+      subject: "राहाता तालुक्यातील जनावरांच्या आंतरजिल्हा वाहतुकीवर तात्पुरती बंदी व चेकपोस्ट उभारणीबाबत.",
+      provisions: [
+        "संशयित लंपी व खुरकूत विषाणूचा इतर तालुक्यांत प्रसार रोखण्यासाठी राहाता गुरे बाजार बंद ठेवण्यात येत आहे.",
+        "वाहतूक करणाऱ्या सर्व वाहनांचे हायपोक्लोराइट फवारणीद्वारे निर्जंतुकीकरण बंधनकारक राहील.",
+        "स्थानिक पोलीस ठाण्याने तपासणी नाक्यांवर महसूल व पशुसंवर्धन कर्मचाऱ्यांना २४x७ सुरक्षा पुरवावी."
+      ]
+    },
+    "DEC-003": {
+      title: "झुनोटिक ब्रूसेलोसिस दूध संकलन विथड्रॉवल व DHO सूचना",
+      grNo: "AH-ONEHEALTH-2026-NIV-018",
+      date: "०४ नोव्हेंबर २०२६",
+      authority: "जिल्हा आरोग्य अधिकारी (DHO) व जिल्हा पशुसंवर्धन अधिकारी",
+      subject: "संशयित ब्रूसेलोसिस बाधित गोठ्यातील कच्च्या दुधाच्या संकलनावर तात्काळ निर्बंध घालण्याबाबत.",
+      provisions: [
+        "मानवी आरोग्यास संभाव्य धोका (Undulant Fever) लक्षात घेऊन One Health Sentinel सक्रिय करण्यात आले आहे.",
+        "संबंधित बाधित गोठ्यातील दूध बल्क मिल्क कुलर (BMCU) मध्ये मिसळण्यास बंदी घालण्यात आली आहे.",
+        "पशु सखी व आशा सेविका यांनी बाधित शेतकरी कुटुंबातील सर्व व्यक्तींची आरोग्य तपासणी करावी."
+      ]
+    }
+  };
+
+  const ord = orders[decId] || orders["DEC-001"];
+
+  content.innerHTML = `
+    <div style="text-align:center; border-bottom:2px solid #0f172a; padding-bottom:12px; margin-bottom:14px;">
+      <div style="font-size:12px; font-weight:800; letter-spacing:1px; color:#475569;">महाराष्ट्र शासन • पशुसंवर्धन विभाग</div>
+      <h3 style="margin:4px 0; font-size:17px; color:#0f172a; font-weight:800;">${ord.title}</h3>
+      <div style="font-size:11.5px; color:#64748b;">आदेश क्रमांक: <strong>${ord.grNo}</strong> • दिनांक: ${ord.date}</div>
+    </div>
+    <div style="margin-bottom:10px;"><strong>सक्षम प्राधिकारी:</strong> ${ord.authority}</div>
+    <div style="margin-bottom:12px; background:#f8fafc; padding:8px 12px; border-left:3px solid var(--accent-turmeric); border-radius:2px;">
+      <strong>विषय:</strong> ${ord.subject}
+    </div>
+    <div style="margin-bottom:14px;">
+      <strong>आदेशातील प्रमुख तरतुदी:</strong>
+      <ol style="margin:6px 0 0 18px; padding:0; display:flex; flex-direction:column; gap:6px;">
+        ${ord.provisions.map(p => `<li>${p}</li>`).join("")}
+      </ol>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed #cbd5e1; padding-top:12px; margin-top:14px; font-size:11.5px; color:#64748b;">
+      <div>✓ डिजिटल स्वाक्षरी: मा. जिल्हाधिकारी कार्यालय</div>
+      <div>प्रणाली: PashuSachet Surveillance Sentinel (NIC)</div>
+    </div>
+  `;
+
+  modal.classList.add("active");
+  if (typeof renderIcons === 'function') renderIcons();
+}
+
+function closeOfficialOrderModal() {
+  const modal = document.getElementById("officialOrderModal");
+  if (modal) modal.classList.remove("active");
+}
+
+// Para-Vet Vitals Modal Controls
+function promptSignalVitals(id) {
+  const modal = document.getElementById("paravetVitalsModal");
+  const idInput = document.getElementById("vitalsSignalId");
+  if (idInput) idInput.value = id;
+  if (modal) modal.classList.add("active");
+}
+
+function closeParavetVitalsModal() {
+  const modal = document.getElementById("paravetVitalsModal");
+  if (modal) modal.classList.remove("active");
+}
+
+function submitParavetVitals() {
+  const id = document.getElementById("vitalsSignalId").value;
+  const temp = document.getElementById("vitalsTemp").value;
+  const notes = document.getElementById("vitalsNotes").value;
+  
+  const sig = villageSignals.find(s => s.id === id);
+  if (sig) {
+    sig.status = "VERIFIED_ON_FARM";
+    sig.verifiedBy = "सुनिता पाटील (Pashu Sakhi)";
+    sig.verifiedTemp = `${temp}°F`;
+    sig.verifiedAt = "आत्ताच";
+  }
+
+  showToast(`सिग्नल #${id} प्रत्यक्ष पडताळणी पूर्ण! तापमान: ${temp}°F.`);
+  closeParavetVitalsModal();
+  renderParavetInbox();
+  renderVillageSignalBoard();
+}
+
+// RDDL Real-time RT-PCR Simulation Controls
+function openRddlPcrModal(sampleId) {
+  const modal = document.getElementById("rddlPcrModal");
+  const idEl = document.getElementById("pcrSampleId");
+  const runState = document.getElementById("pcrRunningState");
+  const resState = document.getElementById("pcrResultState");
+  const countEl = document.getElementById("pcrCycleCount");
+  const pBar = document.getElementById("pcrProgress");
+  const btn = document.getElementById("btnRunPcr");
+
+  if (idEl) idEl.textContent = sampleId || "SMP-2026-041";
+  if (runState) runState.style.display = "block";
+  if (resState) resState.style.display = "none";
+  if (countEl) countEl.textContent = "Cycle: 0 / 40";
+  if (pBar) pBar.style.width = "0%";
+  if (btn) btn.disabled = false;
+  if (modal) modal.classList.add("active");
+}
+
+function closeRddlPcrModal() {
+  const modal = document.getElementById("rddlPcrModal");
+  if (modal) modal.classList.remove("active");
+}
+
+function startRtPcrThermocycler() {
+  const countEl = document.getElementById("pcrCycleCount");
+  const pBar = document.getElementById("pcrProgress");
+  const btn = document.getElementById("btnRunPcr");
+  const resState = document.getElementById("pcrResultState");
+
+  if (btn) btn.disabled = true;
+  let cycle = 0;
+  const interval = setInterval(() => {
+    cycle += 4;
+    if (countEl) countEl.textContent = `Cycle: ${cycle} / 40 (Denaturation 95°C / Annealing 60°C)`;
+    if (pBar) pBar.style.width = `${(cycle / 40) * 100}%`;
+
+    if (cycle >= 40) {
+      clearInterval(interval);
+      if (resState) resState.style.display = "block";
+      showToast("✓ RT-PCR चाचणी पूर्ण: FMDV Serotype O पॉझिटिव्ह (Ct 18.42)!");
+      advanceSampleStage("SMP-2026-041");
+    }
+  }, 100);
+}
+
+
+
+// ==========================================================================
+// REAL TACTILE ACTIONS FOR VILLAGE SIGNALS & GIS OPERATIONS
+// ==========================================================================
+
+function focusVillageOnMap(village, x, y, disease, count) {
+  const gisSection = document.getElementById("outbreak-gis") || document.getElementById("workspaceOfficer");
+  const svgMap = document.getElementById("gisSvgMap");
+  const inspector = document.getElementById("mapPinInspector");
+  const details = document.getElementById("mapPinDetails");
+
+  if (svgMap) {
+    // Add glowing targeting circle if not exists
+    let reticle = document.getElementById("mapTargetReticle");
+    if (!reticle) {
+      reticle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      reticle.setAttribute("id", "mapTargetReticle");
+      reticle.setAttribute("r", "28");
+      reticle.setAttribute("fill", "rgba(221, 167, 58, 0.35)");
+      reticle.setAttribute("stroke", "#DDA73A");
+      reticle.setAttribute("stroke-width", "3");
+      reticle.setAttribute("stroke-dasharray", "4");
+      svgMap.appendChild(reticle);
+    }
+    reticle.setAttribute("cx", x || 340);
+    reticle.setAttribute("cy", y || 180);
+    reticle.style.display = "block";
+  }
+
+  if (inspector && details) {
+    inspector.style.display = "block";
+    details.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div class="brand-emblem" style="color:var(--urgency-critical);"><span data-icon="map-pin" data-size="16"></span></div>
+          <strong style="font-size:15px; color:var(--ink-primary);">${village}</strong>
+        </div>
+        <span class="badge-pill" style="background:var(--urgency-critical-light); color:var(--urgency-critical);">
+          ${count || 4} Signals Verified
+        </span>
+      </div>
+      <div style="font-size:13px; color:var(--ink-secondary); margin:8px 0;">
+        संशयित आजार: <strong style="color:var(--urgency-critical);">${disease || 'FMD (लाळ्या खुरकूत)'}</strong> | अधिकारक्षेत्र: <strong>CVD साक्री व संगमनेर</strong>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+        <button type="button" class="btn btn-sm btn-primary" onclick="dispatchMvuToVillage('${village}', '${disease}')">
+          <span data-icon="truck" data-size="14"></span>
+          <span>१९६२ पथक रवाना करा</span>
+        </button>
+        <button type="button" class="btn btn-sm btn-outline" onclick="openVillageSmsBroadcastModal('${village}', '${disease}', 480)">
+          <span data-icon="send" data-size="14"></span>
+          <span>GP SMS सूचना पाठवा</span>
+        </button>
+        <button type="button" class="btn btn-sm btn-danger" onclick="enforceRingQuarantine('${village}', '${disease}')">
+          <span data-icon="shield-alert" data-size="14"></span>
+          <span>५ किमी रिंग विलगीकरण</span>
+        </button>
+        <button type="button" class="btn btn-sm btn-outline" onclick="exportNadresBatch()">
+          <span data-icon="download" data-size="14"></span>
+          <span>NADRES V2 निर्यात</span>
+        </button>
+      </div>
+    `;
+    if (typeof renderIcons === 'function') renderIcons();
+  }
+
+  showToast(`नकाशावर लक्ष्यित केले: ${village}.`);
+}
+
+let mvuCountdownTimer = null;
+
+function dispatchMvuToVillage(village, disease) {
+  const card = document.getElementById("mvuDispatchCard");
+  const ticket = document.getElementById("mvuTicketDetails");
+  const gps = document.getElementById("mvuGpsDist");
+
+  if (ticket) {
+    ticket.innerHTML = `<strong>सद्यस्थिती:</strong> ${village} कडे तातडीने रवाना • अंतर: ३.४ किमी • चालक: मोहन शिंदे (MH-17-AG-1962)`;
+  }
+  if (gps) {
+    gps.innerHTML = `<span style="color:var(--urgency-critical); font-weight:700;">🚨 LIVE GPS DISPATCH: ३२ किमी/तास गती • सायरन चालू • अंदाजे पोहोच: <span id="mvuLiveEta">०८:४५ मिनिटे</span></span>`;
+  }
+
+  if (mvuCountdownTimer) clearInterval(mvuCountdownTimer);
+  let seconds = 525; // 8 mins 45s
+  mvuCountdownTimer = setInterval(() => {
+    seconds--;
+    if (seconds <= 0) {
+      clearInterval(mvuCountdownTimer);
+      if (gps) gps.innerHTML = `<span style="color:var(--status-success); font-weight:700;">✓ घटनास्थळी दाखल (ON-SCENE AT ${village}) • तपासणी व लसीकरण सुरू!</span>`;
+      showToast(`१९६२ फिरते पथक ${village} येथे दाखल झाले!`);
+    } else {
+      const mins = Math.floor(seconds / 60);
+      const remSecs = seconds % 60;
+      const etaEl = document.getElementById("mvuLiveEta");
+      if (etaEl) etaEl.textContent = `${String(mins).padStart(2, '0')}:${String(remSecs).padStart(2, '0')} मिनिटे`;
+    }
+  }, 1000);
+
+  if (typeof playMvuSirenTone === 'function') {
+    try { playMvuSirenTone(); } catch(e) {}
+  }
+
+  showToast(`१९६२ फिरते पथक (MVU Unit 04) ${village} साठी रवाना!`);
+}
+
+function enforceRingQuarantine(village, disease) {
+  if (typeof ringVaxActive !== 'undefined' && !ringVaxActive) {
+    toggleRingVaxRadius();
+  }
+  showToast(`५ किमी रिंग विलगीकरण आदेश जारी (Sec 144 / Animal Contagious Disease Act) around ${village}!`);
+}
+
+
+
+// ==========================================================================
+// V2 APP SHELL NAVIGATION ENGINE: DESKTOP SIDEBAR + MOBILE BOTTOM BAR
+// ==========================================================================
+
+const ROLE_NAV_SPECS = {
+  farmer: {
+    userName: "एकनाथराव पाटील",
+    roleLabel: "शेतकरी (साक्री बीट)",
+    avatar: "EB",
+    items: [
+      { id: 'viewFarmerHome', labelMr: 'आजची काळजी (Home)', labelEn: "Today's Care", icon: 'home', badge: '' },
+      { id: 'viewFarmerTriage', labelMr: 'लक्षणे नोंदवा (Report)', labelEn: 'Start Health Check', icon: 'stethoscope', badge: '९० से.' },
+      { id: 'viewFarmerAnimals', labelMr: 'माझी जनावरे (Animals)', labelEn: 'My Animals', icon: 'tag', badge: '३' },
+      { id: 'viewFarmerCases', labelMr: 'रुग्ण नोंदवही (Cases)', labelEn: 'Active Cases', icon: 'file-text', badge: '१ चालू' },
+      { id: 'viewFarmerVets', labelMr: 'पशुवैद्यकीय दवाखाने', labelEn: 'Vet Care Directory', icon: 'phone-call', badge: '' }
+    ]
+  },
+  paravet: {
+    userName: "सुनिता पाटील",
+    roleLabel: "पशु सखी (साक्री व ५ गावे)",
+    avatar: "SP",
+    items: [
+      { id: 'paravetSignalsContainer', labelMr: 'पडताळणी रांग (Queue)', labelEn: 'Verification Queue', icon: 'clipboard-check', badge: '३ प्रलंबित' },
+      { id: 'paravetVillageSelect', labelMr: 'गाव निवड व फिल्टर', labelEn: 'Village Filter', icon: 'filter', badge: '५ गावे' },
+      { id: 'sampleSignalCount', labelMr: 'नमुना किट्स (Samples)', labelEn: 'Diagnostic Kits', icon: 'flask', badge: '२' },
+      { id: 'outbreak-gis', labelMr: 'गाव नकाशा (Field Map)', labelEn: 'Village Map', icon: 'map-pin', badge: '' }
+    ]
+  },
+  ldo: {
+    userName: "डॉ. रामेश्वर कुटे",
+    roleLabel: "पशुवैद्यकीय अधिकारी (साक्री)",
+    avatar: "RK",
+    items: [
+      { id: 'vetAppointmentsContainer', labelMr: 'दवाखाना अपॉइंटमेंट्स', labelEn: 'Appointments', icon: 'calendar', badge: '३' },
+      { id: 'vetCasesContainer', labelMr: 'AI-रेफर्ड तातडीच्या केसेस', labelEn: 'Referred Cases', icon: 'alert-triangle', badge: '२' },
+      { id: 'prescribeForm', labelMr: 'डिजिटल प्रिस्क्रिप्शन (Rx)', labelEn: 'Prescription Engine', icon: 'pill', badge: 'दूध सुरक्षा' },
+      { id: 'outbreak-gis', labelMr: 'साथरोग नियंत्रण नकाशा', labelEn: 'Epidemic Map', icon: 'map-pin', badge: '' }
+    ]
+  },
+  vet: {
+    userName: "डॉ. रामेश्वर कुटे",
+    roleLabel: "पशुवैद्यकीय अधिकारी (साक्री)",
+    avatar: "RK",
+    items: [
+      { id: 'vetAppointmentsContainer', labelMr: 'दवाखाना अपॉइंटमेंट्स', labelEn: 'Appointments', icon: 'calendar', badge: '३' },
+      { id: 'vetCasesContainer', labelMr: 'AI-रेफर्ड तातडीच्या केसेस', labelEn: 'Referred Cases', icon: 'alert-triangle', badge: '२' },
+      { id: 'prescribeForm', labelMr: 'डिजिटल प्रिस्क्रिप्शन (Rx)', labelEn: 'Prescription Engine', icon: 'pill', badge: 'दूध सुरक्षा' },
+      { id: 'outbreak-gis', labelMr: 'साथरोग नियंत्रण नकाशा', labelEn: 'Epidemic Map', icon: 'map-pin', badge: '' }
+    ]
+  },
+  collector: {
+    userName: "जिल्हाधिकारी कार्यालय",
+    roleLabel: "जिल्हा नियंत्रण कक्ष (धुळे)",
+    avatar: "DC",
+    items: [
+      { id: 'villageSignalsGrid', labelMr: 'गाव पातळीवरील सिग्नल', labelEn: 'Village Signal Board', icon: 'activity', badge: '४ गावे' },
+      { id: 'officerDecisionQueue', labelMr: 'सकाळची निर्णय रांग', labelEn: 'Decision Queue', icon: 'shield', badge: '३ प्रलंबित' },
+      { id: 'gisSvgMap', labelMr: 'साथरोग अंदाज व ५ किमी रिंग', labelEn: 'SEIR GIS Map', icon: 'map-pin', badge: '५ किमी' },
+      { id: 'mvuDispatchCard', labelMr: '१९६२ फिरते पथक (MVU)', labelEn: 'MVU Live Dispatch', icon: 'truck', badge: 'लाइव्ह' }
+    ]
+  },
+  officer: {
+    userName: "जिल्हाधिकारी कार्यालय",
+    roleLabel: "जिल्हा नियंत्रण कक्ष (धुळे)",
+    avatar: "DC",
+    items: [
+      { id: 'villageSignalsGrid', labelMr: 'गाव पातळीवरील सिग्नल', labelEn: 'Village Signal Board', icon: 'activity', badge: '४ गावे' },
+      { id: 'officerDecisionQueue', labelMr: 'सकाळची निर्णय रांग', labelEn: 'Decision Queue', icon: 'shield', badge: '३ प्रलंबित' },
+      { id: 'gisSvgMap', labelMr: 'साथरोग अंदाज व ५ किमी रिंग', labelEn: 'SEIR GIS Map', icon: 'map-pin', badge: '५ किमी' },
+      { id: 'mvuDispatchCard', labelMr: '१९६२ फिरते पथक (MVU)', labelEn: 'MVU Live Dispatch', icon: 'truck', badge: 'लाइव्ह' }
+    ]
+  },
+  rddl: {
+    userName: "राज्य रोग निदान प्रयोगशाळा",
+    roleLabel: "विभागीय प्रयोगशाळा (पुणे)",
+    avatar: "RD",
+    items: [
+      { id: 'sampleCardsContainer', labelMr: 'सक्रिय नमुना ट्रॅकिंग', labelEn: 'Sample Pipeline', icon: 'flask', badge: '१ सक्रिय' },
+      { id: 'rddlPcrAction', labelMr: 'RT-PCR चाचणी विश्लेषण', labelEn: 'RT-PCR Thermocycler', icon: 'cpu', badge: '४० सायकल' },
+      { id: 'nadresPayloadBox', labelMr: 'ICAR-NIVEDI NADRES V2', labelEn: 'NADRES Export', icon: 'download', badge: 'DPDP' }
+    ]
+  },
+  admin: {
+    userName: "राज्य रोग निदान प्रयोगशाळा",
+    roleLabel: "विभागीय प्रयोगशाळा (पुणे)",
+    avatar: "RD",
+    items: [
+      { id: 'sampleCardsContainer', labelMr: 'सक्रिय नमुना ट्रॅकिंग', labelEn: 'Sample Pipeline', icon: 'flask', badge: '१ सक्रिय' },
+      { id: 'rddlPcrAction', labelMr: 'RT-PCR चाचणी विश्लेषण', labelEn: 'RT-PCR Thermocycler', icon: 'cpu', badge: '४० सायकल' },
+      { id: 'nadresPayloadBox', labelMr: 'ICAR-NIVEDI NADRES V2', labelEn: 'NADRES Export', icon: 'download', badge: 'DPDP' }
+    ]
+  }
+};
+
+function renderSidebarNav(role) {
+  const sidebar = document.getElementById("sidebarNavList");
+  const userEl = document.getElementById("sidebarUserName");
+  const roleEl = document.getElementById("sidebarRoleLabel");
+  const avatarEl = document.getElementById("sidebarAvatar");
+
+  const spec = ROLE_NAV_SPECS[role] || ROLE_NAV_SPECS.farmer;
+  const isMr = (typeof currentLang === 'undefined' || currentLang === 'mr');
+
+  if (userEl) userEl.textContent = spec.userName;
+  if (roleEl) roleEl.textContent = spec.roleLabel;
+  if (avatarEl) avatarEl.textContent = spec.avatar;
+
+  if (sidebar) {
+    sidebar.innerHTML = spec.items.map((item, idx) => `
+      <div class="sidebar-nav-item ${idx === 0 ? 'active' : ''}" data-target="${item.id}" onclick="navigateToAppSection('${item.id}', '${role}', this)">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span data-icon="${item.icon}" data-size="16"></span>
+          <span>${isMr ? item.labelMr : item.labelEn}</span>
+        </div>
+        ${item.badge ? `<span class="sidebar-nav-badge">${item.badge}</span>` : ''}
+      </div>
+    `).join("");
+  }
+
+  // Update topbar segmented control buttons
+  const segmentedMap = {
+    farmer: 'btnPersonaFarmer',
+    paravet: 'btnPersonaParavet',
+    ldo: 'btnPersonaLdo',
+    vet: 'btnPersonaLdo',
+    collector: 'btnPersonaCollector',
+    officer: 'btnPersonaCollector',
+    rddl: 'btnPersonaRddl',
+    admin: 'btnPersonaRddl'
+  };
+  document.querySelectorAll('.persona-tab-btn').forEach(b => b.classList.remove('active'));
+  const activeBtn = document.getElementById(segmentedMap[role]);
+  if (activeBtn) activeBtn.classList.add('active');
+
+  // Also render mobile bottom tabs
+  renderBottomTabBar(role);
+
+  if (typeof renderIcons === 'function') renderIcons();
+}
+
+function renderBottomTabBar(role) {
+  const bottomBar = document.getElementById("appMobileBottomBar");
+  if (!bottomBar) return;
+
+  const spec = ROLE_NAV_SPECS[role] || ROLE_NAV_SPECS.farmer;
+  const isMr = (typeof currentLang === 'undefined' || currentLang === 'mr');
+
+  bottomBar.innerHTML = spec.items.slice(0, 5).map((item, idx) => `
+    <button type="button" class="bottom-tab-item ${idx === 0 ? 'active' : ''}" data-target="${item.id}" onclick="navigateToAppSection('${item.id}', '${role}', this)">
+      <span data-icon="${item.icon}" data-size="18"></span>
+      <span>${isMr ? item.labelMr.split(' ')[0] : item.labelEn.split(' ')[0]}</span>
+    </button>
+  `).join("");
+
+  if (typeof renderIcons === 'function') renderIcons();
+}
+
+function navigateToAppSection(targetId, role, btnEl) {
+  // Update active state in sidebar and bottom bar
+  document.querySelectorAll(`.sidebar-nav-item, .bottom-tab-item`).forEach(el => {
+    if (el.getAttribute('data-target') === targetId) {
+      el.classList.add('active');
+    } else {
+      el.classList.remove('active');
+    }
+  });
+
+  // Action dispatches
+  if (targetId === 'rddlPcrAction') {
+    openRddlPcrModal("SMP-2026-041");
+    return;
+  }
+
+  if (targetId.startsWith('viewFarmer')) {
+    switchNotebookTab(targetId);
+    return;
+  }
+
+  if (targetId === 'vetAppointmentsContainer') {
+    switchVetTab('apts');
+    const el = document.getElementById('vetAppointmentsContainer');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+
+  if (targetId === 'vetCasesContainer') {
+    switchVetTab('cases');
+    const el = document.getElementById('vetCasesContainer');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+
+  // Smooth scroll to container within main content
+  const el = document.getElementById(targetId);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    el.style.transition = 'box-shadow 0.3s ease';
+    el.style.boxShadow = '0 0 0 3px var(--accent-turmeric)';
+    setTimeout(() => { el.style.boxShadow = ''; }, 1200);
+  }
+}

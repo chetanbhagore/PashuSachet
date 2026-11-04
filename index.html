@@ -566,7 +566,21 @@
        3. AUTHENTICATED APP SHELL (The Full-Screen Village Care Notebook)
        ====================================================================== -->
   <div id="authenticatedAppShell" class="authenticated-app-shell" style="display: none;">
-<header class="site-topbar">
+  <!-- PERSISTENT DEMO BANNER -->
+  <div class="app-demo-banner" id="appDemoBanner">
+    <div class="demo-banner-inner">
+      <div style="display:flex; align-items:center;">
+        <span class="demo-banner-dot"></span>
+        <span class="demo-banner-text">
+          <strong>पशूसचेत • प्रत्यक्ष फील्ड प्रणाली (Field Sentinel Demo)</strong> — Bharat Pashudhan (NDLM), 1962 फिरते पशुवैद्यकीय पथक व ICAR-NIVEDI NADRES V2 डेटा sync सक्रिय.
+        </span>
+      </div>
+      <span class="demo-banner-pill">LIVE SENTINEL DEMO</span>
+    </div>
+  </div>
+
+  <!-- FIXED FULL-WIDTH TOPBAR -->
+  <header class="site-topbar">
     <div class="topbar-brand">
       <div class="brand-emblem">
         <span data-icon="shield" data-size="20"></span>
@@ -577,33 +591,59 @@
       </div>
     </div>
 
+    <!-- CENTER PERSONA SWITCHER (5 ROLES SEGMENTED CONTROL) -->
     <div class="topbar-center-role">
-      <div class="role-switcher-capsule" id="appRoleBadge" onclick="openRoleSwitcher()" title="भूमिका बदला (Switch Role)">
-        <span data-icon="user" data-size="14"></span>
-        <span id="appRoleText">शेतकरी (Farmer)</span> • <span id="appBeatText">साक्री, धुळे</span>
-        <span data-icon="chevron-down" data-size="12"></span>
+      <div class="persona-segmented-control" id="personaSegmentedControl">
+        <button type="button" class="persona-tab-btn active" id="btnPersonaFarmer" onclick="activatePersona('farmer')">
+          <span data-icon="home" data-size="14"></span>
+          <span>शेतकरी</span>
+        </button>
+        <button type="button" class="persona-tab-btn" id="btnPersonaParavet" onclick="activatePersona('paravet')">
+          <span data-icon="clipboard-check" data-size="14"></span>
+          <span>पशु सखी</span>
+        </button>
+        <button type="button" class="persona-tab-btn" id="btnPersonaLdo" onclick="activatePersona('ldo')">
+          <span data-icon="stethoscope" data-size="14"></span>
+          <span>LDO डॉक्टर</span>
+        </button>
+        <button type="button" class="persona-tab-btn" id="btnPersonaCollector" onclick="activatePersona('collector')">
+          <span data-icon="building-2" data-size="14"></span>
+          <span>जिल्हाधिकारी / DVO</span>
+        </button>
+        <button type="button" class="persona-tab-btn" id="btnPersonaRddl" onclick="activatePersona('rddl')">
+          <span data-icon="flask" data-size="14"></span>
+          <span>RDDL लॅब</span>
+        </button>
       </div>
+
+      <!-- Sync Status Indicator -->
       <div class="sync-status-indicator" id="syncStatusBadge">
         <span class="sync-dot"></span>
         <span id="syncStatusLabel">ऑफलाइन सक्षम • २ मि. पूर्वी</span>
       </div>
+      <div id="appRoleBadge" style="display:none;" onclick="openRoleSwitcher()"><span id="appRoleText"></span><span id="appBeatText"></span></div>
     </div>
 
+    <!-- RIGHT TOPBAR ACTIONS -->
     <div class="topbar-actions">
-      <button class="emergency-pill-btn" id="emergencyPillBtn" onclick="openEmergencyModal()">
+      <!-- 1962 Emergency Pill -->
+      <button class="emergency-pill-btn" id="emergencyPillBtn" onclick="openEmergencyModal()" title="1962 टोल-फ्री तातडीची सेवा">
         <span data-icon="phone-call" data-size="15"></span>
-        <span>1962</span>
+        <span>१९६२</span>
       </button>
 
-      
+      <!-- Language Switcher -->
+      <button class="lang-switch-btn" id="langSwitchBtn" onclick="toggleLanguage()" title="भाषा बदला (EN / मराठी)">
+        <span id="langCurrentText">EN</span>
+      </button>
+
+      <!-- Return to Landing -->
       <button class="lang-switch-btn" onclick="showLandingPage()" title="मुख्य पानावर जा (Exit to Landing)">
         <span data-icon="home" data-size="13"></span>
         <span style="margin-left: 4px;">मुख्य पान</span>
       </button>
-      <button class="lang-switch-btn" id="langSwitchBtn" onclick="toggleLanguage()">
-        <span id="langCurrentText">EN</span>
-      </button>
 
+      <!-- User Profile Dropdown Pill -->
       <button class="profile-capsule-btn" id="profileDropdownBtn" onclick="openRoleSwitcher()">
         <span class="profile-avatar-circle" id="userAvatarText">EB</span>
         <span id="userNameHeader" style="font-size: 13px;">एकनाथराव</span>
@@ -612,17 +652,44 @@
     </div>
   </header>
 
-  <!-- ======================================================================
-       ROLE-ISOLATED SUBNAV BAR (Clean Notebook Navigation)
-       ====================================================================== -->
-  <nav class="role-subnav-bar" id="roleSubnavBar">
-    <!-- Dynamically rendered based on active persona -->
+  <!-- SUBNAV BAR (Hidden or Secondary Fallback) -->
+  <nav class="role-subnav-bar" id="roleSubnavBar" style="display:none;">
   </nav>
 
-  <!-- ======================================================================
-       MAIN APPLICATION WORKSPACE CANVAS
-       ====================================================================== -->
-  <main class="app-container">
+  <!-- APP SHELL BODY (SIDEBAR + MAIN WORKSPACE CANVAS) -->
+  <div class="app-shell-body">
+    <!-- DESKTOP LEFT SIDEBAR -->
+    <aside class="app-sidebar" id="appDesktopSidebar">
+      <div class="sidebar-user-card">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="profile-avatar-circle" id="sidebarAvatar">EB</div>
+          <div style="flex:1; overflow:hidden;">
+            <div style="font-weight:700; font-size:14px; color:var(--ink-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" id="sidebarUserName">एकनाथराव पाटील</div>
+            <div style="font-size:11.5px; color:var(--ink-secondary);" id="sidebarRoleLabel">शेतकरी (साक्री बीट)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DYNAMIC ROLE NAVIGATION LIST -->
+      <nav class="sidebar-nav-menu" id="sidebarNavList">
+        <!-- Rendered dynamically by renderSidebarNav(role) -->
+      </nav>
+
+      <!-- SIDEBAR PINNED BOTTOM ACTIONS -->
+      <div class="sidebar-bottom-actions">
+        <a href="tel:1962" class="sidebar-action-item emergency">
+          <span data-icon="phone-call" data-size="16"></span>
+          <span>१९६२ फिरते पथक कॉल</span>
+        </a>
+        <button type="button" class="sidebar-action-item" onclick="openAboutBlueprintModal()">
+          <span data-icon="info" data-size="16"></span>
+          <span>प्रणाली रूपरेषा (About)</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN SCROLLABLE WORKSPACE (FULL REMAINING SCREEN WIDTH) -->
+    <main class="app-main-content app-container" id="appMainContent">
 
     <!-- ====================================================================
          WORKSPACE 1: SHETKARI / FARMER (The Personal Animal-Care Notebook)
@@ -1670,6 +1737,172 @@
   <!-- ======================================================================
        LEGACY COMPATIBILITY TEST STORE (Preserves all required IDs and strings)
        ====================================================================== -->
+  
+  <!-- ======================================================================
+       OPERATIONAL MODAL 1: GRAM PANCHAYAT EMERGENCY SMS BROADCAST
+       ====================================================================== -->
+  <div class="notebook-modal-overlay" id="villageSmsModal">
+    <div class="notebook-modal-card" style="max-width: 520px;">
+      <div class="modal-header-row">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div class="brand-emblem" style="color:var(--urgency-critical);"><span data-icon="send" data-size="18"></span></div>
+          <h2 class="modal-title-text">ग्रामपंचायत तातडीचा SMS अलर्ट (Emergency Blast)</h2>
+        </div>
+        <button class="btn-close-modal" onclick="closeVillageSmsModal()"><span data-icon="x" data-size="16"></span></button>
+      </div>
+      <div style="margin-top:14px;">
+        <div style="background:var(--bg-paper-subtle); padding:12px; border-radius:var(--radius-sm); font-size:13px; margin-bottom:12px;">
+          <div><strong>लक्ष्यित गाव:</strong> <span id="smsTargetVillage">निमगाव जाळी (Nimgaon Jali)</span></div>
+          <div style="margin-top:3px;"><strong>नोंदणीकृत पशुपालक:</strong> <span id="smsTargetCount" style="color:var(--status-info); font-weight:700;">480 शेतकरी</span></div>
+          <div style="margin-top:3px;"><strong>प्रसारण गेटवे:</strong> CDAC e-Gov SMS Gateway (Bulk Push)</div>
+        </div>
+        <label style="font-size:12px; font-weight:600; color:var(--ink-secondary);">मराठी संदेश मसुदा (SMS Template)</label>
+        <textarea id="smsMessageContent" class="notebook-input" rows="4" style="margin-top:4px; font-size:13px; line-height:1.5; resize:none;">अत्यंत महत्त्वाचे: पशूसचेत व पशुसंवर्धन विभाग अलर्ट. गावात लाळ्या खुरकूत (FMD) संशयित रुग्ण आढळले आहेत. कृपया सर्व जनावरे गोठ्यात बांधून ठेवावीत, चारा-पाणी वेगळे करावे. १९६२ फिरते पथक गावात दाखल होत आहे. - जिल्हाधिकारी कार्यालय.</textarea>
+        
+        <div id="smsProgressBarContainer" style="display:none; margin:14px 0;">
+          <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; margin-bottom:4px;">
+            <span>SMS पाठवले जात आहेत...</span>
+            <span id="smsProgressPercent">0%</span>
+          </div>
+          <div style="height:6px; background:var(--border-subtle); border-radius:3px; overflow:hidden;">
+            <div id="smsProgressBar" style="width:0%; height:100%; background:var(--status-success); transition:width 0.3s ease;"></div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:16px;">
+          <button type="button" class="btn btn-outline" onclick="closeVillageSmsModal()" style="flex:1;">रद्द करा</button>
+          <button type="button" class="btn btn-primary" id="btnSendSmsBlast" onclick="executeSmsBroadcast()" style="flex:2;">
+            <span data-icon="send" data-size="14"></span>
+            <span>तातडीने SMS पाठवा (Broadcast)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       OPERATIONAL MODAL 2: OFFICIAL GOVERNMENT ORDER (GR) VIEWER
+       ====================================================================== -->
+  <div class="notebook-modal-overlay" id="officialOrderModal">
+    <div class="notebook-modal-card" style="max-width: 600px;">
+      <div class="modal-header-row">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div class="brand-emblem" style="color:var(--accent-turmeric);"><span data-icon="file-text" data-size="18"></span></div>
+          <h2 class="modal-title-text">अधिकृत शासन निर्णय (Government Order)</h2>
+        </div>
+        <button class="btn-close-modal" onclick="closeOfficialOrderModal()"><span data-icon="x" data-size="16"></span></button>
+      </div>
+      <div id="officialOrderContent" style="margin-top:14px; background:#FFFFFF; border:1px solid var(--border-medium); padding:20px; border-radius:var(--radius-sm); font-size:13px; line-height:1.6; color:#1e293b;">
+        <!-- Populated dynamically by viewOfficialOrder() -->
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+        <button type="button" class="btn btn-outline" onclick="window.print()">
+          <span data-icon="printer" data-size="14"></span>
+          <span>प्रत मुद्रित करा (Print)</span>
+        </button>
+        <button type="button" class="btn btn-primary" onclick="closeOfficialOrderModal()">
+          <span>समजले (Done)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       OPERATIONAL MODAL 3: PARA-VET ON-FARM VITALS ENTRY
+       ====================================================================== -->
+  <div class="notebook-modal-overlay" id="paravetVitalsModal">
+    <div class="notebook-modal-card" style="max-width: 480px;">
+      <div class="modal-header-row">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div class="brand-emblem" style="color:var(--status-success);"><span data-icon="clipboard-check" data-size="18"></span></div>
+          <h2 class="modal-title-text">गोठा पातळीवर शारीरिक तपासणी (On-Farm Vitals)</h2>
+        </div>
+        <button class="btn-close-modal" onclick="closeParavetVitalsModal()"><span data-icon="x" data-size="16"></span></button>
+      </div>
+      <form id="paravetVitalsForm" onsubmit="event.preventDefault(); submitParavetVitals();" style="margin-top:14px;">
+        <input type="hidden" id="vitalsSignalId">
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <div>
+            <label style="font-size:12px; font-weight:600; color:var(--ink-secondary);">गुदाशय तापमान (Rectal Temp °F)</label>
+            <input type="number" id="vitalsTemp" class="notebook-input" value="103.8" step="0.1" required>
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:600; color:var(--ink-secondary);">रवंथ हालचाल (Rumination/min)</label>
+            <select id="vitalsRumination" class="notebook-input">
+              <option value="depressed">मंदावलेली (१ पेक्षा कमी / २ मिनिटे) - गंभीर</option>
+              <option value="normal">सामान्य (२ ते ३ / २ मिनिटे)</option>
+              <option value="absent">पूर्णपणे बंद (Absent) - तातडीची केस</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:600; color:var(--ink-secondary);">तोंडातील / खुरांमधील फोड (Vesicular Lesions)</label>
+            <select id="vitalsLesions" class="notebook-input">
+              <option value="present_ruptured">फोड फुटून जखमा झालेल्या (Erosions Present)</option>
+              <option value="present_intact">ताजे फोड (Intact Vesicles)</option>
+              <option value="nodules">त्वचेवर कडक गाठी (LSD Nodules)</option>
+              <option value="none">काहीही नाही (None)</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:600; color:var(--ink-secondary);">पशु सखी शेरा (Field Observations)</label>
+            <input type="text" id="vitalsNotes" class="notebook-input" value="लाळ गळत आहे, जनावराला चालताना त्रास होतोय. तात्काळ पशुवैद्यकीय अधिकारी तपासणीची गरज." required>
+          </div>
+          <div style="display:flex; gap:10px; margin-top:8px;">
+            <button type="button" class="btn btn-outline" onclick="closeParavetVitalsModal()" style="flex:1;">रद्द करा</button>
+            <button type="submit" class="btn btn-primary" style="flex:2;">
+              <span>नोंद जतन करा व पाठवा</span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       OPERATIONAL MODAL 4: RDDL REAL-TIME RT-PCR SIMULATOR
+       ====================================================================== -->
+  <div class="notebook-modal-overlay" id="rddlPcrModal">
+    <div class="notebook-modal-card" style="max-width: 540px;">
+      <div class="modal-header-row">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div class="brand-emblem" style="color:var(--ink-secondary);"><span data-icon="flask" data-size="18"></span></div>
+          <h2 class="modal-title-text">RDDL RT-PCR विश्‍लेषण (Thermocycler Run)</h2>
+        </div>
+        <button class="btn-close-modal" onclick="closeRddlPcrModal()"><span data-icon="x" data-size="16"></span></button>
+      </div>
+      <div style="margin-top:14px;">
+        <div style="font-size:13px; color:var(--ink-secondary); margin-bottom:12px;">
+          नमुना क्र.: <strong id="pcrSampleId">SMP-2026-041</strong> • लक्ष्यित विषाणू: <strong>Foot and Mouth Disease Virus (FMDV Serotype O)</strong>
+        </div>
+        
+        <div id="pcrRunningState" style="text-align:center; padding:20px; background:var(--bg-paper-subtle); border-radius:var(--radius-sm);">
+          <div style="font-size:24px; font-weight:800; font-family:var(--font-mono); color:var(--accent-turmeric);" id="pcrCycleCount">Cycle: 0 / 40</div>
+          <div style="font-size:12px; color:var(--ink-secondary); margin-top:4px;">TaqMan Real-Time Fluorogenic Probe Active...</div>
+          <div style="height:6px; background:var(--border-subtle); border-radius:3px; overflow:hidden; margin-top:14px;">
+            <div id="pcrProgress" style="width:0%; height:100%; background:var(--accent-turmeric); transition:width 0.1s linear;"></div>
+          </div>
+        </div>
+
+        <div id="pcrResultState" style="display:none; margin-top:14px; background:#f0fdf4; border:1px solid #bbf7d0; padding:16px; border-radius:var(--radius-sm);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color:#166534; font-size:15px;">✓ RT-PCR निकाल: पॉझिटिव्ह (POSITIVE)</strong>
+            <span class="badge-pill" style="background:#dcfce7; color:#15803d;">Ct = 18.42</span>
+          </div>
+          <p style="font-size:13px; color:#1e293b; margin:8px 0 0; line-height:1.5;">
+            उच्च विषाणू भार (High Viral Load detected). ICAR-NIVEDI NADRES V2 राष्ट्रीय डेटाबेसमध्ये स्वयंचलित नोंदणी पूर्ण.
+          </p>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+          <button type="button" class="btn btn-outline" onclick="closeRddlPcrModal()">बंद करा</button>
+          <button type="button" class="btn btn-primary" id="btnRunPcr" onclick="startRtPcrThermocycler()">
+            <span>विश्लेषण सुरू करा (Start 40 Cycles)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="legacy-test-store" aria-hidden="true">
     <a href="#" id="paravetNavLink"></a>
     <a href="#" id="adminNavLink"></a>
