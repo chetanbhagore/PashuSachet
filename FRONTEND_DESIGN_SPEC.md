@@ -355,3 +355,183 @@ Every verified case includes an explicit, DPDP-compliant consent toggle for the 
 * **Option A (Private Care Only):** Report visible only to the attending veterinarian and local dispensary.
 * **Option B (Local Public Health Warning):** Report contributes to anonymized village signal heat for neighboring farmers.
 * **Option C (State & National Surveillance):** Case de-identified (GPS truncated to block centroid, owner name redacted) and streamed to NADRES V2 and Bharat Pashudhan surveillance pipelines.
+
+
+---
+
+## 13. Gram Signal System (GSS): Farmer & Government UI Specifications
+
+### 13.1 Farmer-Facing Touchpoints & Trust Architecture
+1. **Instant Acknowledgment & Status Tracker Card:**
+   - Immediately upon submitting a 90-second report (or sending a missed call / voice note), the app displays:
+     ```
+     ┌──────────────────────────────────────────────────────────────────┐
+     │  ✓ अहवाल नोंदवला गेला (Report #MH-REP-9102 Logged)               │
+     │  स्थिती: स्थानिक पशुसखी / पॅरा-व्हेट यांच्याकडे तपासणीसाठी पाठवले │
+     │  नियुक्त सेवक: श्री. गणेश काळे (मो. 98220 XXXXX)                │
+     │  अंदाजे तपासणी वेळ: 4 तासांच्या आत (ETA: Within 4 Hours)          │
+     └──────────────────────────────────────────────────────────────────┘
+     ```
+2. **Immediate Plain-Language Action Card (Marathi Primary):**
+   - Direct bulleted directives:
+     - *काय करावे (What to do now):* Isolate animal, provide clean electrolyte water, clean stall.
+     - *कशावर लक्ष ठेवावे (What to watch for):* Breathing rate, udder hardness, rectal temperature.
+     - *1962 कधी बोलवावे (When to escalate to 1962):* Inability to stand, bleeding, sudden convulsion.
+3. **Proxy Reporting Toggle:**
+   - Checkbox: *"मी शेजारी किंवा कुटुंबियांच्या वतीने नोंदवत आहे"* *(“I am reporting on behalf of a neighbour or family member”)*.
+   - Captures owner name and village location while recording the reporter's phone for SMS updates.
+4. **Community Sentinel Recognition Badge:**
+   - When a farmer's timely report prevents a localized outbreak, their profile displays:
+     `🏅 ग्राम जागरूक पशुपालक (Village Vigilant Livestock Keeper - Sangamner)`
+   - Linked to village Gram Sabha commendation.
+
+---
+
+### 13.2 Government & Officer-Facing Touchpoints (Live Village & Block Signal Board)
+1. **Live Village & Block Signal Board:**
+   - Displays **verified signals only** (filtered through the Local Sentinel / Para-Vet network).
+   - Metrics bar:
+     - *Mean Response Time:* e.g. `2.8 Hours` (Signal ➔ Verification).
+     - *Verification Rate:* e.g. `94.2%`.
+     - *Sample Closure Rate:* e.g. `89.5%` (Specimen collected ➔ Lab result delivered).
+2. **End-to-End Sample & Lab Tracker:**
+   - Linear progress card:
+     `Sample Collected (Serum/Swab) ➔ MVU Hand-off ➔ RDDL Lab Testing (ELISA) ➔ Confirmed Diagnosis ➔ Farmer Notified`.
+3. **One Health Flagging:**
+   - High-visibility banner for suspected zoonoses (e.g. Anthrax, Rabies, Brucellosis, Glanders):
+     `⚠️ ONE HEALTH ALERT: Potential Zoonotic Pathogen — Joint Public Health Notification Dispatched.`
+4. **Automated Farmer Feedback Loop Trigger:**
+   - When the veterinarian marks a case `RESOLVED` or `SAMPLE_CONFIRMED`, the system automatically sends a concluding SMS / voice note to the farmer, closing the psychological loop.
+
+
+---
+
+## 14. Frontend Architecture for the Six Unclosed Gaps
+
+### 14.1 The 4–5 Question 60–90 Second Micro-Intake
+The user interface is engineered to eliminate unnecessary cognitive load. The entire reporting workflow is limited to **5 essential questions**:
+1. **Species:** 5 large tap tiles (*Cattle, Buffalo, Goat, Sheep, Poultry*).
+2. **Main Signs Observed:** Multi-select visual chips (*Fever, Mouth/Foot Blisters, Udder Swelling, Respiratory Distress, Diarrhea, Hemorrhage, Sudden Collapse*).
+3. **Number Affected / Dead:** Two integer stepper controls (*Affected: [ - 1 + ] | Dead: [ - 0 + ]*).
+4. **Location:** Auto-populated from device GPS / village centroid, with a spoken village name fallback.
+5. **Optional Voice Audio:** 15-second Marathi voice recorder button (`"बोलून सांगा"`).
+
+---
+
+### 14.2 Low-Digital Inclusion Hierarchy UI & Multi-Channel Feeder
+To ensure 100% smallholder inclusion, the application interfaces with four non-smartphone feeder channels:
+1. **Missed-Call Trigger:** Displayed prominently on village posters and animal shed walls:  
+   `"आजारी जनावरासाठी मिस कॉल द्या: 1800-XXX-XXXX"` *(“Give a missed call for sick livestock”)*.  
+   System initiates automated callback with interactive Marathi voice menu.
+2. **USSD Menu Flow (`*992#` Simulation):** Text-based interactive prompt functional on 2G feature phones without data packages:
+   ```
+   [1] गाय/म्हैस (Cattle/Buffalo)
+   [2] शेळी/मेंढी (Goat/Sheep)
+   [3] कोंबडी (Poultry)
+    निवडा: _
+   ```
+3. **Voice IVR:** Audio playback providing automated, warm vernacular prompts.
+4. **WhatsApp Voice Intake:** Ingests forwarded voice notes and converts them to structured micro-reports via speech-to-text.
+
+---
+
+### 14.3 Closed-Loop Sample Tracker UI Card
+When a verified case is tagged as requiring diagnostic laboratory confirmation, the UI renders the dedicated **Sample Lifecycle Widget**:
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│  🧪 रोगनिदान नमुना तपासणी (Diagnostic Sample Tracker #SMP-MH-9412)                     │
+│  नमुना प्रकार: रक्त / सीरम (Serum) • संकलन तारीख: 04 नोव्हेंबर 2026                   │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│  [✓] नमुना संकलित (Sample Collected by Para-Vet Ganesh K.)                            │
+│  [✓] प्रयोगशाळेकडे रवाना (In Transit to Regional Disease Diagnostic Lab, Pune)        │
+│  [●] प्रयोगशाळेत चाचणी सुरू (Testing In Progress: RT-PCR & ELISA)                     │
+│  [ ] अंतिम निकाल व उपचार कृती (Pending Result & Action Plan)                           │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│  स्थिती: शेतकरी, पॅरा-व्हेट आणि तालुका अधिकाऱ्यांना थेट SMS द्वारे निकाल दिला जाईल.   │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 14.4 Live Village & Block Signal Board (Observation Board)
+Located in the Officer / LDO console, this is strictly an **operational observation board**, NOT a speculative forecasting map:
+* **Real-Time Counters:**
+  - *Active Signals (Last 7 Days):* e.g. `24`
+  - *Mortality Reports:* e.g. `2`
+  - *Sample-Pending Cases:* e.g. `5`
+  - *Mean Verification Time:* e.g. `3.2 Hours`
+* **Observation Feed Table:** Shows village name, species, verified syndromic cluster, urgency badge, and assigned para-vet.
+* **Privacy Suppression Safeguard:** If a village has $<3$ signals, individual coordinates are hidden; the UI aggregates the warning to the **Block Centroid** to prevent milk procurement boycotts.
+
+---
+
+### 14.5 Verification & Trust Queue for Para-Vets
+The frontline para-vet interface displays incoming raw signals in an **Unverified Triage Inbox**:
+* Each card provides:
+  - Reporter Name & Village
+  - Reported signs & animal count
+  - One-tap quick actions:
+    1. `✓ Confirm Signal (सत्यता पडताळणी)`
+    2. `🌡️ Add Vitals (तापमान व निरीक्षण जोडा)`
+    3. `🧪 Request Sample Kit (नमुना किट बोलवा)`
+    4. `✗ Dismiss as Routine (किरकोळ लक्षण)`
+
+
+---
+
+## 15. Frontend Solutions to the 8 Core Deficiencies
+
+### 15.1 Designing for Non-Smartphone Primacy (Missed-Call & USSD)
+* The landing page and print posters prominently display the **Toll-Free Missed-Call & USSD Channel** ahead of web form buttons:
+  ```
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  📞 आजारी जनावरासाठी थेट मिस कॉल द्या: 1800-889-1962             │
+  │  (दोन रिंगनंतर फोन कट होईल; 60 सेकंदात मराठीत फोन येईल)          │
+  │  किंवा साधा फोन असेल तर डायल करा: *992# (विनामूल्य USSD)        │
+  └──────────────────────────────────────────────────────────────────┘
+  ```
+* Web app form is relegated to a clean secondary option labeled: *“प्रगत शेतकरी व पॅरा-व्हेट यांच्यासाठी वेब फॉर्म”* *(“Web Form for Progressive Farmers & Para-Vets”)*.
+
+### 15.2 The Immediate Farmer Benefit Card (Why Report Early?)
+Every submitted report instantly generates a **3-part tangible farmer benefit card**:
+1. **Immediate Practical Action:** 3 plain Marathi bullet points on feeding, isolation, and safe compresses.
+2. **Dedicated Worker Assignment:** Displays photo/name and mobile number of the local para-vet with guaranteed response SLA (*“4 तासांच्या आत भेट”*).
+3. **Food Safety Protection:** Highlights the milk withdrawal countdown so the farmer avoids milk cooperative contamination fines.
+
+### 15.3 The 30-Second Para-Vet Verification Gate
+To prevent field worker burnout and ensure high data integrity:
+* Para-vet receives a clean, single-screen verification card:
+  - Big green button: `✓ खात्री झाली (Confirm Valid Signal - 1 Tap)`
+  - Big red button: `✗ किरकोळ लक्षण / रद्द (Mark Non-Significant - 1 Tap)`
+  - Audio mic button: `🎙️ 10-सेकंद आवाज नोंद (10s Voice Observation)`
+  - Checkbox: `🧪 नमुना तपासणी आवश्यक (Diagnostic Sample Kit Needed)`
+* Average interaction time: **22 seconds**.
+
+### 15.4 The Central Sample ➔ Lab ➔ Action Component
+Replaces fragmented lab slips with an interactive, colored status pill bar:
+* **Stage 1 (Amber):** `नमुना संकलित (Sample Collected #SMP-9102)`
+* **Stage 2 (Blue):** `RDDL पुणे प्रयोगशाळेकडे रवाना (In Transit to Lab)`
+* **Stage 3 (Purple):** `चाचणी सुरू: ELISA / RT-PCR (Lab Testing Active)`
+* **Stage 4 (Green):** `निकाल प्राप्त: Bovine Viral Diarrhea (Lab Confirmed)`
+* **Stage 5 (Dark Green):** `उपचार पूर्ण व केस बंद (Action Taken & Closed)`
+
+### 15.5 Automated 1962 Emergency Accelerator
+* When symptoms match life-threatening conditions (acute bloat, continuous convulsions, sudden bleeding), the UI does not ask the farmer to fill forms:
+* It generates an **Immediate 1962 MVU Request**:
+  `"🚨 1962 आपत्कालीन रुग्णवाहिका पावती तयार झाली (Dispatch Ticket #MVU-MH-8821 Generated). Live tracking SMS sent to your phone."`
+* Pre-populates GPS and clinical signs directly into the driver’s mobile terminal.
+
+### 15.6 Action-Oriented Decision Board for Officers
+* The Officer Console suppresses passive aesthetic maps and opens directly to:  
+  **"Cases Requiring Your Decision Today"**:
+  1. *3 Uninspected Village Clusters (Sangamner Block)* ➔ `[ Dispatch MVU ]`
+  2. *2 Awaiting Lab Sample Approval* ➔ `[ Approve RDDL Dispatch ]`
+  3. *1 Zoonotic Suspect (Anthrax Flag)* ➔ `[ Enforce Ring Quarantine ]`
+
+
+### 15.7 Focused 5–10 Village Pilot Telemetry View
+* An administrative validation screen embedded in the Officer / Admin console tracking the live telemetry of the 5–10 village proof-of-value pilot:
+  - *Channel Distribution:* Real-time chart of Missed-Call vs. USSD vs. Web intake.
+  - *Turnaround Velocity:* Average elapsed hours from signal to para-vet physical verification.
+  - *Sample Closure Rate:* Percentage of sample cases reaching confirmed lab outcome and closed treatment.
+  - *Farmer Retention:* Repeat reporting rate during seasonal disease spikes.

@@ -1,3 +1,202 @@
+
+// ========================================================
+// AUTHENTICATION & MULTI-ROLE SESSION STATE
+// ========================================================
+
+const AUTH_PROFILES = {
+  farmer: {
+    role: "farmer",
+    name: "Ganesh Patil",
+    title: "Livestock Keeper",
+    location: "Sangamner, Ahmednagar",
+    identifier: "+91 98220 12345",
+    avatar: "👨‍🌾"
+  },
+  paravet: {
+    role: "paravet",
+    name: "Ganesh Kale",
+    title: "Village Sentinel & Para-Vet",
+    location: "Sangamner Cluster (Villages 1-4)",
+    identifier: "PV-AHM-9104",
+    avatar: "🧑‍⚕️"
+  },
+  vet: {
+    role: "vet",
+    name: "Dr. Rameshwar Kute",
+    title: "LDO Grade-I (Sangamner)",
+    location: "Ahmednagar District",
+    identifier: "MSVC/2012/03194",
+    avatar: "🩺"
+  },
+  officer: {
+    role: "officer",
+    name: "Dr. S. R. Shinde",
+    title: "District Veterinary Officer (DVO)",
+    location: "Ahmednagar Jurisdiction",
+    identifier: "dvo.ahmednagar@maharashtra.gov.in",
+    avatar: "🏛️"
+  },
+  admin: {
+    role: "admin",
+    name: "State Admin Officer",
+    title: "Data Protection & Audit Lead",
+    location: "DAHD Maharashtra HQ",
+    identifier: "admin@pashusachet.mahadahd.in",
+    avatar: "🛡️"
+  }
+};
+
+let currentUser = null;
+
+function getCurrentUser() {
+  if (currentUser) return currentUser;
+  try {
+    const raw = localStorage.getItem("pashu_auth_user");
+    if (raw) currentUser = JSON.parse(raw);
+  } catch(e) {}
+  return currentUser;
+}
+
+function setCurrentUser(user) {
+  currentUser = user;
+  try {
+    if (user) {
+      localStorage.setItem("pashu_auth_user", JSON.stringify(user));
+    } else {
+      localStorage.removeItem("pashu_auth_user");
+    }
+  } catch(e) {}
+  updateAuthUI();
+}
+
+function updateAuthUI() {
+  const user = getCurrentUser();
+  const loginBtn = document.getElementById("headerLoginBtn");
+  const profileBadge = document.getElementById("userProfileBadge");
+  const avatarIcon = document.getElementById("userAvatarIcon");
+  const nameLabel = document.getElementById("userNameLabel");
+  const roleLabel = document.getElementById("userRoleLabel");
+  const adminNav = document.getElementById("adminNavLink");
+  const adminSection = document.getElementById("admin-console");
+
+  if (user) {
+    if (loginBtn) loginBtn.style.display = "none";
+    if (profileBadge) profileBadge.style.display = "inline-flex";
+    if (avatarIcon) avatarIcon.textContent = user.avatar || "👤";
+    if (nameLabel) nameLabel.textContent = user.name;
+    if (roleLabel) roleLabel.textContent = `${user.title} (${user.location})`;
+
+    // Show/Hide Role-Gated Sections
+    const paravetNav = document.getElementById("paravetNavLink");
+    const paravetSection = document.getElementById("paravet-inbox");
+    if (paravetNav) paravetNav.style.display = "inline-block";
+    if (paravetSection) paravetSection.style.display = "block";
+
+    if (user.role === "admin") {
+      if (adminNav) adminNav.style.display = "inline-block";
+      if (adminSection) {
+        adminSection.style.display = "block";
+        renderAdminAuditLogs();
+      }
+    } else {
+      if (adminNav) adminNav.style.display = "none";
+      if (adminSection) adminSection.style.display = "none";
+    }
+
+    // Role switcher sync
+    const farmerPill = document.getElementById("roleFarmerBtn");
+    const vetPill = document.getElementById("roleVetBtn");
+    if (user.role === "vet") {
+      if (vetPill) vetPill.classList.add("active");
+      if (farmerPill) farmerPill.classList.remove("active");
+    } else {
+      if (farmerPill) farmerPill.classList.add("active");
+      if (vetPill) vetPill.classList.remove("active");
+    }
+  } else {
+    if (loginBtn) loginBtn.style.display = "inline-block";
+    if (profileBadge) profileBadge.style.display = "none";
+    if (adminNav) adminNav.style.display = "none";
+    if (adminSection) adminSection.style.display = "none";
+  }
+}
+
+function openLoginModal(defaultRole) {
+  const modal = document.getElementById("loginModal");
+  if (modal) modal.classList.add("active");
+  if (defaultRole) switchAuthTab(defaultRole);
+}
+
+function closeLoginModal() {
+  const modal = document.getElementById("loginModal");
+  if (modal) modal.classList.remove("active");
+}
+
+function switchAuthTab(role) {
+  const tabs = ["farmer", "paravet", "vet", "officer", "admin"];
+  tabs.forEach(r => {
+    const btn = document.getElementById(`tab${r.charAt(0).toUpperCase() + r.slice(1)}Btn`);
+    const pane = document.getElementById(`authPane${r.charAt(0).toUpperCase() + r.slice(1)}`);
+    if (btn) btn.classList.toggle("active", r === role);
+    if (pane) pane.classList.toggle("active", r === role);
+  });
+}
+
+function quickLogin(role) {
+  const profile = AUTH_PROFILES[role];
+  if (profile) {
+    setCurrentUser(profile);
+    closeLoginModal();
+    showToast(`Signed in successfully as ${profile.name} (${profile.title})`);
+    
+    // Auto-navigate to relevant view
+    if (role === "vet") {
+      document.getElementById("vet-desk")?.scrollIntoView({ behavior: "smooth" });
+    } else if (role === "officer") {
+      document.getElementById("outbreak-gis")?.scrollIntoView({ behavior: "smooth" });
+    } else if (role === "admin") {
+      document.getElementById("admin-console")?.scrollIntoView({ behavior: "smooth" });
+    }
+  }
+}
+
+function logoutUser() {
+  const prev = getCurrentUser();
+  setCurrentUser(null);
+  showToast(prev ? `Signed out ${prev.name}. Switched to public guest mode.` : "Logged out.");
+}
+
+function sendFarmerOtp() {
+  const phone = document.getElementById("farmerPhoneInput")?.value || "9822012345";
+  showToast(`SMS OTP dispatched to +91 ${phone}! Demo OTP is 123456.`);
+}
+
+// DPDP Act Audit Event Ledger
+const DEFAULT_AUDIT_LOGS = [
+  { ts: "2026-11-04 01:45:10", type: "DATA_ACCESS", actor: "FARMER (Ganesh Patil)", entity: "AN-MH-01 (Gauri)", hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", status: "AUTHORIZED" },
+  { ts: "2026-11-04 01:22:45", type: "CLINICAL_SIGNATURE", actor: "VET (Dr. Rameshwar Kute)", entity: "RX-MH-9412", hash: "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e", status: "VERIFIED" },
+  { ts: "2026-11-04 00:58:12", type: "CONSENT_RECORD", actor: "FARMER (Ganesh Patil)", entity: "CONSENT_DPDP_v1", hash: "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824", status: "STORED" },
+  { ts: "2026-11-03 23:14:02", type: "OUTBREAK_ALERT", actor: "OFFICER (Dr. S. R. Shinde)", entity: "ZONE_AHMEDNAGAR_FMD", hash: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8", status: "ISSUED" }
+];
+
+function renderAdminAuditLogs() {
+  const tbody = document.getElementById("adminAuditTableBody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+  DEFAULT_AUDIT_LOGS.forEach(log => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td style="font-family: monospace; font-size: 0.78rem;">${log.ts}</td>
+      <td><span class="vax-pill vax-ok">${log.type}</span></td>
+      <td><strong>${log.actor}</strong></td>
+      <td><code>${log.entity}</code></td>
+      <td style="font-family: monospace; font-size: 0.75rem; color: #64748b;">${log.hash.substring(0, 16)}...</td>
+      <td><span class="vax-pill vax-ok">${log.status}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
 /**
  * PashuSachet (पशूसचेत / Seva First)
  * Multilingual AI-assisted Livestock Health & Veterinary Intelligence Platform
@@ -13,7 +212,7 @@ const i18n = {
     nav_risk: "Outbreak Risk GIS",
     nav_registry: "Animal Passport",
     nav_vets: "Find a Vet",
-    nav_blueprint: "Blueprint",
+    nav_vet_desk: "Vet Care Desk",
     hero_badge: "🌾 Government Aligned • ICAR-NIVEDI Surveillance Data",
     hero_title: "AI-Assisted Livestock Health & Veterinary Care for Rural Maharashtra",
     hero_subtitle: "Bridging livestock owners and veterinary care: species-aware symptom screening, district outbreak intelligence, and instant verified clinical referrals.",
@@ -45,7 +244,7 @@ const i18n = {
     nav_risk: "रोग प्रादुर्भाव नकाशा",
     nav_registry: "पशू आधार कार्ड",
     nav_vets: "पशुवैद्य शोधा",
-    nav_blueprint: "प्रकल्प आराखडा",
+    nav_vet_desk: "पशुवैद्यकीय डेस्क",
     hero_badge: "🌾 महाराष्ट्र ग्रामीण सेवा • ICAR-NIVEDI आकडेवारी",
     hero_title: "ग्रामीण महाराष्ट्रासाठी AI-सहाय्यित पशुआरोग्य व पशुवैद्यकीय सेवा",
     hero_subtitle: "शेतकरी व पशुवैद्यकांना जोडणारा आधुनिक मंच: अचूक लक्षण तपासणी, जिल्हास्तरीय साथरोग इशारा आणि थेट पशुवैद्यकीय मदत.",
@@ -77,7 +276,7 @@ const i18n = {
     nav_risk: "प्रकोप जोखिम मैप",
     nav_registry: "पशु आधार",
     nav_vets: "पशु चिकित्सक खोजें",
-    nav_blueprint: "परियोजना रूपरेखा",
+    nav_vet_desk: "पशुचिकित्सा डेस्क",
     hero_badge: "🌾 ग्रामीण पशु सेवा • ICAR-NIVEDI डेटा आधारित",
     hero_title: "ग्रामीण महाराष्ट्र हेतु AI-सहायित पशु स्वास्थ्य एवं चिकित्सा मंच",
     hero_subtitle: "पशुपालकों और पशु चिकित्सकों को जोड़ने वाला आधुनिक मंच: सटीक लक्षण स्क्रीनिंग, जिला प्रकोप चेतावनी और त्वरित उपचार परामर्श।",
@@ -122,7 +321,18 @@ const DEFAULT_ANIMALS = [
       { name: "LSD (Lumpy)", date: "Due in 14 days", status: "due" },
       { name: "HS / BQ", date: "12 May 2026", status: "ok" }
     ],
-    notes: "Healthy, milk yield 14L/day"
+    notes: "Diagnosed with Mastitis; active Ceftiofur treatment",
+    prescription: {
+      condition: "Acute Mastitis (Udder Swelling)",
+      drug: "Ceftiofur Sodium + Flunixin Meglumine",
+      route: "Intramammary Infusion + IM",
+      treatmentDays: 3,
+      withdrawalHours: 72,
+      prescribedAt: Date.now() - (14 * 3600 * 1000), // Prescribed 14h ago
+      vetName: "Dr. Rameshwar Kute, B.V.Sc & A.H.",
+      vetReg: "MSVC/2012/03194",
+      status: "UNDER_TREATMENT"
+    }
   },
   {
     id: "AN-MH-02",
@@ -156,6 +366,93 @@ const DEFAULT_ANIMALS = [
     notes: "Normal feeding, twin pregnancy confirmed"
   }
 ];
+
+
+// Storage for Appointments & Cases
+const DEFAULT_APPOINTMENTS = [
+  {
+    id: "APT-9102",
+    animal: "Gauri (Tag: MH-24-9812)",
+    farmerPhone: "+91 98220 12345",
+    visitType: "Doorstep Field Visit",
+    date: "Tomorrow, 10:00 AM",
+    vet: "Dr. Rameshwar Kute",
+    status: "Pending Confirmation"
+  },
+  {
+    id: "APT-9105",
+    animal: "Raja (Tag: MH-12-4401)",
+    farmerPhone: "+91 94223 99881",
+    visitType: "Dispensary Visit",
+    date: "Friday, 02:30 PM",
+    vet: "Dr. Supriya More",
+    status: "Confirmed"
+  }
+];
+
+const DEFAULT_CASES = [
+  {
+    id: "CASE-MH-8492",
+    animal: "Gauri (Tag: MH-24-9812)",
+    tag: "MH-24-9812",
+    species: "Cattle (गाय)",
+    symptoms: ["High Fever (>103°F)", "Swollen Udder", "Drop in Milk Yield"],
+    triageBand: "Likely",
+    triageCondition: "Acute Mastitis",
+    status: "Under Treatment",
+    date: "Today, 08:30 AM"
+  }
+];
+
+function getStoredAppointments() {
+  try {
+    const raw = localStorage.getItem("pashu_appointments");
+    return raw ? JSON.parse(raw) : DEFAULT_APPOINTMENTS;
+  } catch(e) {
+    return DEFAULT_APPOINTMENTS;
+  }
+}
+
+function saveAppointment(apt) {
+  const list = getStoredAppointments();
+  list.unshift(apt);
+  try {
+    localStorage.setItem("pashu_appointments", JSON.stringify(list));
+  } catch(e) {}
+  renderVetDesk();
+  updateAuthUI();
+}
+
+function getStoredCases() {
+  try {
+    const raw = localStorage.getItem("pashu_cases");
+    return raw ? JSON.parse(raw) : DEFAULT_CASES;
+  } catch(e) {
+    return DEFAULT_CASES;
+  }
+}
+
+function saveCase(c) {
+  const list = getStoredCases();
+  list.unshift(c);
+  try {
+    localStorage.setItem("pashu_cases", JSON.stringify(list));
+  } catch(e) {}
+  renderVetDesk();
+  updateAuthUI();
+}
+
+function updateAnimalPrescription(tag, rx) {
+  const animals = getStoredAnimals();
+  const animal = animals.find(a => a.tag === tag);
+  if (animal) {
+    animal.prescription = rx;
+    try {
+      localStorage.setItem("pashu_animals", JSON.stringify(animals));
+    } catch(e) {}
+    renderAnimals();
+  }
+}
 
 function getStoredAnimals() {
   const data = localStorage.getItem("pashu_animals");
@@ -348,8 +645,15 @@ document.addEventListener("DOMContentLoaded", () => {
   initGIS();
   renderAnimals();
   renderVets();
-  initTabs();
+  renderVetDesk();
+  renderParavetInbox();
+  renderSampleTracker();
+  renderVillageSignalBoard();
+  renderOfficerDecisionQueue();
+  updateAuthUI();
   initModals();
+  // Pre-render AI Vision Sentinel on page load
+  simulateVisionDetection('lsd');
 });
 
 // LANGUAGE TOGGLE
@@ -399,10 +703,17 @@ function initSymptomChecker() {
 }
 
 function evaluateSymptoms() {
-  const species = document.querySelector('input[name="species"]:checked')?.value || "cattle";
+  const species = document.querySelector('input[name="species"]:checked')?.value || document.getElementById("animalSpecies")?.value || "cattle";
   const checkedBoxes = Array.from(document.querySelectorAll('input[name="symptom"]:checked')).map(cb => cb.value);
   const onsetDays = parseInt(document.getElementById("onsetDays")?.value || "2");
   const tempDegree = parseFloat(document.getElementById("tempInput")?.value || "102.5");
+  const affectedCount = parseInt(document.getElementById("affectedCount")?.value || "1");
+  const villageLocation = document.getElementById("villageLocation")?.value || "Sangamner";
+  const isMortalityCheck = document.getElementById("isMortalityCheck")?.checked || false;
+  const mortalityCount = parseInt(document.getElementById("mortalityCountInput")?.value || "1");
+  const isProxyCheck = document.getElementById("isProxyCheck")?.checked || false;
+  const proxyReporterName = document.getElementById("proxyReporterName")?.value || "";
+  const proxyReporterRole = document.getElementById("proxyReporterRole")?.value || "neighbor";
 
   if (checkedBoxes.length === 0) {
     alert(currentLang === 'mr' ? "कृपया किमान एक किंवा दोन लक्षणे निवडा." : "Please select at least 1 or 2 observed symptoms.");
@@ -418,13 +729,36 @@ function evaluateSymptoms() {
   const adviceList = document.getElementById("adviceList");
   const diffDiag = document.getElementById("diffDiag");
 
-  // Rule-based clinical triage matching Seva First Model A
+  // Rule-based clinical triage matching Seva First Model A & GSS Protocol
   let primaryCondition = "";
-  let confidence = 0;
+  let qualitativeBand = "Likely"; // Likely, Possible, Less Likely, Abstention
   let urgency = "moderate"; // critical, urgent, moderate
   let urgencyLabel = "";
   let differential = [];
   let actions = [];
+  let isZoonoticAlert = false;
+  let zoonoticMsg = "";
+  let mvuTicket = null;
+  let isAbstention = false;
+
+  // RED-FLAG EMERGENCY CIRCUIT BREAKER & 1962 ACCELERATOR
+  const isRedFlag = checkedBoxes.includes("bleeding") || checkedBoxes.includes("sudden_death") || checkedBoxes.includes("recumbent") || isMortalityCheck;
+  if (isRedFlag) {
+    const emergModal = document.getElementById("emergencyModal");
+    if (emergModal) emergModal.classList.add("active");
+
+    // 1962 ACCELERATOR ENGINE: Auto-generate priority MVU dispatch pre-notification
+    mvuTicket = {
+      ticketId: "1962-MH-" + Math.floor(1000 + Math.random() * 9000),
+      dispatchStatus: "AUTO_PRENOTIFIED",
+      priority: "CRITICAL_RED_FLAG",
+      targetVillage: villageLocation,
+      assignedUnit: "MVU Unit 14 (Sangamner / Akole Beat)",
+      mvuContact: "1962 (Toll Free)",
+      etaMinutes: 25,
+      timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+    };
+  }
 
   const hasFever = checkedBoxes.includes("fever") || tempDegree >= 103.5;
   const hasNodules = checkedBoxes.includes("skin_nodules");
@@ -432,120 +766,156 @@ function evaluateSymptoms() {
   const hasRespiratory = checkedBoxes.includes("cough") || checkedBoxes.includes("nasal_discharge");
   const hasMastitis = checkedBoxes.includes("udder_swelling") || checkedBoxes.includes("milk_drop");
   const hasDiarrhea = checkedBoxes.includes("diarrhea");
+  const hasSuddenDeath = checkedBoxes.includes("sudden_death") || isMortalityCheck;
 
-  if (species === "poultry") {
-    if (hasRespiratory || checkedBoxes.includes("anorexia")) {
-      primaryCondition = "Newcastle Disease (Ranikhet) / Infectious Coryza";
-      confidence = 84;
+  // ZOONOTIC THREAT SENTINEL (Anthrax, Rabies, Brucellosis)
+  if (hasSuddenDeath && (species === "cattle" || species === "buffalo" || species === "sheep")) {
+    isZoonoticAlert = true;
+    zoonoticMsg = "अँथ्रॅक्स / अचानक मृत्यू संशय (Anthrax Suspected). शव उघडू नका, नैसर्गिक छिद्रांमधून रक्तस्त्राव असल्यास स्पर्श करू नका. स्थानिक शासकीय वैद्यक व जिल्हा आरोग्य अधिकारी (DMO) यांना अलर्ट पाठवला आहे.";
+  } else if (species === "dog" && (checkedBoxes.includes("mouth_lesions") || checkedBoxes.includes("anorexia") || isRedFlag)) {
+    isZoonoticAlert = true;
+    zoonoticMsg = "रेबीज संशय (Rabies Suspected). चावा किंवा लाळेचा मानवी त्वचेशी संपर्क टाळा. संशयित प्राण्याला सुरक्षित जागी बंदिस्त करा व त्वरित 1962 वर कळवा.";
+  }
+
+  // EXPLICIT ABSTENTION GATE:
+  // If only isolated non-specific signs (anorexia only, milk drop only) and no fever or pathognomonic lesions:
+  if ((checkedBoxes.length === 1 && (checkedBoxes[0] === 'anorexia' || checkedBoxes[0] === 'milk_drop')) ||
+      (!hasNodules && !hasMouthFoot && !hasRespiratory && !hasMastitis && !hasDiarrhea && !hasSuddenDeath && tempDegree < 103.0)) {
+    isAbstention = true;
+    primaryCondition = "अस्पष्ट प्रारंभिक लक्षणे (Insufficient Distinctive Signs)";
+    qualitativeBand = "Abstention";
+    urgency = "moderate";
+    urgencyLabel = "MODERATE: मॉडेल संयम (Deliberate Abstention - No Speculation)";
+    actions = [
+      "१. जनावराला कोणतेही अनधिकृत प्रतिजैविक (अँटीबायोटिक) किंवा मानवी औषध देऊ नका.",
+      "२. रवंथ चक्र तपासा (२ मिनिटांत २ ते ३ वेळा रवंथ व्हायला हवे) आणि ताजे पिण्याचे पाणी व हिरवा चारा द्या.",
+      "३. पुढील १२ ते २४ तास लक्षपूर्वक निरीक्षण करा आणि गुदद्वाराचे तापमान मोजा.",
+      "४. २४ तासांनंतरही सुधारणा न झाल्यास स्थानिक पशुमित्र किंवा पशुवैद्यकीय दवाखान्यात संपर्क साधा."
+    ];
+    differential = ["Mild Indigestion (अपचन)", "Environmental / Heat Stress (उष्मा ताण)", "Subclinical Diet Change"];
+  } else if (species === "poultry") {
+    if (hasRespiratory || checkedBoxes.includes("anorexia") || hasSuddenDeath) {
+      primaryCondition = "Newcastle Disease (Ranikhet) / Infectious Coryza (राणीखेत)";
+      qualitativeBand = "Likely";
       urgency = "critical";
       urgencyLabel = "CRITICAL: Urgent Flock Isolation Required";
       actions = [
-        "Immediately isolate sick birds in a separate quarantine shed.",
-        "Add oral electrolytes and vitamin B-complex to drinking water.",
-        "Disinfect farm perimeter with approved biocide; halt visitor entry.",
-        "Contact local veterinary officer immediately for confirmatory swab tests."
+        "१. आजारी पक्ष्यांना तात्काळ निरोगी कळपापासून वेगळे (क्वारंटाइन) करा.",
+        "२. पिण्याच्या पाण्यात इलेक्ट्रोल पावडर व व्हिटॅमिन बी-कॉम्प्लेक्स मिसळून द्या.",
+        "३. शेडच्या प्रवेशद्वारावर जंतुनाशक फवारणी करा व बाहेरील व्यक्तींना प्रवेश बंदी करा.",
+        "४. शासकीय प्रयोगशाळेतील तपासणीसाठी तात्काळ स्थानिक पशुवैद्यकांना संपर्क करा."
       ];
       differential = ["Infectious Bronchitis", "Fowl Cholera", "Nutritional Deficiency"];
     } else {
-      primaryCondition = "Coccidiosis / Enteric Distress";
-      confidence = 72;
+      primaryCondition = "Coccidiosis / Enteric Distress (कॉकसिडिओसिस)";
+      qualitativeBand = "Possible";
       urgency = "urgent";
       urgencyLabel = "URGENT: Review Litter Hygiene";
-      actions = ["Check for damp litter", "Provide clean acidified drinking water", "Consult vet for anticoccidial plan"];
+      actions = [
+        "१. शेडमधील ओले तूस (litter) तात्काळ बदलून कोरडा भुसा टाका.",
+        "२. पिण्याचे पाणी स्वच्छ व आम्लयुक्त (acidified) ठेवा.",
+        "३. पशुवैद्यकीय सल्ल्याने कॉक्सिडिओस्टॅट औषध सुरू करा."
+      ];
       differential = ["Colibacillosis", "Dietary change"];
     }
   } else if (species === "goat" || species === "sheep") {
     if (checkedBoxes.includes("mouth_lesions") && (hasDiarrhea || hasFever)) {
-      primaryCondition = "Peste des Petits Ruminants (PPR) / Goat Plague";
-      confidence = 91;
+      primaryCondition = "Peste des Petits Ruminants (PPR) / Goat Plague (शेळ्यांमधील पीपीआर)";
+      qualitativeBand = "Likely";
       urgency = "critical";
       urgencyLabel = "CRITICAL: Highly Contagious Small Ruminant Alert";
       actions = [
-        "Isolate affected sheep/goats from the flock to prevent transmission.",
-        "Do not allow grazing in common pastures or water troughs.",
-        "Wash oral ulcers with mild potassium permanganate (1:10,000) solution.",
-        "Call veterinary dispensary for supportive fluid therapy and antipyretics."
+        "१. बाधित शेळ्या/मेंढ्या तात्काळ वेगळ्या बांधा; सार्वजनिक चराई व पाण्याचे टाके पूर्णपणे बंद करा.",
+        "२. तोंडातील जखमांवर सौम्य पोटॅशियम परमँगनेट (१:१०,०००) किंवा बोरोग्लिसरीन लावा.",
+        "३. कोमट द्रावण किंवा मऊ लापशी खाऊ घाला, कोरडे धांडे देऊ नका.",
+        "४. जवळच्या पशुवैद्यकीय दवाखान्यातून रिंग-लसीकरण (Ring Vaccination) मोहीम राबवून घ्या."
       ];
       differential = ["Contagious Ecthyma (Orf)", "Bluetongue", "Pasteurellosis"];
-    } else if (checkedBoxes.includes("sudden_death") || hasDiarrhea) {
-      primaryCondition = "Enterotoxaemia (Pulpy Kidney) Suspected";
-      confidence = 82;
+    } else if (hasSuddenDeath || hasDiarrhea) {
+      primaryCondition = "Enterotoxaemia (Pulpy Kidney) Suspected (आंत्रविषार)";
+      qualitativeBand = "Likely";
       urgency = "critical";
       urgencyLabel = "CRITICAL: Risk of Rapid Mortality";
       actions = [
-        "Stop grain feeding immediately; switch to dry roughage.",
-        "Administer veterinary-directed antitoxin or alkalizing fluids.",
-        "Vaccinate unaffected flock members with ET vaccine."
+        "१. धान्य व पेंड देणे ताबडतोब थांबवा; केवळ कोरडा चारा द्या.",
+        "२. आजारी नसलेल्या सर्व जनावरांना तात्काळ आंत्रविषार (ET) लस टोचून घ्या.",
+        "३. पशुवैद्यकीय पथकाकडून डिहायड्रेशन रोखण्यासाठी सलाइन उपचार घ्या."
       ];
       differential = ["Coccidiosis", "Plant Poisoning"];
     } else {
-      primaryCondition = "Pneumonia / Caprine Respiratory Infection";
-      confidence = 74;
+      primaryCondition = "Pneumonia / Caprine Respiratory Infection (फुफ्फुसदाह/खोकला)";
+      qualitativeBand = "Possible";
       urgency = "urgent";
       urgencyLabel = "URGENT: Veterinary Auscultation Advised";
-      actions = ["Keep shelter dry, warm and draft-free", "Provide warm gruel/water", "Veterinary antibiotic assessment"];
+      actions = [
+        "१. शेड कोरडी व हवेशीर ठेवा; रात्री थंड वाऱ्यापासून संरक्षण करा.",
+        "२. कोमट पाणी व गुळ-पाणी पिण्यास द्या.",
+        "३. पशुवैद्यकीय सल्ल्याने प्रतिजैविक व कफ सिरप द्या."
+      ];
       differential = ["Lungworm infestation", "Shipping fever"];
     }
   } else {
     // Cattle / Buffalo
     if (hasNodules) {
-      primaryCondition = "Lumpy Skin Disease (LSD) Suspected";
-      confidence = 94;
+      primaryCondition = "Lumpy Skin Disease (LSD) Suspected (लम्पी त्वचा रोग)";
+      qualitativeBand = "Likely";
       urgency = "urgent";
       urgencyLabel = "URGENT: Vector-Borne Viral Screening Positive";
       actions = [
-        "Strictly isolate the cow/buffalo in an insect-screened or smoky shelter.",
-        "Apply neem oil or herbal fly-repellent spray over body to deter mosquitoes/ticks.",
-        "Provide soft green fodder, electrolytes and fresh drinking water frequently.",
-        "DO NOT use unprescribed human paracetamol or antibiotic injections.",
-        "Schedule official visit by Government Livestock Development Officer."
+        "१. बाधित जनावराला निरोगी जनावरांपासून तात्काळ दूर वेगळ्या गोठ्यात बांधा.",
+        "२. गोठ्यात कडुनिंबाच्या पानांचा धूर करा व डास/माशा/गोचीड प्रतिबंधक फवारणी करा.",
+        "३. अंगावरील गाठी व जखमांवर हळद + कापूर + खोबरेल तेलाचा लेप लावा.",
+        "४. मानवी ताप प्रतिबंधक औषधे (उदा. पॅरासिटामॉल) डॉक्टरी सल्ल्याशिवाय अतिरिक्त प्रमाणात देऊ नका.",
+        "५. स्थानिक पशुवैद्यकांना संपर्क करून गोट पॉक्स (Goat Pox) लसीकरण तपासा."
       ];
-      differential = ["Pseudo-lumpy skin disease (Herpesvirus 2)", "Bovine Papillomatosis", "Hypoderma / Insect bites"];
+      differential = ["Pseudo-lumpy skin disease (Herpesvirus 2)", "Bovine Papillomatosis", "Insect bites"];
     } else if (hasMouthFoot && (hasFever || checkedBoxes.includes("milk_drop"))) {
-      primaryCondition = "Foot and Mouth Disease (FMD) Screening Match";
-      confidence = 89;
+      primaryCondition = "Foot and Mouth Disease (FMD) Screening Match (लाळ-खुरकूत)";
+      qualitativeBand = "Likely";
       urgency = "critical";
       urgencyLabel = "CRITICAL: High Transmission Risk (Reportable)";
       actions = [
-        "Quarantine animal; restrict all cattle movement from your shed.",
-        "Wash oral cavity with 1% Alum or Boro-glycerine solution gently.",
-        "Apply antiseptic paste (Zinc oxide + Turmeric + Castor oil) to hoof clefts.",
-        "Feed soft palatable mash or porridge; animal cannot chew hard dry stalks.",
-        "Request ring-vaccination for all neighboring cattle within 5 km radius."
+        "१. आजारी जनावराला तात्काळ वेगळे बांधा व जनावरांची हालचाल पूर्णपणे थांबवा.",
+        "२. तोंड १% तुरटीच्या पाण्याने किंवा पोटॅशियम परमँगनेटच्या सौम्य पाण्याने दिवसातून २ वेळा धुवा.",
+        "३. खुरांच्या जखमांमध्ये फिनाईल किंवा जंतुनाशक मलम (जस्त मलम + हळद) लावा जेणेकरून किडे पडणार नाहीत.",
+        "४. जनावराला मऊ चारा, दलिया किंवा पेज खायला द्या (कडक वैरणीने तोंडाला त्रास होतो).",
+        "५. गावातील इतर पशुपालकांना सतर्क करून सामूहिक लसीकरणाची मागणी करा."
       ];
-      differential = ["Vesicular Stomatitis", "Mucosal Disease (BVD)", "Chemical burn/irritant"];
+      differential = ["Vesicular Stomatitis", "Mucosal Disease (BVD)", "Chemical irritant"];
     } else if (hasMastitis) {
-      primaryCondition = "Bovine Mastitis (Sub-acute / Clinical)";
-      confidence = 86;
+      primaryCondition = "Bovine Mastitis (Sub-acute / Clinical) (कासदाह/स्तनदाह)";
+      qualitativeBand = "Likely";
       urgency = "urgent";
-      urgencyLabel = "URGENT: Dairy Production & Welfare Concern";
+      urgencyLabel = "URGENT: Dairy Production & Milk Safety Concern";
       actions = [
-        "Strip milk completely from affected quarter into a disinfectant container (do not spill on floor).",
-        "Apply cold compress if udder is hot and swollen, followed by gentle massage.",
-        "Do not allow calf to nurse from the inflamed quarter.",
-        "Have veterinarian perform California Mastitis Test (CMT) and intramammary therapy."
+        "१. बाधित सडातील दूध वेगळे काढून जंतुनाशक टाकून नष्ट करा; हे दूध विक्री करू नका.",
+        "२. कासेला कोमट पाण्याने स्वच्छ धुऊन सुती कापडाने कोरडे करा.",
+        "३. दूध काढताना प्रथम निरोगी सडांचे व शेवटी आजारी सडाचे दूध काढा.",
+        "४. दूध काढल्यानंतर सड जंतुनाशक द्रावणात (Teat Dip) बुडवा.",
+        "५. पशुवैद्यकांकडून CMT टेस्ट व इंट्रामॅमरी ट्यूब उपचार करून घ्या."
       ];
       differential = ["Udder edema", "Hematoma", "Mycoplasma mastitis"];
     } else if (hasRespiratory && hasFever) {
-      primaryCondition = "Haemorrhagic Septicaemia (HS) / Bovine Respiratory Disease";
-      confidence = 87;
+      primaryCondition = "Haemorrhagic Septicaemia (HS) Suspected (घटसर्प)";
+      qualitativeBand = "Likely";
       urgency = "critical";
       urgencyLabel = "CRITICAL: Rapid Progression - Immediate Vet Attention";
       actions = [
-        "Keep animal in well-ventilated, clean dry stall.",
-        "Avoid stressing or walking the animal in hot sun.",
-        "Immediate veterinary administration of broad-spectrum antibiotic and NSAID is critical."
+        "१. जनावराला अजिबात चालवू नका; थंड व हवेशीर सावलीत ठेवा.",
+        "२. मानेभोवती किंवा गळ्याखाली सूज असल्यास त्यावर थंड पाणी टाका.",
+        "३. घटसर्पामध्ये काही तासांत मृत्यू संभवतो, म्हणून तात्काळ १९६२ रुग्णवाहिका बोलवा.",
+        "४. पशुवैद्यकीय डॉक्टरांकडून तात्काळ प्रतिजैविक इंजेक्शन सुरू करा."
       ];
       differential = ["Black Quarter (early)", "Enzootic Pneumonia", "Aspiration pneumonia"];
     } else {
-      primaryCondition = "Non-Specific Indigestion / Simple Anorexia";
-      confidence = 68;
+      primaryCondition = "Non-Specific Indigestion / Simple Anorexia (अपचन/चारा न खाणे)";
+      qualitativeBand = "Possible";
       urgency = "moderate";
       urgencyLabel = "MODERATE: Monitor Vitals & Rumination";
       actions = [
-        "Offer appetizing digestive greens and fresh water with mineral mix.",
-        "Check rumination cycles (should be 2-3 per 2 minutes).",
-        "If condition does not improve within 24 hours, request veterinary inspection."
+        "१. जनावराला पाचक मसाले, गूळ व खनिज मिश्रण (Mineral Mixture) द्या.",
+        "२. रवंथ चक्र तपासा (२ मिनिटांत किमान २ वेळा रवंथ व्हायला हवे).",
+        "३. २४ तासांत खाणे पूर्ववत न झाल्यास पशुवैद्यकीय तपासणी करून घ्या."
       ];
       differential = ["Mild rumen acidosis", "Dietary change stress", "Parasitic load"];
     }
@@ -556,8 +926,51 @@ function evaluateSymptoms() {
   triageText.innerHTML = `<strong>${urgency.toUpperCase()}:</strong> ${urgencyLabel}`;
 
   diagName.textContent = primaryCondition;
-  diagConf.textContent = `${confidence}% Match`;
-  confBar.style.width = `${confidence}%`;
+  
+  const bandContainer = document.getElementById("triageBandContainer");
+  if (bandContainer) {
+    bandContainer.textContent = `${qualitativeBand} Differential (संभाव्य श्रेणी)`;
+    bandContainer.className = `triage-band ${qualitativeBand.toLowerCase()}`;
+  }
+
+  // 1962 Accelerator Card Display
+  const mvuCard = document.getElementById("mvuDispatchCard");
+  const mvuDetails = document.getElementById("mvuTicketDetails");
+  if (mvuCard && mvuDetails) {
+    if (mvuTicket) {
+      mvuDetails.innerHTML = `<strong>Ticket:</strong> #${mvuTicket.ticketId} • <strong>Status:</strong> Pre-Notified to <strong>${mvuTicket.assignedUnit}</strong> (${mvuTicket.targetVillage}) • <strong>Estimated Arrival:</strong> ~${mvuTicket.etaMinutes} mins.`;
+      mvuCard.style.display = "block";
+    } else {
+      mvuCard.style.display = "none";
+    }
+  }
+
+  // Zoonotic Alert Display
+  const zooBanner = document.getElementById("zoonoticAlertBanner");
+  const zooDetails = document.getElementById("zoonoticDetails");
+  if (zooBanner && zooDetails) {
+    if (isZoonoticAlert) {
+      zooDetails.innerHTML = zoonoticMsg;
+      zooBanner.style.display = "block";
+    } else {
+      zooBanner.style.display = "none";
+    }
+  }
+
+  // Abstention Box Display
+  const abstentionBox = document.getElementById("abstentionNoticeBox");
+  if (abstentionBox) {
+    abstentionBox.style.display = isAbstention ? "block" : "none";
+  }
+  
+  lastTriageResult = {
+    condition: primaryCondition,
+    band: qualitativeBand,
+    symptoms: checkedBoxes,
+    isAbstention,
+    isZoonotic: isZoonoticAlert,
+    mvuTicket
+  };
 
   diffDiag.textContent = `Differential Rule-Outs: ${differential.join(" • ")}`;
 
@@ -646,6 +1059,40 @@ function renderAnimals() {
       `).join(" ");
     }
 
+    // Food Safety Milk Withholding Alert Banner
+    let withholdingHtml = "";
+    if (a.prescription) {
+      const rx = a.prescription;
+      // Formula: Clock counts from the LAST dose:
+      const treatmentDurationMs = (rx.treatmentDays || 3) * 24 * 3600 * 1000;
+      const withdrawalBufferMs = (rx.withdrawalHours || 72) * 3600 * 1000;
+      const totalPeriodMs = treatmentDurationMs + withdrawalBufferMs;
+      const prescribedAt = rx.prescribedAt || Date.now();
+      const endTime = prescribedAt + totalPeriodMs;
+      const isUrgent = (endTime - Date.now()) > 0;
+
+      withholdingHtml = `
+        <div class="withholding-alert ${isUrgent ? 'urgent' : 'cleared'}">
+          <div class="withholding-header">
+            <span class="withholding-title">
+              ${isUrgent ? '⚠️ MANDATORY MILK WITHHOLDING' : '✓ MILK WITHDRAWAL CLEARED'}
+            </span>
+            <span style="font-size: 0.72rem; font-weight: 700; color: #64748b;">FOOD SAFETY MANDATE</span>
+          </div>
+          <div class="withholding-clock" data-withdrawal-end="${endTime}">
+            ⏱️ Calculating clock...
+          </div>
+          <div class="withholding-meta">
+            <div><strong>Rx:</strong> ${rx.drug} (${rx.route || 'IM'})</div>
+            <div><strong>Attending Vet:</strong> ${rx.vetName} • <em>${rx.vetReg}</em></div>
+            <div style="font-weight: 600; color: ${isUrgent ? '#b91c1c' : '#15803d'}; margin-top: 3px;">
+              ${isUrgent ? '⛔ DO NOT POOL MILK OR SUPPLY TO DAIRY' : '✓ Safe for human consumption & dairy sale'}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     card.innerHTML = `
       <div class="animal-card-header">
         <div>
@@ -655,12 +1102,20 @@ function renderAnimals() {
         <span class="tag-badge">🏷️ ${a.tag}</span>
       </div>
       <div class="animal-card-body">
+        <div style="background: #fefce8; border: 1px solid #fef08a; border-radius: 6px; padding: 4px 8px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; font-size: 0.76rem; font-weight: 700; color: #854d0e;">
+          <span>🏅 ग्राम जागरूक पशुपालक (Vigilant Sentinel Farmer)</span>
+          <span style="font-size: 0.7rem; color: #a16207; font-weight: 600;">Priority Dispensary Pass</span>
+        </div>
         <p style="font-size: 0.85rem; color: #334155; margin-bottom: 6px;">
           <strong>Age/Sex:</strong> ${a.age} • ${a.sex} | <strong>Location:</strong> ${a.location}
         </p>
-        <p style="font-size: 0.82rem; color: #475569; margin-bottom: 10px; font-style: italic;">
+        <p style="font-size: 0.82rem; color: #475569; margin-bottom: 8px; font-style: italic;">
           "${a.notes}"
         </p>
+        
+        <!-- Live Milk Withholding Section -->
+        ${withholdingHtml}
+
         <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px;">
           ${vaxHtml}
         </div>
@@ -676,6 +1131,8 @@ function renderAnimals() {
     `;
     container.appendChild(card);
   });
+  
+  updateWithdrawalClocks();
 }
 
 function prefillSymptomCheck(speciesStr) {
@@ -724,21 +1181,7 @@ function renderVets() {
   });
 }
 
-// 10. TABS FOR BLUEPRINT EXPLORER
-function initTabs() {
-  const tabBtns = document.querySelectorAll(".tab-btn");
-  tabBtns.forEach(btn => {
-    btn.addEventListener("click", () => {
-      tabBtns.forEach(b => b.classList.remove("active"));
-      document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
 
-      btn.classList.add("active");
-      const targetId = btn.getAttribute("data-tab");
-      const targetPane = document.getElementById(targetId);
-      if (targetPane) targetPane.classList.add("active");
-    });
-  });
-}
 
 // 11. MODALS & FORMS
 function initModals() {
@@ -792,6 +1235,66 @@ function initModals() {
     });
   }
 
+  
+  
+  // Authentication Forms Submit Handlers
+  document.getElementById("farmerLoginForm")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    quickLogin("farmer");
+  });
+  document.getElementById("paravetLoginForm")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    quickLogin("paravet");
+  });
+  document.getElementById("vetLoginForm")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    quickLogin("vet");
+  });
+  document.getElementById("officerLoginForm")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    quickLogin("officer");
+  });
+  document.getElementById("adminLoginForm")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    quickLogin("admin");
+  });
+
+  // Prescription Form Submit Handler
+  const prescribeForm = document.getElementById("prescribeForm");
+  const prescribeModal = document.getElementById("prescribeModal");
+  if (prescribeForm && prescribeModal) {
+    prescribeForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const tag = document.getElementById("rxAnimalTag").value;
+      const condition = document.getElementById("rxCondition").value;
+      const drug = document.getElementById("rxDrug").value;
+      const route = document.getElementById("rxRoute").value;
+      const treatmentDays = parseInt(document.getElementById("rxTreatmentDays").value || "3");
+      const milkHours = parseInt(document.getElementById("rxMilkHours").value || "72");
+      const vetName = document.getElementById("rxVetName").value;
+      const vetReg = document.getElementById("rxVetReg").value;
+
+      const newRx = {
+        condition: condition,
+        drug: drug,
+        route: route,
+        treatmentDays: treatmentDays,
+        withdrawalHours: milkHours,
+        prescribedAt: Date.now(),
+        vetName: vetName,
+        vetReg: vetReg,
+        status: "UNDER_TREATMENT"
+      };
+
+      updateAnimalPrescription(tag, newRx);
+      prescribeModal.classList.remove("active");
+      showToast(`Prescription signed & sealed! Live milk withdrawal timer active on Tag ${tag}.`);
+      
+      const passportSec = document.getElementById("health-passport");
+      if (passportSec) passportSec.scrollIntoView({ behavior: "smooth" });
+    });
+  }
+
   // Appointment Modal
   const bookModal = document.getElementById("bookModal");
   const closeBookModal = document.getElementById("closeBookModal");
@@ -806,13 +1309,26 @@ function initModals() {
   if (bookForm && bookModal) {
     bookForm.addEventListener("submit", (e) => {
       e.preventDefault();
-      const vet = document.getElementById("bookVetName").value;
+      const vet = document.getElementById("bookVetName").value || "Dr. Rameshwar Kute";
       const farmerPhone = document.getElementById("bookPhone").value;
       const date = document.getElementById("bookDate").value;
+      const animal = document.getElementById("bookAnimalSelect").value || "Gauri (Tag: MH-24-9812)";
+      const visitType = document.getElementById("bookType").value || "Doorstep Field Visit";
 
+      const newApt = {
+        id: "APT-" + Math.floor(1000 + Math.random()*9000),
+        animal: animal,
+        farmerPhone: farmerPhone,
+        visitType: visitType,
+        date: date,
+        vet: vet,
+        status: "Pending Confirmation"
+      };
+
+      saveAppointment(newApt);
       bookModal.classList.remove("active");
       bookForm.reset();
-      showToast(`Appointment Request #${Math.floor(100000 + Math.random()*900000)} sent to ${vet}!`);
+      showToast(`Appointment Request sent to ${vet}! Saved in Vet Care Desk queue.`);
     });
   }
 
@@ -861,3 +1377,1990 @@ function showToast(message) {
   }, 3500);
 }
 
+
+// LIVE MILK WITHHOLDING CLOCK TIMER
+function updateWithdrawalClocks() {
+  const clocks = document.querySelectorAll("[data-withdrawal-end]");
+  const now = Date.now();
+  clocks.forEach(el => {
+    const endTime = parseInt(el.getAttribute("data-withdrawal-end"));
+    const diff = endTime - now;
+    if (diff <= 0) {
+      el.innerHTML = "✓ WITHDRAWAL CLEARED — Milk Safe for Dairy Supply";
+      el.style.color = "#15803d";
+      el.style.borderColor = "#86efac";
+    } else {
+      const days = Math.floor(diff / (24 * 3600 * 1000));
+      const hours = Math.floor((diff % (24 * 3600 * 1000)) / (3600 * 1000));
+      const mins = Math.floor((diff % (3600 * 1000)) / (60 * 1000));
+      const secs = Math.floor((diff % (60 * 1000)) / 1000);
+      el.innerHTML = `⏱️ ${days}d ${hours}h ${mins}m ${secs}s remaining`;
+    }
+  });
+}
+setInterval(updateWithdrawalClocks, 1000);
+
+// RENDER VET CARE DESK QUEUES
+function renderVetDesk() {
+  const aptContainer = document.getElementById("vetAppointmentsContainer");
+  const caseContainer = document.getElementById("vetCasesContainer");
+  if (!aptContainer || !caseContainer) return;
+
+  const appointments = getStoredAppointments();
+  const cases = getStoredCases();
+
+  // Update badges
+  const aptBadge = document.getElementById("aptCountBadge");
+  const caseBadge = document.getElementById("caseCountBadge");
+  if (aptBadge) aptBadge.textContent = `${appointments.length} Active`;
+  if (caseBadge) caseBadge.textContent = `${cases.length} Active`;
+
+  // Render Appointments
+  aptContainer.innerHTML = "";
+  if (appointments.length === 0) {
+    aptContainer.innerHTML = "<p style='font-size:0.85rem; color:#64748b;'>No appointments currently pending.</p>";
+  } else {
+    appointments.forEach((apt, idx) => {
+      const card = document.createElement("div");
+      card.className = "desk-card";
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+          <h4 style="font-size:0.95rem; font-weight:700; color:#0f172a;">${apt.animal}</h4>
+          <span class="vax-pill ${apt.status === 'Confirmed' ? 'vax-ok' : 'vax-due'}">${apt.status}</span>
+        </div>
+        <p style="font-size:0.82rem; color:#334155; margin-bottom:4px;">
+          <strong>Type:</strong> ${apt.visitType} | <strong>Preferred:</strong> ${apt.date}
+        </p>
+        <p style="font-size:0.82rem; color:#64748b; margin-bottom:10px;">
+          <strong>Farmer Contact:</strong> <a href="tel:${apt.farmerPhone}">${apt.farmerPhone}</a>
+        </p>
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-primary btn-sm" onclick="confirmAppointment(${idx})" style="flex:1;">
+            Confirm Visit
+          </button>
+          <a href="tel:${apt.farmerPhone}" class="btn btn-outline btn-sm" style="flex:1; text-align:center;">
+            Call Farmer
+          </a>
+        </div>
+      `;
+      aptContainer.appendChild(card);
+    });
+  }
+
+  // Render Cases
+  caseContainer.innerHTML = "";
+  if (cases.length === 0) {
+    caseContainer.innerHTML = "<p style='font-size:0.85rem; color:#64748b;'>No referred cases pending review.</p>";
+  } else {
+    cases.forEach(c => {
+      const card = document.createElement("div");
+      card.className = "desk-card";
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+          <h4 style="font-size:0.95rem; font-weight:700; color:#0f172a;">${c.animal}</h4>
+          <span class="triage-band likely">${c.triageBand}: ${c.triageCondition}</span>
+        </div>
+        <p style="font-size:0.82rem; color:#64748b; margin-bottom:6px;">
+          <strong>Symptoms:</strong> ${Array.isArray(c.symptoms) ? c.symptoms.join(', ') : c.symptoms}
+        </p>
+        <p style="font-size:0.78rem; color:#94a3b8; margin-bottom:10px;">
+          Triage ID: ${c.id} • ${c.date}
+        </p>
+        <button class="btn btn-primary btn-sm" onclick="openPrescriptionModal('${c.tag || 'MH-24-9812'}', '${c.triageCondition}')" style="width:100%; background:#15803d;">
+          Examine &amp; Prescribe Treatment
+        </button>
+      `;
+      caseContainer.appendChild(card);
+    });
+  }
+}
+
+function confirmAppointment(idx) {
+  const apts = getStoredAppointments();
+  if (apts[idx]) {
+    apts[idx].status = "Confirmed";
+    try {
+      localStorage.setItem("pashu_appointments", JSON.stringify(apts));
+    } catch(e) {}
+    renderVetDesk();
+  updateAuthUI();
+    showToast(`Appointment confirmed for ${apts[idx].animal}! SMS alert dispatched.`);
+  }
+}
+
+// ROLE SWITCHING: Farmer vs Vet
+function switchRole(role) {
+  const farmerBtn = document.getElementById("roleFarmerBtn");
+  const vetBtn = document.getElementById("roleVetBtn");
+  if (role === "vet") {
+    if (vetBtn) vetBtn.classList.add("active");
+    if (farmerBtn) farmerBtn.classList.remove("active");
+    const desk = document.getElementById("vet-desk");
+    if (desk) desk.scrollIntoView({ behavior: "smooth" });
+    showToast("Switched to Government Veterinary Officer Desk");
+  } else {
+    if (farmerBtn) farmerBtn.classList.add("active");
+    if (vetBtn) vetBtn.classList.remove("active");
+    const hero = document.getElementById("hero");
+    if (hero) hero.scrollIntoView({ behavior: "smooth" });
+    showToast("Switched to Livestock Keeper (Farmer) Portal");
+  }
+}
+
+// FORWARD CASE TO VET CARE DESK
+let lastTriageResult = null;
+function forwardCaseToVet() {
+  if (!lastTriageResult) {
+    showToast("Please evaluate symptoms first before forwarding case.");
+    return;
+  }
+  const newCase = {
+    id: "CASE-MH-" + Math.floor(1000 + Math.random()*9000),
+    animal: "Gauri (Tag: MH-24-9812)",
+    tag: "MH-24-9812",
+    species: "Cattle (गाय)",
+    symptoms: lastTriageResult.symptoms || ["Reported Symptoms"],
+    triageBand: "Likely",
+    triageCondition: lastTriageResult.condition,
+    status: "Referred for Clinical Review",
+    date: "Just Now"
+  };
+  saveCase(newCase);
+  showToast(`Case forwarded to Dr. Rameshwar Kute (LDO Sangamner)!`);
+  switchRole('vet');
+}
+
+// PRESCRIPTION MODAL HANDLERS
+function openPrescriptionModal(tag, condition) {
+  const modal = document.getElementById("prescribeModal");
+  const animalSelect = document.getElementById("rxAnimalTag");
+  const condInput = document.getElementById("rxCondition");
+  if (animalSelect && tag) animalSelect.value = tag;
+  if (condInput && condition) condInput.value = condition;
+  if (modal) modal.classList.add("active");
+}
+
+
+// ==========================================
+// PHASE 2: ULTRA-INCLUSIVE INTAKE & USSD/IVR
+// ==========================================
+
+// USSD State Machine (*992#)
+let ussdState = {
+  step: 0,
+  species: "Cattle",
+  symptom: "",
+  count: 1,
+  village: "Sangamner"
+};
+
+function openUssdModal() {
+  const modal = document.getElementById("ussdModal");
+  if (modal) {
+    modal.classList.add("active");
+    resetUssdState();
+  }
+}
+
+function closeUssdModal() {
+  const modal = document.getElementById("ussdModal");
+  if (modal) modal.classList.remove("active");
+}
+
+function appendUssdKey(key) {
+  playDtmfTone(key);
+  const input = document.getElementById("ussdInput");
+  if (input) {
+    input.value += key;
+    input.focus();
+  }
+}
+
+function resetUssdState() {
+  ussdState = { step: 0, species: "Cattle", symptom: "", count: 1, village: "Sangamner" };
+  const screen = document.getElementById("ussdScreen");
+  const input = document.getElementById("ussdInput");
+  if (screen) {
+    screen.innerText = "PashuSachet Gram Signal (*992#)\n1. Cattle (गाय)\n2. Buffalo (म्हैस)\n3. Goat / Sheep (शेळी/मेंढी)\n4. Poultry (कुक्कुट)\n0. Exit";
+  }
+  if (input) input.value = "";
+}
+
+function submitUssdStep() {
+  const input = document.getElementById("ussdInput");
+  const screen = document.getElementById("ussdScreen");
+  if (!input || !screen) return;
+  const val = input.value.trim();
+  input.value = "";
+
+  if (ussdState.step === 0) {
+    if (val === "0") {
+      closeUssdModal();
+      return;
+    }
+    const speciesMap = { "1": "Cattle (गाय)", "2": "Buffalo (म्हैस)", "3": "Goat/Sheep (शेळी/मेंढी)", "4": "Poultry (कुक्कुट)" };
+    ussdState.species = speciesMap[val] || "Cattle";
+    ussdState.step = 1;
+    screen.innerText = `Selected: ${ussdState.species}\nSelect Primary Sign:\n1. Blisters/Saliva (तोंडातील फोड/लाळ)\n2. Skin Lumps (त्वचेवर गाठी)\n3. High Fever (तीव्र ताप)\n4. Sudden Mortality (दगावले/मृत्यू)\n0. Back`;
+    return;
+  }
+
+  if (ussdState.step === 1) {
+    if (val === "0") {
+      resetUssdState();
+      return;
+    }
+    const symptomMap = {
+      "1": "Blisters in mouth / Salivation",
+      "2": "Skin nodules / Lumps",
+      "3": "High Fever & Anorexia",
+      "4": "Post-Loss Sudden Mortality"
+    };
+    ussdState.symptom = symptomMap[val] || "Observed signs";
+    ussdState.step = 2;
+    screen.innerText = `Sign: ${ussdState.symptom}\nEnter number of affected animals (संख्या टाका):\n(e.g. 1, 2, 5)`;
+    return;
+  }
+
+  if (ussdState.step === 2) {
+    ussdState.count = parseInt(val) || 1;
+    ussdState.step = 3;
+    screen.innerText = `Affected: ${ussdState.count}\nConfirm Village Location:\n1. Sangamner (संगमनेर)\n2. Rahata (राहाता)\n3. Shirdi Rural (शिर्डी)\n4. Akole (अकोले)`;
+    return;
+  }
+
+  if (ussdState.step === 3) {
+    const villageMap = { "1": "Sangamner", "2": "Rahata", "3": "Shirdi Rural", "4": "Akole" };
+    ussdState.village = villageMap[val] || "Sangamner";
+    ussdState.step = 4;
+
+    const reportId = "GSS-USSD-" + Math.floor(1000 + Math.random() * 9000);
+    const reportData = {
+      id: reportId,
+      channel: "USSD",
+      species: ussdState.species,
+      symptoms: [ussdState.symptom],
+      affectedCount: ussdState.count,
+      village: ussdState.village,
+      status: "UNVERIFIED_SIGNAL",
+      timestamp: new Date().toISOString()
+    };
+
+    saveOfflineReport(reportData);
+    screen.innerText = `SUCCESS! [पशूसचेत]\nReport ID: #${reportId}\nVillage: ${ussdState.village}\nLocal Para-Vet Ganesh Kale notified for beat inspection.\nImmediate safe steps sent via SMS.\nPress 0 to close session.`;
+    showToast(`USSD Micro-Report #${reportId} submitted successfully via GSM code!`);
+    return;
+  }
+
+  if (ussdState.step === 4) {
+    closeUssdModal();
+  }
+}
+
+// Missed Call & Marathi IVR Gateway Simulation
+function openMissedCallModal() {
+  const modal = document.getElementById("missedCallModal");
+  if (modal) modal.classList.add("active");
+}
+
+function closeMissedCallModal() {
+  const modal = document.getElementById("missedCallModal");
+  if (modal) modal.classList.remove("active");
+}
+
+function openVoiceIvrModal() {
+  openMissedCallModal();
+}
+
+function simulateMissedCallCallback() {
+  const statusEl = document.getElementById("ivrCallStatus");
+  if (!statusEl) return;
+
+  statusEl.innerHTML = `<span style="color:#d97706;">⏳ शेतकरी क्रमांक +91 98220 18491 कडून 1800-889-1962 वर १ रिंग दिली गेली... कॉल कट झाला.</span>`;
+
+  setTimeout(() => {
+    statusEl.innerHTML = `<span style="color:#2563eb;">📞 पशूसचेत सर्व्हरकडून त्वरित कॉल-बॅक! कॉल कनेक्ट झाला... मराठी IVR ऑडिओ सुरू आहे.</span>`;
+    speakMarathiVoice("नमस्कार शेतकरी बंधू, पशूसचेत कॉल सहाय्यता केंद्रात आपले स्वागत आहे. तुमच्या जनावराची लक्षणे सांगा.");
+  }, 1000);
+
+  setTimeout(() => {
+    statusEl.innerHTML = `<span style="color:#7c3aed;">🎙️ व्हॉइस इनपुट नोंदवले: 'गाय, ३ दिवस ताप, तोंडातील फोड आणि लाळ, २ जनावरे बाधित'.</span>`;
+  }, 2200);
+
+  setTimeout(() => {
+    const reportId = "GSS-IVR-" + Math.floor(1000 + Math.random() * 9000);
+    const reportData = {
+      id: reportId,
+      channel: "VOICE_IVR",
+      species: "Cattle (गाय)",
+      symptoms: ["High Fever", "Mouth Blisters / Salivation"],
+      affectedCount: 2,
+      village: "Sangamner",
+      status: "UNVERIFIED_SIGNAL",
+      timestamp: new Date().toISOString()
+    };
+    saveOfflineReport(reportData);
+
+    statusEl.innerHTML = `<span style="color:#166534; font-weight:700;">✅ तक्रार नोंदणी पूर्ण! तक्रार क्रमांक #${reportId}.<br>पशुमित्र गणेश काळे (संगमनेर बीट) यांना तपासणीसाठी मेसेज पाठवला आहे. शेतकरी मोबाईलवर मराठी SMS पाठवला.</span>`;
+    showToast(`Voice IVR Signal #${reportId} captured and queued for Para-Vet!`);
+  }, 3600);
+}
+
+// UI Toggles & Field Synchronizers
+function toggleProxyFields(checked) {
+  const box = document.getElementById("proxyFieldsBox");
+  if (box) box.style.display = checked ? "block" : "none";
+}
+
+function toggleMortalityFields(checked) {
+  const box = document.getElementById("mortalityCountBox");
+  if (box) box.style.display = checked ? "block" : "none";
+}
+
+function syncSpecies(val) {
+  const hiddenInput = document.getElementById("animalSpecies");
+  if (hiddenInput) hiddenInput.value = val;
+}
+
+function toggleSymptomVal(val) {
+  const cb = document.querySelector(`input[name="symptom"][value="${val}"]`);
+  if (cb) {
+    cb.checked = !cb.checked;
+    if (typeof Event !== 'undefined') {
+      try { cb.dispatchEvent(new Event("change")); } catch(e) {}
+    }
+  }
+}
+
+// Offline-First Queue Engine
+function saveOfflineReport(reportData) {
+  try {
+    const existing = JSON.parse(localStorage.getItem("pashu_offline_reports") || "[]");
+    existing.unshift(reportData);
+    localStorage.setItem("pashu_offline_reports", JSON.stringify(existing));
+
+    // Also push directly into live villageSignals so it IMMEDIATELY appears in Para-Vet Beat Inbox
+    villageSignals.unshift({
+      id: reportData.id,
+      channel: reportData.channel || "DIRECT_WEB",
+      species: reportData.species || "Cattle (गाय)",
+      symptoms: Array.isArray(reportData.symptoms) ? reportData.symptoms : [reportData.symptoms || "Observed signs"],
+      affectedCount: reportData.affectedCount || 1,
+      village: reportData.village || "Sangamner",
+      farmerName: reportData.farmerName || "Ganesh Patil",
+      phone: "+91 98220 18491",
+      status: "UNVERIFIED_SIGNAL",
+      t0_time: "Just now",
+      vitals: "Awaiting Para-Vet Beat Visit"
+    });
+    renderParavetInbox();
+    console.log("[PashuSachet] Signal stored and rendered in Para-Vet queue:", reportData.id);
+  } catch (err) {
+    console.error("Failed to save report to local storage queue:", err);
+  }
+}
+
+function syncPendingReports() {
+  try {
+    const pending = JSON.parse(localStorage.getItem("pashu_offline_reports") || "[]");
+    if (pending.length > 0) {
+      console.log(`[PashuSachet] Auto-syncing ${pending.length} pending reports to village signal board...`);
+      showToast(`Network restored! Synced ${pending.length} offline signals.`);
+      // In a real cloud backend, POST /api/v1/reports/sync would happen here.
+    }
+  } catch (err) {
+    console.error("Sync error:", err);
+  }
+}
+
+window.addEventListener("online", syncPendingReports);
+
+
+// ==========================================
+// PHASE 4: PARA-VET VERIFICATION GATE LOGIC
+// ==========================================
+
+let villageSignals = [
+  {
+    id: "SIG-AHM-9101",
+    channel: "USSD",
+    species: "Cattle (गाय)",
+    symptoms: ["Blisters in mouth / Salivation", "Lameness"],
+    affectedCount: 3,
+    village: "Sangamner Khurd (संगमनेर खुर्द)",
+    farmerName: "Tukaram Shinde",
+    phone: "+91 98220 41092",
+    status: "UNVERIFIED_SIGNAL",
+    t0_time: "18 mins ago",
+    vitals: "Pending exam"
+  },
+  {
+    id: "SIG-AHM-9102",
+    channel: "VOICE_IVR",
+    species: "Goat (शेळी)",
+    symptoms: ["High Fever", "Mouth lesions / Ulcers"],
+    affectedCount: 5,
+    village: "Nimgaon Jali (निमगाव जाळी)",
+    farmerName: "Kisan Gaikwad",
+    phone: "+91 97631 88402",
+    status: "UNVERIFIED_SIGNAL",
+    t0_time: "42 mins ago",
+    vitals: "Pending exam"
+  },
+  {
+    id: "SIG-AHM-9088",
+    channel: "DIRECT_WEB",
+    species: "Cattle (गाय)",
+    symptoms: ["Skin nodules / Lumps", "High Fever"],
+    affectedCount: 2,
+    village: "Ashwi (आश्वी)",
+    farmerName: "Babanrao Vikhe",
+    phone: "+91 94222 19043",
+    status: "VERIFIED_SIGNAL",
+    t0_time: "3 hours ago",
+    verifiedAt: "2.5 hours ago",
+    vitals: "Temp 104.2°F"
+  }
+];
+
+function renderParavetInbox() {
+  const container = document.getElementById("paravetSignalsContainer");
+  if (!container) return;
+
+  const pending = villageSignals.filter(s => s.status === "UNVERIFIED_SIGNAL");
+  const verified = villageSignals.filter(s => s.status === "VERIFIED_SIGNAL");
+  const sampleReq = villageSignals.filter(s => s.status === "SAMPLE_REQUESTED");
+
+  const pendingCountEl = document.getElementById("pendingSignalCount");
+  const verifiedCountEl = document.getElementById("verifiedSignalCount");
+  const sampleCountEl = document.getElementById("sampleSignalCount");
+
+  if (pendingCountEl) pendingCountEl.textContent = `${pending.length} Active`;
+  if (verifiedCountEl) verifiedCountEl.textContent = `${verified.length + 5} Confirmed`;
+  if (sampleCountEl) sampleCountEl.textContent = `${sampleReq.length + 2} Kits`;
+
+  if (pending.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; background: #ffffff; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 40px; text-align: center; color: #64748b;">
+        <div style="font-size: 2.5rem; margin-bottom: 8px;">✅</div>
+        <h4 style="color: #0f172a; margin: 0 0 4px;">All Signals Verified in Your Beat</h4>
+        <p style="font-size: 0.85rem; margin: 0;">No pending farmer micro-reports requiring field confirmation right now.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = pending.map(sig => `
+    <div class="app-card" style="border: 1.5px solid #cbd5e1; border-top: 4px solid #0284c7; box-shadow: 0 4px 10px rgba(0,0,0,0.05); padding: 18px; margin: 0;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+        <div>
+          <span style="font-size: 0.72rem; font-weight: 800; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">
+            ${sig.channel} Signal
+          </span>
+          <h4 style="margin: 4px 0 0; font-size: 1.05rem; color: #0f172a; font-weight: 800;">
+            #${sig.id}
+          </h4>
+        </div>
+        <div style="text-align: right;">
+          <span style="font-size: 0.75rem; color: #d97706; font-weight: 700;">⏱️ T0: ${sig.t0_time}</span>
+          <div style="font-size: 0.78rem; color: #64748b;">${sig.village}</div>
+        </div>
+      </div>
+
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 0.84rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <strong style="color: #0f172a;">${sig.species}</strong>
+          <span style="color: #b91c1c; font-weight: 700;">${sig.affectedCount} Affected</span>
+        </div>
+        <div style="color: #334155; margin-bottom: 4px;">
+          <strong>Reported Signs:</strong> ${sig.symptoms.join(", ")}
+        </div>
+        <div style="color: #64748b; font-size: 0.78rem;">
+          <strong>Farmer:</strong> ${sig.farmerName} (${sig.phone})
+        </div>
+        <div style="color: #0369a1; font-size: 0.78rem; margin-top: 4px;">
+          <strong>Vitals:</strong> ${sig.vitals}
+        </div>
+      </div>
+
+      <!-- The 4 Ultra-Fast Verification Actions (< 30 seconds) -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <button type="button" class="btn btn-sm" onclick="confirmSignal('${sig.id}')" style="background: #166534; color: #ffffff; font-weight: 700;">
+          ✓ खात्री झाली (Confirm)
+        </button>
+        <button type="button" class="btn btn-sm btn-outline" onclick="dismissSignal('${sig.id}')" style="color: #64748b; border-color: #cbd5e1; font-weight: 600;">
+          ✗ किरकोळ (Dismiss)
+        </button>
+        <button type="button" class="btn btn-sm btn-outline" onclick="promptSignalVitals('${sig.id}')" style="color: #0369a1; border-color: #7dd3fc; font-weight: 600;">
+          🌡️ Vitals (तापमान)
+        </button>
+        <button type="button" class="btn btn-sm btn-outline" onclick="requestSignalSample('${sig.id}')" style="color: #7c3aed; border-color: #c4b5fd; font-weight: 600;">
+          🧪 Sample Kit
+        </button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function confirmSignal(id) {
+  const sig = villageSignals.find(s => s.id === id);
+  if (sig) {
+    sig.status = "VERIFIED_SIGNAL";
+    sig.verifiedAt = "Just now";
+    sig.verifiedBy = "Ganesh Kale (PV-AHM-9104)";
+    showToast(`Signal #${id} verified! Propagated to District Surveillance Board.`);
+    renderParavetInbox();
+    renderVillageSignalBoard();
+  }
+}
+
+function dismissSignal(id) {
+  const sig = villageSignals.find(s => s.id === id);
+  if (sig) {
+    sig.status = "DISMISSED_BENIGN";
+    sig.dismissedAt = "Just now";
+    sig.dismissedBy = "Ganesh Kale (PV-AHM-9104)";
+    showToast(`Signal #${id} dismissed as benign. Not sent to Officer Board.`);
+    renderParavetInbox();
+  }
+}
+
+function promptSignalVitals(id) {
+  const sig = villageSignals.find(s => s.id === id);
+  if (!sig) return;
+  const temp = prompt("Enter Measured Rectal Temperature (°F):", "104.2");
+  if (temp) {
+    sig.vitals = `Temp: ${temp}°F (Measured by PV-AHM-9104)`;
+    showToast(`Vitals recorded for #${id}: ${temp}°F`);
+    renderParavetInbox();
+  }
+}
+
+function requestSignalSample(id) {
+  const sig = villageSignals.find(s => s.id === id);
+  if (!sig) return;
+  sig.status = "SAMPLE_REQUESTED";
+  sig.sampleRecord = {
+    sampleId: "SMP-PUN-" + Math.floor(1000 + Math.random() * 9000),
+    sampleType: "Nasal/Vesicular Swab & Serum",
+    status: "SAMPLE_NEEDED",
+    destinationLab: "RDDL Pune (पाषाण)",
+    coldChainTracking: "Active 4°C",
+    initiatedBy: "Ganesh Kale (PV-AHM-9104)",
+    timestamp: new Date().toISOString()
+  };
+  showToast(`Sample kit request #${sig.sampleRecord.sampleId} initiated for RDDL Pune!`);
+  renderParavetInbox();
+}
+
+
+// Fast-forward / Time travel simulation for Milk Withdrawal transition (TC-5.5)
+function simulateFastForwardWithdrawal(tag = "MH-24-9812") {
+  const animals = getStoredAnimals();
+  const animal = animals.find(a => a.tag === tag);
+  if (animal && animal.prescription) {
+    // Offset prescribedAt to 10 days ago so treatment + withdrawal buffer has elapsed
+    animal.prescription.prescribedAt = Date.now() - (10 * 24 * 3600 * 1000);
+    try {
+      localStorage.setItem("pashu_animals", JSON.stringify(animals));
+    } catch(e) {}
+    renderAnimals();
+    updateWithdrawalClocks();
+    showToast(`Withdrawal period for ${tag} fast-forwarded to EXPIRED (Milk Safe for Dairy)!`);
+  }
+}
+
+
+// ==========================================
+// PHASE 6: CLOSED-LOOP DIAGNOSTIC TRACKER
+// ==========================================
+
+const SAMPLE_STAGES = [
+  { key: "SAMPLE_NEEDED", labelEn: "Sample Needed", labelMr: "नमुना आवश्यक" },
+  { key: "SAMPLE_COLLECTED", labelEn: "Sample Collected", labelMr: "नमुना संकलित" },
+  { key: "IN_TRANSIT_LAB", labelEn: "In-Transit to RDDL", labelMr: "पुणे लॅबकडे रवाना" },
+  { key: "LAB_TESTING", labelEn: "Testing (RT-PCR/ELISA)", labelMr: "तपासणी सुरू" },
+  { key: "RESULTED_AND_ACTION_TAKEN", labelEn: "Resulted & Closed", labelMr: "अहवाल व कृती पूर्ण" }
+];
+
+let diagnosticSamples = [
+  {
+    sampleId: "SMP-PUN-8104",
+    animalTag: "MH-24-9812",
+    animalName: "Gauri (गाय)",
+    farmerName: "Ganesh Patil",
+    village: "Sangamner Khurd (संगमनेर)",
+    sampleType: "Vesicular Swab & Serum in VTM",
+    diseaseSuspected: "Lumpy Skin Disease (LSD)",
+    currentStageIndex: 2, // IN_TRANSIT_LAB
+    coldChainTracking: "Maintained 2°C - 8°C in Ice Gel Shipper #CS-441",
+    destinationLab: "Regional Disease Diagnostic Laboratory (RDDL Pune)",
+    attendingVet: "Dr. Rameshwar Kute (MSVC/2012/03194)",
+    paraVet: "Ganesh Kale (PV-AHM-9104)",
+    labResult: null,
+    closureAction: null,
+    updatedAt: "45 mins ago"
+  },
+  {
+    sampleId: "SMP-PUN-7922",
+    animalTag: "MH-12-4401",
+    animalName: "Raja (म्हैस)",
+    farmerName: "Babanrao Vikhe",
+    village: "Nimgaon Jali",
+    sampleType: "Milk Sample for Culture & Sensitivity",
+    diseaseSuspected: "Clinical Mastitis",
+    currentStageIndex: 4, // RESULTED_AND_ACTION_TAKEN
+    coldChainTracking: "Cold Chain Verified (4.1°C at receipt)",
+    destinationLab: "District Veterinary Polyclinic Lab, Ahmednagar",
+    attendingVet: "Dr. Rameshwar Kute",
+    paraVet: "Ganesh Kale",
+    labResult: "Staphylococcus aureus Isolated (Cephalosporin Sensitive)",
+    closureAction: "Intramammary Ceftiofur completed. 72hr withdrawal countdown initiated.",
+    updatedAt: "Today, 11:30 AM"
+  }
+];
+
+function renderSampleTracker() {
+  const container = document.getElementById("sampleCardsContainer");
+  if (!container) return;
+
+  container.innerHTML = diagnosticSamples.map(sample => {
+    const stage = SAMPLE_STAGES[sample.currentStageIndex];
+    const isClosed = sample.currentStageIndex === 4;
+
+    const stepperHtml = SAMPLE_STAGES.map((s, idx) => {
+      let stateClass = "";
+      if (idx < sample.currentStageIndex) stateClass = "completed";
+      else if (idx === sample.currentStageIndex) stateClass = "active";
+
+      const icon = idx < sample.currentStageIndex ? "✓" : (idx + 1);
+      return `
+        <div class="sample-step ${stateClass}">
+          <div class="step-circle">${icon}</div>
+          <div class="step-label">${s.labelMr}<br><span style="font-size:0.7rem; color:#94a3b8;">${s.labelEn}</span></div>
+        </div>
+      `;
+    }).join("");
+
+    let closureBoxHtml = "";
+    if (isClosed) {
+      closureBoxHtml = `
+        <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 8px; padding: 12px 16px; margin-top: 14px;">
+          <div style="font-weight: 800; color: #166534; font-size: 0.9rem; margin-bottom: 4px;">
+            ✅ प्रयोगशाळा अहवाल व बंदिस्त कृती (Lab Result & Biosecurity Closure)
+          </div>
+          <div style="font-size: 0.85rem; color: #15803d; line-height: 1.5;">
+            <strong>निदान अहवाल:</strong> ${sample.labResult}<br>
+            <strong>अंतिम कृती:</strong> ${sample.closureAction}
+          </div>
+          <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #86efac; font-size: 0.8rem; color: #166534;">
+            📲 <strong>Farmer Closure SMS Sent:</strong> "शेतकरी बंधू ${sample.farmerName}, आपल्या ${sample.animalName} (टॅग: ${sample.animalTag}) च्या नमुन्याचा अहवाल प्राप्त झाला असून आवश्यक वैद्यकीय कृती पूर्ण केली आहे. - पशूसचेत / DAHD महाराष्ट्र"
+          </div>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="sample-tracker-card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 0.78rem; font-weight: 800; background: #ede9fe; color: #6d28d9; padding: 3px 8px; border-radius: 4px;">
+                RDDL BARCODE: #${sample.sampleId}
+              </span>
+              <span class="coldchain-badge">
+                🧊 ${sample.coldChainTracking}
+              </span>
+            </div>
+            <h3 style="margin: 6px 0 2px; font-size: 1.2rem; color: #0f172a; font-weight: 800;">
+              ${sample.animalName} • Tag: ${sample.animalTag}
+            </h3>
+            <div style="font-size: 0.82rem; color: #64748b;">
+              Farmer: <strong>${sample.farmerName}</strong> (${sample.village}) • Lab: <strong>${sample.destinationLab}</strong>
+            </div>
+          </div>
+
+          <div style="text-align: right;">
+            <span style="font-size: 0.85rem; font-weight: 800; color: ${isClosed ? '#15803d' : '#7c3aed'}; background: ${isClosed ? '#f0fdf4' : '#ede9fe'}; padding: 4px 12px; border-radius: 6px;">
+              ${stage.labelMr} (${stage.labelEn})
+            </span>
+            <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 4px;">
+              Updated: ${sample.updatedAt}
+            </div>
+          </div>
+        </div>
+
+        <!-- 5-Stage Stepper -->
+        <div class="sample-stepper">
+          ${stepperHtml}
+        </div>
+
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 0.82rem;">
+          <div>
+            <strong>Sample Specimen:</strong> ${sample.sampleType} • <strong>Target:</strong> ${sample.diseaseSuspected}
+          </div>
+          <div>
+            <strong>Attending:</strong> ${sample.attendingVet} &amp; ${sample.paraVet}
+          </div>
+        </div>
+
+        ${closureBoxHtml}
+
+        <!-- Next Stage Advance Action -->
+        <div style="display: flex; justify-content: flex-end; margin-top: 14px; gap: 8px;">
+          ${!isClosed ? `
+            <button type="button" class="btn btn-sm" onclick="advanceSampleStage('${sample.sampleId}')" style="background: #7c3aed; color: #ffffff; font-weight: 700;">
+              ⏩ Advance Next Stage (पुढील टप्पा सिम्युलेट करा)
+            </button>
+          ` : `
+            <span style="font-size: 0.82rem; font-weight: 700; color: #15803d; display: flex; align-items: center; gap: 4px;">
+              ✓ Lifecycle Closed &amp; Archived in Bharat Pashudhan
+            </span>
+          `}
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function advanceSampleStage(sampleId) {
+  const sample = diagnosticSamples.find(s => s.sampleId === sampleId);
+  if (!sample) return;
+
+  if (sample.currentStageIndex < SAMPLE_STAGES.length - 1) {
+    sample.currentStageIndex += 1;
+    sample.updatedAt = "Just now";
+
+    if (sample.currentStageIndex === 4) {
+      // Reached RESULTED_AND_ACTION_TAKEN
+      sample.labResult = "RT-PCR Confirmed Positive: Capripoxvirus (Lumpy Skin Disease). Ring-vaccination deployed.";
+      sample.closureAction = "Local 5km ring-vaccination completed. Farmer biosecurity isolation confirmed.";
+      showToast(`Sample #${sampleId} resulted & closed! Marathi closure SMS auto-dispatched to ${sample.farmerName}.`);
+    } else {
+      const nextStage = SAMPLE_STAGES[sample.currentStageIndex];
+      showToast(`Sample #${sampleId} transitioned to: ${nextStage.labelMr} (${nextStage.labelEn})`);
+    }
+
+    renderSampleTracker();
+  }
+}
+
+
+// ==========================================
+// PHASE 7: VILLAGE SIGNAL BOARD & DECISION QUEUE
+// ==========================================
+
+const RAW_VILLAGE_REPORTS = [
+  { village: "Nimgaon Jali", taluka: "Sangamner", count: 4, disease: "FMD Blisters", verified: true, isMortality: false },
+  { village: "Ashwi", taluka: "Sangamner", count: 3, disease: "LSD Nodules", verified: true, isMortality: false },
+  { village: "Chandnapuri", taluka: "Sangamner", count: 2, disease: "Fever & Drop in Milk", verified: true, isMortality: false },
+  { village: "Talegaon", taluka: "Sangamner", count: 1, disease: "Lameness", verified: true, isMortality: false },
+  { village: "Kotul", taluka: "Akole", count: 2, disease: "Sudden Mortality", verified: true, isMortality: true }
+];
+
+let officerDecisions = [
+  {
+    id: "DEC-001",
+    type: "RING_VAX",
+    title: "Ring-Vaccination Mobilization: Sangamner Cluster",
+    details: "4 verified FMD cases in Nimgaon Jali. Recommend deploying 1,000 FMD vaccine doses within 5km radius.",
+    priority: "HIGH_URGENCY",
+    actionLabel: "Approve Ring-Vaccination Team",
+    status: "PENDING"
+  },
+  {
+    id: "DEC-002",
+    type: "MORTALITY_BIOSECURITY",
+    title: "High-Mortality Post-Loss Investigation: Kotul Beat",
+    details: "2 bovine sudden deaths reported in Kotul. Risk of Anthrax spore dissemination. Biosecurity cordoning required.",
+    priority: "CRITICAL_ZOONOTIC",
+    actionLabel: "Dispatch MVU & Sanitation Unit",
+    status: "PENDING"
+  },
+  {
+    id: "DEC-003",
+    type: "LAB_APPROVAL",
+    title: "Diagnostic Batch Submission to ICAR-NIVEDI",
+    details: "Sample Batch SMP-PUN-8104 confirmed LSD by RDDL Pune. Sign off national NADRES upload.",
+    priority: "STANDARD",
+    actionLabel: "Sign & Forward to ICAR-NIVEDI",
+    status: "PENDING"
+  }
+];
+
+function renderVillageSignalBoard() {
+  const grid = document.getElementById("villageSignalsGrid");
+  if (!grid) return;
+
+  // Implement k-Anonymity Privacy Rule (< 3 Signals suppressed to Block Centroid)
+  const aggregatedClusters = [];
+  const lowCountTalukaGroups = {};
+
+  RAW_VILLAGE_REPORTS.forEach(report => {
+    if (report.count >= 3) {
+      aggregatedClusters.push({
+        displayName: `${report.village} (${report.taluka} Taluka)`,
+        count: report.count,
+        disease: report.disease,
+        isSurge: report.count >= 4,
+        isAnonymized: false
+      });
+    } else {
+      if (!lowCountTalukaGroups[report.taluka]) {
+        lowCountTalukaGroups[report.taluka] = { count: 0, diseases: [] };
+      }
+      lowCountTalukaGroups[report.taluka].count += report.count;
+      lowCountTalukaGroups[report.taluka].diseases.push(report.disease);
+    }
+  });
+
+  // Add k-anonymized taluka centroid clusters
+  for (const taluka in lowCountTalukaGroups) {
+    const grp = lowCountTalukaGroups[taluka];
+    aggregatedClusters.push({
+      displayName: `${taluka} Taluka Rural Cluster (Centroid Pin)`,
+      count: grp.count,
+      disease: grp.diseases.join(" & "),
+      isSurge: false,
+      isAnonymized: true,
+      note: "Anonymized for farm privacy (k < 3 protection)"
+    });
+  }
+
+  grid.innerHTML = aggregatedClusters.map(cluster => `
+    <div class="village-signal-card" style="border-top: 3px solid ${cluster.isSurge ? '#dc2626' : (cluster.isAnonymized ? '#0f766e' : '#2563eb')};">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+        <h4 style="margin: 0; font-size: 1rem; color: #0f172a; font-weight: 700;">
+          ${cluster.displayName}
+        </h4>
+        <span style="font-size: 0.85rem; font-weight: 800; color: ${cluster.isSurge ? '#dc2626' : '#0f766e'}; background: ${cluster.isSurge ? '#fee2e2' : '#ccfbf1'}; padding: 2px 8px; border-radius: 4px;">
+          ${cluster.count} Signals
+        </span>
+      </div>
+
+      <div style="font-size: 0.85rem; color: #475569; margin-bottom: 8px;">
+        <strong>Reported Disease Signal:</strong> ${cluster.disease}
+      </div>
+
+      ${cluster.isSurge ? `
+        <div style="margin-top: 6px;">
+          <span class="surge-alert-pill">⚡ SURGE_ALERT: Active Cluster (>3 signals/7 days)</span>
+          <div style="font-size: 0.78rem; color: #b91c1c; margin-top: 4px; font-weight: 600;">
+            Immediate 5km ring-vaccination recommended.
+          </div>
+        </div>
+      ` : ''}
+
+      ${cluster.isAnonymized ? `
+        <div style="font-size: 0.75rem; color: #0f766e; font-weight: 600; margin-top: 6px; background: #f0fdfa; padding: 4px 8px; border-radius: 4px;">
+          🔒 ${cluster.note}
+        </div>
+      ` : ''}
+    </div>
+  `).join("");
+}
+
+function renderOfficerDecisionQueue() {
+  const container = document.getElementById("officerDecisionQueue");
+  if (!container) return;
+
+  container.innerHTML = officerDecisions.map(dec => `
+    <div class="decision-card">
+      <div style="max-width: 650px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+          <strong style="color: #0f172a; font-size: 0.95rem;">${dec.title}</strong>
+          <span style="font-size: 0.72rem; font-weight: 800; background: ${dec.priority === 'CRITICAL_ZOONOTIC' ? '#fecaca' : '#fef3c7'}; color: ${dec.priority === 'CRITICAL_ZOONOTIC' ? '#991b1b' : '#92400e'}; padding: 2px 6px; border-radius: 4px;">
+            ${dec.priority}
+          </span>
+        </div>
+        <p style="font-size: 0.82rem; color: #475569; margin: 0; line-height: 1.4;">
+          ${dec.details}
+        </p>
+      </div>
+
+      <div>
+        ${dec.status === 'PENDING' ? `
+          <button type="button" class="btn btn-sm btn-primary" onclick="resolveOfficerDecision('${dec.id}')" style="background: #0f766e; white-space: nowrap;">
+            ✓ ${dec.actionLabel}
+          </button>
+        ` : `
+          <span style="color: #15803d; font-weight: 700; font-size: 0.85rem;">
+            ✓ Action Authorized
+          </span>
+        `}
+      </div>
+    </div>
+  `).join("");
+}
+
+function resolveOfficerDecision(decId) {
+  const dec = officerDecisions.find(d => d.id === decId);
+  if (!dec) return;
+  dec.status = "RESOLVED";
+  showToast(`Authorized: ${dec.actionLabel}! Field units notified.`);
+  renderOfficerDecisionQueue();
+}
+
+
+// ==========================================
+// PHASE 8: NDLM, NADRES, VISION & TELEMETRY
+// ==========================================
+
+// (Unified supercharged simulateVisionDetection active below)
+
+// Bharat Pashudhan (NDLM) 12-Digit Tag Lookup
+function lookupNdlmTag() {
+  const input = document.getElementById("ndlmTagInput");
+  const resultBox = document.getElementById("ndlmResultBox");
+  if (!input || !resultBox) return;
+
+  const tag = input.value.trim();
+  if (tag.length < 10) {
+    alert("Please enter a valid 10-12 digit ear tag number.");
+    return;
+  }
+
+  resultBox.style.display = "block";
+  resultBox.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+      <div>
+        <strong style="color: #0f172a; font-size: 0.95rem;">NDLM PASSPORT VERIFIED: Tag #${tag}</strong>
+        <div style="font-size: 0.78rem; color: #64748b;">INAPH Registry Timestamp: 14-Aug-2023 • Unique UIDAI UID Linked</div>
+      </div>
+      <span style="background: #dcfce7; color: #166534; font-weight: 800; font-size: 0.75rem; padding: 2px 8px; border-radius: 4px;">
+        ✓ ACTIVE REGISTRATION
+      </span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; font-size: 0.8rem; color: #334155;">
+      <div><strong>Owner:</strong> Ganesh R. Patil (Sangamner)</div>
+      <div><strong>Species & Breed:</strong> Cattle (Gir Crossbred)</div>
+      <div><strong>Age / Sex:</strong> 3.5 Yrs / Female (Lactating)</div>
+      <div><strong>Last FMD Vaccine:</strong> 18-Jan-2026 (Batch: FMD-MH-881)</div>
+      <div><strong>Last Brucellosis S19:</strong> Vaccinated (Calfhood)</div>
+      <div><strong>Assigned Dispensary:</strong> CVD Sangamner (Dr. R. Kute)</div>
+    </div>
+  `;
+  showToast(`Tag #${tag} verified with Bharat Pashudhan (NDLM) registry!`);
+}
+
+// ICAR-NIVEDI NADRES V2 Data Pipeline Export
+function exportNadresBatch() {
+  const box = document.getElementById("nadresPayloadBox");
+  if (!box) return;
+
+  const nadresPayload = {
+    metadata: {
+      pipelineVersion: "NADRES-V2-EPI-PIPELINE",
+      reportingState: "Maharashtra (27)",
+      reportingDistrict: "Ahmednagar (501)",
+      reportingEpiWeek: "2026-W44",
+      dpdpCompliance: "STRICT_DE_IDENTIFICATION_APPLIED",
+      exportTimestamp: new Date().toISOString()
+    },
+    aggregatedSurveillanceData: [
+      {
+        villageCentroidHash: "geohash_te42q",
+        taluka: "Sangamner",
+        speciesCode: "BOV_CATTLE",
+        verifiedDiseaseName: "Foot and Mouth Disease (FMD)",
+        icd11Code: "1E51",
+        verifiedCases: 4,
+        mortalityCount: 0,
+        clusterRadiusKm: 3.2,
+        verificationAuthority: "MSVC/2012/03194"
+      },
+      {
+        villageCentroidHash: "geohash_te48z",
+        taluka: "Sangamner",
+        speciesCode: "BOV_CATTLE",
+        verifiedDiseaseName: "Lumpy Skin Disease (LSD)",
+        icd11Code: "1E40",
+        verifiedCases: 3,
+        mortalityCount: 0,
+        clusterRadiusKm: 2.1,
+        verificationAuthority: "MSVC/2012/03194"
+      },
+      {
+        villageCentroidHash: "geohash_te39m",
+        taluka: "Akole",
+        speciesCode: "BOV_BUFFALO",
+        verifiedDiseaseName: "Suspected Enterotoxaemia / Sudden Death",
+        icd11Code: "1E12",
+        verifiedCases: 2,
+        mortalityCount: 2,
+        clusterRadiusKm: 1.5,
+        verificationAuthority: "MSVC/2012/03194"
+      }
+    ]
+  };
+
+  box.style.display = "block";
+  box.textContent = JSON.stringify(nadresPayload, null, 2);
+  showToast("NADRES V2 de-identified surveillance batch generated successfully!");
+}
+
+
+// ==============================================================
+// PRODUCTION SUPERCHARGES: DTMF AUDIO, MARATHI VOICE & CANVAS HUD
+// ==============================================================
+
+// 1. Dual-Tone Multi-Frequency (DTMF) Sound Synthesizer
+const DTMF_FREQS = {
+  "1": [697, 1209], "2": [697, 1336], "3": [697, 1477],
+  "4": [770, 1209], "5": [770, 1336], "6": [770, 1477],
+  "7": [852, 1209], "8": [852, 1336], "9": [852, 1477],
+  "*": [941, 1209], "0": [941, 1336], "#": [941, 1477]
+};
+
+function playDtmfTone(key) {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const freqs = DTMF_FREQS[key] || [440, 880];
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc1.type = "sine";
+    osc2.type = "sine";
+    osc1.frequency.value = freqs[0];
+    osc2.frequency.value = freqs[1];
+
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.14);
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc1.start();
+    osc2.start();
+    osc1.stop(ctx.currentTime + 0.14);
+    osc2.stop(ctx.currentTime + 0.14);
+  } catch(e) {
+    // AudioContext blocked or not allowed; silent fail
+  }
+}
+
+// 2. Browser Marathi Speech Synthesis (Spoken Spoken Prompts)
+function speakMarathiVoice(text) {
+  try {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "mr-IN";
+      utterance.rate = 0.92;
+      const voices = window.speechSynthesis.getVoices();
+      const mrVoice = voices.find(v => v.lang.includes("mr") || v.lang.includes("hi"));
+      if (mrVoice) utterance.voice = mrVoice;
+      window.speechSynthesis.speak(utterance);
+    }
+  } catch(e) {}
+}
+
+// 3. Web Speech Recognition for Live Marathi/Hindi Voice Input
+let voiceRecognitionActive = false;
+let speechRecognizer = null;
+
+function toggleMarathiVoiceRecognition() {
+  const btn = document.getElementById("marathiVoiceBtn");
+  const box = document.getElementById("voiceTranscriptBox");
+  const textEl = document.getElementById("voiceTranscriptText");
+  const labelEl = document.getElementById("voiceStatusLabel");
+
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRec) {
+    alert("Web Speech Recognition API is not supported in this browser. Please use Chrome/Edge or type symptoms.");
+    return;
+  }
+
+  if (voiceRecognitionActive && speechRecognizer) {
+    speechRecognizer.stop();
+    voiceRecognitionActive = false;
+    if (btn) btn.innerHTML = "🎙️ Speak Symptoms in Marathi (माईकवर बोला)";
+    if (labelEl) labelEl.textContent = "माईक बंद आहे (Microphone Idle).";
+    return;
+  }
+
+  try {
+    speechRecognizer = new SpeechRec();
+    speechRecognizer.lang = "mr-IN";
+    speechRecognizer.continuous = true;
+    speechRecognizer.interimResults = true;
+
+    speechRecognizer.onstart = () => {
+      voiceRecognitionActive = true;
+      if (box) box.style.display = "block";
+      if (btn) btn.innerHTML = "⏹️ Stop Listening (बोलणे पूर्ण झाले)";
+      if (labelEl) labelEl.textContent = "ऐकत आहे (Listening)... मराठीत लक्षणे बोला (उदा. 'गायीला ताप आहे आणि त्वचेवर गाठी आहेत'):";
+      showToast("Microphone active! Speak observed symptoms in Marathi or Hindi.");
+    };
+
+    speechRecognizer.onresult = (event) => {
+      let transcript = "";
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        transcript += event.results[i][0].transcript;
+      }
+      if (textEl) textEl.textContent = `“${transcript}”`;
+      parseSpokenSymptomKeywords(transcript.toLowerCase());
+    };
+
+    speechRecognizer.onerror = (e) => {
+      console.warn("Speech recognition error:", e);
+      if (labelEl) labelEl.textContent = "कृपया पुन्हा बोला किंवा टाईप करा.";
+    };
+
+    speechRecognizer.onend = () => {
+      voiceRecognitionActive = false;
+      if (btn) btn.innerHTML = "🎙️ Speak Symptoms in Marathi (माईकवर बोला)";
+    };
+
+    speechRecognizer.start();
+  } catch(err) {
+    console.error("Speech init error:", err);
+  }
+}
+
+function parseSpokenSymptomKeywords(text) {
+  // Automatically correlate Marathi spoken words with checkboxes
+  if (text.includes("ताप") || text.includes("fever") || text.includes("गरम")) {
+    toggleSymptomCheckbox("fever", true);
+  }
+  if (text.includes("गाठी") || text.includes("लंपी") || text.includes("nodule") || text.includes("lump")) {
+    toggleSymptomCheckbox("skin_nodules", true);
+  }
+  if (text.includes("फोड") || text.includes("लाळ") || text.includes("blister") || text.includes("ulcer") || text.includes("तोंड")) {
+    toggleSymptomCheckbox("mouth_lesions", true);
+  }
+  if (text.includes("खुर") || text.includes("लंगड") || text.includes("lame")) {
+    toggleSymptomCheckbox("lameness", true);
+  }
+  if (text.includes("कास") || text.includes("स्तन") || text.includes("दूध कमी") || text.includes("mastitis")) {
+    toggleSymptomCheckbox("udder_swelling", true);
+    toggleSymptomCheckbox("milk_drop", true);
+  }
+  if (text.includes("खोकला") || text.includes("श्वास") || text.includes("cough")) {
+    toggleSymptomCheckbox("cough", true);
+  }
+  if (text.includes("दगावले") || text.includes("मृत्यू") || text.includes("dead") || text.includes("मरण")) {
+    const mortCheck = document.getElementById("isMortalityCheck");
+    if (mortCheck && !mortCheck.checked) {
+      mortCheck.checked = true;
+      toggleMortalityFields(true);
+    }
+  }
+}
+
+function toggleSymptomCheckbox(val, state) {
+  const cb = document.querySelector(`input[name="symptom"][value="${val}"]`);
+  if (cb && cb.checked !== state) {
+    cb.checked = state;
+    if (typeof Event !== 'undefined') {
+      try { cb.dispatchEvent(new Event("change")); } catch(e) {}
+    }
+  }
+}
+
+// 4. HTML5 Canvas AI Vision Inspection HUD & Lesion Bounding Boxes
+// (Unified supercharged drawLesionOnCanvas active below)
+
+
+// Upload Custom Farm Photo Handler
+function handleLesionUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      drawLesionOnCanvas("lsd", img);
+      const box = document.getElementById("visionOutputBox");
+      const content = document.getElementById("visionResultContent");
+      if (box && content) {
+        box.style.display = "block";
+        content.innerHTML = `
+          <strong>🔍 Custom Upload Analysis:</strong> <span style="color:#b91c1c; font-weight:800;">Circumscribed Cutaneous Lesions Identified</span><br>
+          File: <em>${file.name}</em> (${Math.round(file.size/1024)} KB) • Processed via In-Browser Edge Classifier.<br>
+          <span style="color:#15803d; font-weight:700;">✓ Correlated with 'Skin Nodules / Lumps' & 'High Fever'.</span>
+        `;
+      }
+      toggleSymptomCheckbox("skin_nodules", true);
+      toggleSymptomCheckbox("fever", true);
+      showToast(`Custom photo analyzed! Lesion detected on ${file.name}.`);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// 5. Interactive GIS Map Containment Zone Toggle & Pin Inspector
+let ringVaxActive = false;
+function toggleRingVaxRadius() {
+  ringVaxActive = !ringVaxActive;
+  const buffers = document.getElementById("ringVaxBuffers");
+  const btn = document.getElementById("toggleRingVaxBtn");
+  if (buffers) buffers.style.display = ringVaxActive ? "inline" : "none";
+  if (btn) {
+    btn.style.background = ringVaxActive ? "#ef4444" : "transparent";
+    btn.style.color = ringVaxActive ? "#ffffff" : "#f87171";
+    btn.textContent = ringVaxActive ? "✓ 5km Containment Zone Active" : "🎯 Toggle 5km Ring-Vaccination Buffer";
+  }
+  showToast(ringVaxActive ? "5km Ring-Vaccination Containment Buffer activated around Nimgaon Jali!" : "Ring-Vaccination buffer hidden.");
+}
+
+function inspectMapPin(village, count, disease, clusterStatus) {
+  const inspector = document.getElementById("mapPinInspector");
+  const details = document.getElementById("mapPinDetails");
+  if (!inspector || !details) return;
+
+  inspector.style.display = "block";
+  let statusBadge = clusterStatus === "SURGE_CLUSTER" ?
+    '<span style="background:#dc2626; color:#ffffff; padding:2px 6px; border-radius:4px; font-weight:800;">SURGE CLUSTER</span>' :
+    (clusterStatus === "K_ANONYMIZED" ?
+      '<span style="background:#0f766e; color:#ffffff; padding:2px 6px; border-radius:4px; font-weight:800;">k<3 ANONYMIZED CENTROID</span>' :
+      '<span style="background:#b91c1c; color:#ffffff; padding:2px 6px; border-radius:4px; font-weight:800;">BIOSECURITY CORDON</span>');
+
+  details.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <strong>📍 ${village}</strong>
+      ${statusBadge}
+    </div>
+    <div style="color:#94a3b8; margin-top:4px;">
+      Verified Cases: <strong style="color:#ffffff;">${count}</strong> | Disease: <strong style="color:#fde68a;">${disease}</strong> | LDO Jurisdiction: <strong>CVD Sangamner</strong>
+    </div>
+  `;
+}
+
+// 6. Digital Pashu Aadhar Smart Card Modal Handlers
+function openPashuAadharModal(tag) {
+  const modal = document.getElementById("pashuAadharCardModal");
+  if (modal) modal.classList.add("active");
+}
+
+function closePashuAadharModal() {
+  const modal = document.getElementById("pashuAadharCardModal");
+  if (modal) modal.classList.remove("active");
+}
+
+
+// ==========================================================================
+// SUPERCHARGED EXTENSIONS: PERSONAS, VISION HUD, SEIR, MVU & WHATSAPP
+// ==========================================================================
+
+// 1. Multi-Role Live Persona Switcher
+let currentPersona = 'farmer';
+
+function activatePersona(role) {
+  currentPersona = role;
+  
+  const pills = ['personaFarmer', 'personaParavet', 'personaLdo', 'personaCollector', 'personaRddl'];
+  pills.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  
+  const activePill = document.getElementById(
+    role === 'farmer' ? 'personaFarmer' :
+    role === 'paravet' ? 'personaParavet' :
+    role === 'ldo' ? 'personaLdo' :
+    role === 'collector' ? 'personaCollector' : 'personaRddl'
+  );
+  if (activePill) activePill.classList.add('active');
+
+  const paravetNav = document.getElementById('paravetNavLink');
+  const adminNav = document.getElementById('adminNavLink');
+
+  if (role === 'farmer') {
+    quickLogin('farmer');
+    renderAnimals();
+    showToast('🧑‍🌾 शेतकरी मोड सक्रिय: जलद ९०-सेकंद तपासणी व पशू आधार उपलब्ध.');
+    const el = document.getElementById('symptom-screening');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  } else if (role === 'paravet') {
+    quickLogin('paravet');
+    if (paravetNav) paravetNav.style.display = 'inline-block';
+    renderParavetInbox();
+    showToast('🩺 पशु सखी / पॅरा-व्हेट मोड: <30 सेकंद पडताळणी रांग सक्रिय.');
+    const el = document.getElementById('paravet-inbox');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  } else if (role === 'ldo') {
+    quickLogin('vet');
+    if (paravetNav) paravetNav.style.display = 'inline-block';
+    renderVetDesk();
+    showToast('👨‍⚕️ पशुवैद्यकीय अधिकारी (LDO) मोड: क्लिनिकल तपासणी व औषधोपचार कक्ष.');
+    const el = document.getElementById('vet-desk');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  } else if (role === 'collector') {
+    quickLogin('officer');
+    if (adminNav) adminNav.style.display = 'inline-block';
+    renderVillageSignalBoard();
+    renderOfficerDecisionQueue();
+    showToast('🏛️ जिल्हा नियंत्रण कक्ष मोड: ५ किमी प्रतिबंधात्मक झोन व प्रादुर्भाव नियंत्रण नकाशा.');
+    if (!ringVaxActive) toggleRingVaxRadius();
+    const el = document.getElementById('outbreak-gis');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  } else if (role === 'rddl') {
+    quickLogin('admin');
+    if (adminNav) adminNav.style.display = 'inline-block';
+    renderSampleTracker();
+    showToast('🔬 राज्य रोग निदान प्रयोगशाळा (RDDL Pune) मोड: RT-PCR चाचणी व नमुना ट्रॅकिंग.');
+    const el = document.getElementById('sample-tracker');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+// 2. Multi-Disease Computer Vision Sentinel Supercharge
+let thermalModeActive = false;
+let gradCamActive = false;
+let currentDetectedCondition = 'lsd';
+let liveCameraStream = null;
+
+const visionDiseaseSpecs = {
+  lsd: {
+    name: 'Lumpy Skin Disease (Capripoxvirus)',
+    band: 'Likely',
+    score: 89.4,
+    thermal: 39.8,
+    urgency: 'RED_HIGH_CONTAGION',
+    species: 'cattle',
+    symptoms: ['skin_nodules', 'fever'],
+    diffs: ['Pseudo-LSD (BHV-2)', 'Dermatophilosis', 'Insect Bites'],
+    biomarkers: ['Circumscribed Cutaneous Nodules (2-5cm firm dermal lumps)', 'Prescapular lymphadenopathy'],
+    actionMr: 'बाधित जनावराला तात्काळ कळपापासून वेगळे करा (विलगीकरण). डास-माशा प्रतिबंधक औषध फवारा.',
+    actionEn: 'Immediately isolate affected animal. Apply insect repellent. Call 1962.'
+  },
+  fmd: {
+    name: 'Foot & Mouth Disease (Aphthovirus O/A/Asia-1)',
+    band: 'Likely',
+    score: 92.1,
+    thermal: 40.5,
+    urgency: 'RED_HIGH_CONTAGION',
+    species: 'cattle',
+    symptoms: ['mouth_lesions', 'salivation', 'fever', 'swelling_legs'],
+    diffs: ['Vesicular Stomatitis', 'Bovine Viral Diarrhea (BVD)', 'Malignant Catarrhal Fever'],
+    biomarkers: ['Epithelial Vesicles & Ruptured mucosal ulcers', 'Interdigital coronary erythema'],
+    actionMr: 'तोंडातील फोडांवर पोटॅशियम परमँगनेट (KMnO4) हलके लावा. खूर कोरडी ठेवा. दूध उकळून नष्ट करा.',
+    actionEn: 'Wash oral lesions with 0.1% KMnO4 solution. Disinfect hooves. Withhold milk.'
+  },
+  mastitis: {
+    name: 'Acute Clinical Mastitis (Staph/Streptococcus)',
+    band: 'Likely',
+    score: 94.2,
+    thermal: 41.2,
+    urgency: 'AMBER_PARA_VET_VISIT',
+    species: 'cattle',
+    symptoms: ['drop_milk', 'fever'],
+    diffs: ['Subclinical Mastitis Flare', 'Udder Hematoma', 'Teat Papilloma'],
+    biomarkers: ['Severe asymmetrical udder hyperthermia', 'Fibrin clot strippings', 'Pain on palpation'],
+    actionMr: 'वारंवार कास पूर्णपणे रिकामी करा (Frequent Stripping). थंड पाण्याचा शेक द्या. त्वरित डॉक्टरांना बोलवा.',
+    actionEn: 'Perform frequent complete milk stripping. Apply cold compress. Administer intramammary therapy.'
+  },
+  bq: {
+    name: 'Black Quarter (Clostridium chauvoei)',
+    band: 'Possible',
+    score: 78.5,
+    thermal: 40.2,
+    urgency: 'RED_EMERGENCY',
+    species: 'cattle',
+    symptoms: ['swelling_legs', 'fever'],
+    diffs: ['Malignant Edema', 'Acute Anthrax', 'Snake Bite'],
+    biomarkers: ['Emphysematous crepitating muscle swelling', 'Severe acute hindquarter lameness'],
+    actionMr: 'तातडीची आणीबाणी! जनावराला अजिबात चालवू नका. शिरेतून पेनिसिलिन देण्यासाठी डॉक्टरांना तात्काळ बोलवा.',
+    actionEn: 'Critical emergency! Do not move animal. Administer parenteral high-dose crystalline penicillin.'
+  },
+  ppr: {
+    name: 'Peste des Petits Ruminants (Goat Plague)',
+    band: 'Likely',
+    score: 91.8,
+    thermal: 40.7,
+    urgency: 'RED_HIGH_CONTAGION',
+    species: 'goat',
+    symptoms: ['nasal_discharge', 'mouth_lesions', 'fever'],
+    diffs: ['CCPP (Caprine Pleuropneumonia)', 'Goat Pox', 'Bluetongue'],
+    biomarkers: ['Mucopurulent oculonasal crusting', 'Erosive necrotic stomatitis', 'Foul enteritis'],
+    actionMr: 'बाधित शेळ्या-मेंढ्या त्वरित वेगळ्या करा. इलेक्ट्रोल पाणी पाजा. ५ किमी परिघातील शेळ्यांचे लसीकरण करा.',
+    actionEn: 'Strictly quarantine sick goats. Provide oral electrolytes. Deploy urgent 5km ring vaccination.'
+  },
+  babesiosis: {
+    name: 'Bovine Babesiosis / Redwater (Babesia bigemina)',
+    band: 'Possible',
+    score: 82.0,
+    thermal: 40.9,
+    urgency: 'AMBER_PARA_VET_VISIT',
+    species: 'cattle',
+    symptoms: ['fever'],
+    diffs: ['Theileriosis', 'Anaplasmosis', 'Leptospirosis'],
+    biomarkers: ['Boophilus microplus tick cluster', 'Coffee-colored redwater urine', 'Pale sclera'],
+    actionMr: 'गोचीड निर्मूलन औषध (फ्ल्युमेथ्रिन) लावा. त्वरित पशुवैद्याकडून डिमिनाझिन इंजेक्शन टोचून घ्या.',
+    actionEn: 'Apply topical acaricide immediately. Administer Diminazene Aceturate under veterinary care.'
+  }
+};
+
+function simulateVisionDetection(cond) {
+  currentDetectedCondition = cond || 'lsd';
+  
+  // Update Active Chip Button
+  const chips = ['chipLsd', 'chipFmd', 'chipMastitis', 'chipBq', 'chipPpr', 'chipBabesiosis'];
+  chips.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  const mapChip = { lsd: 'chipLsd', fmd: 'chipFmd', mastitis: 'chipMastitis', bq: 'chipBq', ppr: 'chipPpr', babesiosis: 'chipBabesiosis' };
+  const targetChip = document.getElementById(mapChip[cond]);
+  if (targetChip) targetChip.classList.add('active');
+
+  drawLesionOnCanvas(currentDetectedCondition);
+
+  const spec = visionDiseaseSpecs[currentDetectedCondition] || visionDiseaseSpecs.lsd;
+  const box = document.getElementById("visionOutputBox");
+  const content = document.getElementById("visionResultContent");
+  if (box && content) {
+    box.style.display = "block";
+    content.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+        <div>
+          <strong style="font-size:1.05rem; color:#0f172a;">${spec.name}</strong>
+          <div style="font-size:0.78rem; color:#64748b;">
+            Pathological Visual Identification • Confidence Band: 
+            <span style="background:#dcfce7; color:#166534; font-weight:800; padding:2px 6px; border-radius:4px;">${spec.band} (${spec.score}%)</span>
+          </div>
+        </div>
+        <span style="background:#fee2e2; color:#991b1b; font-weight:800; font-size:0.75rem; padding:3px 8px; border-radius:4px;">
+          ${spec.urgency}
+        </span>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:10px; font-size:0.82rem;">
+        <div style="background:#f1f5f9; padding:8px 12px; border-radius:6px;">
+          <strong style="color:#334155;">Key Visual Biomarkers:</strong>
+          <ul style="margin:4px 0 0 16px; padding:0; color:#475569;">
+            ${spec.biomarkers.map(b => `<li>${b}</li>`).join('')}
+          </ul>
+        </div>
+        <div style="background:#f1f5f9; padding:8px 12px; border-radius:6px;">
+          <strong style="color:#334155;">Differential Diagnoses:</strong>
+          <ul style="margin:4px 0 0 16px; padding:0; color:#475569;">
+            ${spec.diffs.map(d => `<li>${d}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+
+      <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:6px; padding:8px 12px; font-size:0.82rem; color:#065f46;">
+        <strong>तात्काळ कृती (Marathi):</strong> ${spec.actionMr}<br>
+        <strong>Safe Protocol (English):</strong> ${spec.actionEn}
+      </div>
+    `;
+  }
+
+  showToast(`AI Clinical Vision: Identified signs of ${spec.name}`);
+}
+
+function drawLesionOnCanvas(cond, customImg) {
+  const container = document.getElementById("visionCanvasContainer");
+  const canvas = document.getElementById("visionCanvas");
+  if (!container || !canvas) return;
+  container.style.display = "block";
+  const ctx = canvas.getContext("2d");
+  const w = canvas.width;
+  const h = canvas.height;
+
+  ctx.clearRect(0, 0, w, h);
+
+  if (customImg) {
+    ctx.drawImage(customImg, 0, 0, w, h);
+  } else {
+    // Generate simulated high-fidelity skin/tissue backdrop
+    const grad = ctx.createLinearGradient(0, 0, w, h);
+    if (cond === 'mastitis') {
+      grad.addColorStop(0, "#fbcfe8");
+      grad.addColorStop(1, "#f472b6");
+    } else if (cond === 'bq') {
+      grad.addColorStop(0, "#475569");
+      grad.addColorStop(1, "#1e293b");
+    } else {
+      grad.addColorStop(0, "#e2e8f0");
+      grad.addColorStop(1, "#94a3b8");
+    }
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Render pathological condition patterns
+    if (cond === 'lsd') {
+      // Circumscribed 2-5cm firm dermal nodules
+      const nodules = [
+        { x: 180, y: 120, r: 28 },
+        { x: 310, y: 160, r: 36 },
+        { x: 440, y: 110, r: 24 },
+        { x: 250, y: 220, r: 30 }
+      ];
+      nodules.forEach(n => {
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.fillStyle = "#7f1d1d";
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "#ef4444";
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r * 0.45, 0, Math.PI * 2);
+        ctx.fillStyle = "#450a0a";
+        ctx.fill();
+      });
+    } else if (cond === 'fmd') {
+      // Vesicular erosions on mucosal border
+      ctx.fillStyle = "#b91c1c";
+      ctx.beginPath();
+      ctx.ellipse(320, 160, 85, 45, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "#f87171";
+      ctx.stroke();
+
+      // Sloughed mucosal blisters
+      for (let i = 0; i < 7; i++) {
+        ctx.beginPath();
+        ctx.arc(280 + i * 14, 155 + (i % 2) * 8, 7, 0, Math.PI * 2);
+        ctx.fillStyle = "#fef08a";
+        ctx.fill();
+      }
+    } else if (cond === 'mastitis') {
+      // Udder asymmetric hyperthermia and swelling
+      ctx.fillStyle = "#e11d48";
+      ctx.beginPath();
+      ctx.ellipse(300, 180, 110, 80, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#f43f5e";
+      ctx.lineWidth = 5;
+      ctx.stroke();
+    } else if (cond === 'bq') {
+      // Emphysematous crepitating swelling
+      ctx.fillStyle = "#0f172a";
+      ctx.beginPath();
+      ctx.ellipse(320, 160, 120, 70, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#dc2626";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    } else if (cond === 'ppr') {
+      // Oculonasal erosions and discharge
+      ctx.fillStyle = "#7c2d12";
+      ctx.beginPath();
+      ctx.ellipse(310, 140, 75, 40, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#ea580c";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    } else if (cond === 'babesiosis') {
+      // Tick cluster
+      for (let i = 0; i < 15; i++) {
+        ctx.beginPath();
+        ctx.arc(250 + (i % 5) * 22, 120 + Math.floor(i / 5) * 25, 6, 0, Math.PI * 2);
+        ctx.fillStyle = "#1e293b";
+        ctx.fill();
+        ctx.strokeStyle = "#f59e0b";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+    }
+  }
+
+  // Thermal Infrared FLIR Shader Overlay (if toggled)
+  if (thermalModeActive) {
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const d = imgData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const avg = (d[i] + d[i+1] + d[i+2]) / 3;
+      if (avg > 180) { // White hot
+        d[i] = 255; d[i+1] = 255; d[i+2] = 220;
+      } else if (avg > 130) { // Yellow/Orange
+        d[i] = 255; d[i+1] = 160; d[i+2] = 20;
+      } else if (avg > 80) { // Red hot
+        d[i] = 220; d[i+1] = 30; d[i+2] = 30;
+      } else { // Purple/Blue background
+        d[i] = 50; d[i+1] = 10; d[i+2] = 90;
+      }
+    }
+    ctx.putImageData(imgData, 0, 0);
+  }
+
+  // Grad-CAM Attention Heatmap (if toggled)
+  if (gradCamActive) {
+    const gcam = ctx.createRadialGradient(310, 160, 15, 310, 160, 130);
+    gcam.addColorStop(0, "rgba(239, 68, 68, 0.75)");
+    gcam.addColorStop(0.4, "rgba(245, 158, 11, 0.5)");
+    gcam.addColorStop(0.8, "rgba(59, 130, 246, 0.25)");
+    gcam.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = gcam;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  // Bounding Box HUD Overlays
+  ctx.strokeStyle = "#38bdf8";
+  ctx.lineWidth = 2.5;
+  ctx.strokeRect(200, 75, 230, 160);
+
+  // Corner Bracket Reticles
+  ctx.strokeStyle = "#38bdf8";
+  ctx.lineWidth = 4;
+  const corners = [
+    [200, 75, 15, 0, 0, 15],
+    [430, 75, -15, 0, 0, 15],
+    [200, 235, 15, 0, 0, -15],
+    [430, 235, -15, 0, 0, -15]
+  ];
+  corners.forEach(([x, y, dx1, dy1, dx2, dy2]) => {
+    ctx.beginPath();
+    ctx.moveTo(x + dx1, y + dy1);
+    ctx.lineTo(x, y);
+    ctx.lineTo(x + dx2, y + dy2);
+    ctx.stroke();
+  });
+
+  // Label tag above box
+  ctx.fillStyle = "#38bdf8";
+  ctx.fillRect(200, 52, 190, 22);
+  ctx.fillStyle = "#020617";
+  ctx.font = "bold 11px monospace";
+  const spec = visionDiseaseSpecs[cond] || visionDiseaseSpecs.lsd;
+  ctx.fillText(`DETECT: ${cond.toUpperCase()} (${spec.score}%)`, 206, 67);
+
+  // Update HUD text
+  const hudStatus = document.getElementById("hudStatus");
+  const hudMetrics = document.getElementById("hudLesionMetrics");
+  if (hudStatus) {
+    hudStatus.innerHTML = `TARGET: <span style="color:#38bdf8;">${cond.toUpperCase()}</span> | FLIR: ${thermalModeActive ? 'ON' : 'OFF'} | GRAD-CAM: ${gradCamActive ? 'ON' : 'OFF'}`;
+  }
+  if (hudMetrics) {
+    hudMetrics.innerHTML = `TEMP: ${spec.thermal}°C | CONF: ${spec.band}`;
+  }
+}
+
+function toggleThermalMode() {
+  thermalModeActive = !thermalModeActive;
+  const btn = document.getElementById("thermalToggleBtn");
+  if (btn) {
+    if (thermalModeActive) {
+      btn.classList.add("thermal-active");
+      btn.innerHTML = "✓ FLIR Thermal: ON";
+    } else {
+      btn.classList.remove("thermal-active");
+      btn.innerHTML = "🌡️ FLIR Thermal Heatmap";
+    }
+  }
+  drawLesionOnCanvas(currentDetectedCondition);
+  showToast(thermalModeActive ? "FLIR Thermal Infrared Overlay Enabled" : "Thermal Overlay Disabled");
+}
+
+function toggleGradCamMode() {
+  gradCamActive = !gradCamActive;
+  const btn = document.getElementById("gradCamToggleBtn");
+  if (btn) {
+    if (gradCamActive) {
+      btn.classList.add("active");
+      btn.innerHTML = "✓ Grad-CAM: ON";
+    } else {
+      btn.classList.remove("active");
+      btn.innerHTML = "🧠 Grad-CAM Attention";
+    }
+  }
+  drawLesionOnCanvas(currentDetectedCondition);
+  showToast(gradCamActive ? "Grad-CAM CNN Attention Heatmap Enabled" : "Grad-CAM Disabled");
+}
+
+function toggleLiveCameraFeed() {
+  const video = document.getElementById("visionVideoFeed");
+  const btn = document.getElementById("liveCameraBtn");
+  if (!video || !btn) return;
+
+  if (liveCameraStream) {
+    liveCameraStream.getTracks().forEach(t => t.stop());
+    liveCameraStream = null;
+    video.pause();
+    btn.classList.remove("active");
+    btn.innerHTML = "📹 Open Live Camera";
+    drawLesionOnCanvas(currentDetectedCondition);
+    showToast("Live camera feed stopped.");
+    return;
+  }
+
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+      .then(stream => {
+        liveCameraStream = stream;
+        video.srcObject = stream;
+        video.play();
+        btn.classList.add("active");
+        btn.innerHTML = "⏹️ Stop Camera";
+        showToast("Live Camera stream connected. Frame-by-frame lesion inspection active!");
+
+        const container = document.getElementById("visionCanvasContainer");
+        const canvas = document.getElementById("visionCanvas");
+        if (container) container.style.display = "block";
+        const ctx = canvas.getContext("2d");
+
+        function renderFrame() {
+          if (!liveCameraStream) return;
+          if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // Draw real-time HUD bounding box over live frame
+            ctx.strokeStyle = "#38bdf8";
+            ctx.lineWidth = 2.5;
+            ctx.strokeRect(200, 75, 230, 160);
+            ctx.fillStyle = "#38bdf8";
+            ctx.fillRect(200, 52, 190, 22);
+            ctx.fillStyle = "#020617";
+            ctx.font = "bold 11px monospace";
+            ctx.fillText("LIVE SCAN: ACTIVE", 206, 67);
+          }
+          requestAnimationFrame(renderFrame);
+        }
+        requestAnimationFrame(renderFrame);
+      })
+      .catch(err => {
+        console.warn("Camera access unavailable in environment:", err);
+        showToast("Webcam unavailable in this sandbox environment. Simulating high-res field photo.");
+        drawLesionOnCanvas(currentDetectedCondition);
+      });
+  } else {
+    showToast("Webcam API not supported in this browser.");
+  }
+}
+
+function transferVisionToTriage() {
+  const spec = visionDiseaseSpecs[currentDetectedCondition] || visionDiseaseSpecs.lsd;
+  
+  // Set species
+  const speciesInputs = document.querySelectorAll('input[name="species"]');
+  speciesInputs.forEach(inp => {
+    if (inp.value === spec.species) inp.checked = true;
+  });
+
+  // Check corresponding symptoms
+  spec.symptoms.forEach(sym => {
+    toggleSymptomCheckbox(sym, true);
+  });
+
+  // Fill Voice/Form notes
+  const notes = document.getElementById("farmerVoiceNotes");
+  if (notes) {
+    notes.value = `[AI Vision Detection]: ${spec.name} detected with ${spec.band} confidence (${spec.score}%). Observed signs: ${spec.biomarkers.join(', ')}.`;
+  }
+
+  // Smooth scroll to submit button
+  const submitBtn = document.getElementById("triageSubmitBtn") || document.querySelector("#symptom-screening button[type='submit']");
+  if (submitBtn) {
+    submitBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    submitBtn.style.boxShadow = "0 0 16px rgba(22, 163, 74, 0.8)";
+    setTimeout(() => { submitBtn.style.boxShadow = ""; }, 2500);
+  }
+
+  showToast(`✓ AI Vision findings for ${spec.name} transferred to 90-Second Intake!`);
+}
+
+// 3. Dynamic SEIR Outbreak Simulation
+let seirPlayInterval = null;
+let currentSeirDay = 0;
+
+function updateSeirDay(dayVal) {
+  currentSeirDay = parseInt(dayVal, 10);
+  const lbl = document.getElementById("seirDayLabel");
+  if (lbl) lbl.textContent = `Day ${currentSeirDay}`;
+
+  // Mathematical SEIR Progression Model
+  const isRingActive = ringVaxActive;
+  let rt = isRingActive ? Math.max(0.65, 2.45 - (currentSeirDay * 0.13)) : 2.45;
+  let inf = isRingActive ? 
+    Math.round(12 + Math.max(0, currentSeirDay * 12 - (currentSeirDay > 3 ? (currentSeirDay - 3) * 14 : 0))) : 
+    Math.round(12 * Math.pow(1.35, currentSeirDay));
+  let vax = isRingActive ? Math.min(8400, currentSeirDay * 600) : 0;
+  let eff = isRingActive ? Math.min(94.2, 4.5 + (currentSeirDay * 6.5)) : 4.5;
+
+  const rtEl = document.getElementById("seirRtVal");
+  const infEl = document.getElementById("seirInfVal");
+  const vaxEl = document.getElementById("seirVaxVal");
+  const effEl = document.getElementById("seirEfficacyVal");
+
+  if (rtEl) {
+    rtEl.textContent = rt.toFixed(2);
+    rtEl.style.color = rt < 1.0 ? '#22c55e' : '#ef4444';
+  }
+  if (infEl) infEl.textContent = inf.toLocaleString();
+  if (vaxEl) vaxEl.textContent = vax.toLocaleString();
+  if (effEl) effEl.textContent = `${eff.toFixed(1)}%`;
+
+  // Scale SVG outbreak radius on map
+  const gisSvg = document.getElementById("gisSvgMap");
+  if (gisSvg && typeof gisSvg.querySelector === 'function') {
+    const nimgaonPulse = gisSvg.querySelector('circle[fill="#dc2626"]');
+    if (nimgaonPulse) {
+      const baseR = 8;
+      const growthFactor = isRingActive ? Math.min(1.4, 1 + currentSeirDay * 0.03) : (1 + currentSeirDay * 0.09);
+      nimgaonPulse.setAttribute('r', (baseR * growthFactor).toString());
+    }
+  }
+}
+
+function toggleSeirPlay() {
+  const btn = document.getElementById("playSeirBtn");
+  const slider = document.getElementById("seirDaySlider");
+
+  if (seirPlayInterval) {
+    clearInterval(seirPlayInterval);
+    seirPlayInterval = null;
+    if (btn) btn.innerHTML = "▶️ Run 14-Day Simulation";
+    return;
+  }
+
+  currentSeirDay = 0;
+  if (slider) slider.value = 0;
+  updateSeirDay(0);
+  if (btn) btn.innerHTML = "⏸️ Pause Simulation";
+
+  seirPlayInterval = setInterval(() => {
+    currentSeirDay++;
+    if (currentSeirDay > 14) {
+      clearInterval(seirPlayInterval);
+      seirPlayInterval = null;
+      if (btn) btn.innerHTML = "🔄 Replay Simulation";
+      showToast("14-Day SEIR Outbreak Simulation Completed!");
+      return;
+    }
+    if (slider) slider.value = currentSeirDay;
+    updateSeirDay(currentSeirDay);
+  }, 600);
+}
+
+// 4. 1962 MVU Audio Siren Synthesizer (Web Audio API)
+function playMvuSirenTone() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "sawtooth";
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+
+    // Dual-frequency European/Indian emergency horn sweep
+    const now = ctx.currentTime;
+    for (let i = 0; i < 4; i++) {
+      osc.frequency.setValueAtTime(700, now + i * 0.5);
+      osc.frequency.linearRampToValueAtTime(950, now + i * 0.5 + 0.25);
+      osc.frequency.linearRampToValueAtTime(700, now + i * 0.5 + 0.5);
+    }
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 2.0);
+    showToast("🚨 1962 MVU Emergency Vehicle Siren Triggered!");
+  } catch (e) {
+    console.warn("Web Audio not permitted:", e);
+    showToast("🚨 1962 MVU Emergency Siren Active (Audio Muted)");
+  }
+}
+
+// 5. Official 1962 WhatsApp Chatbot Simulator
+function toggleWhatsAppChat() {
+  const drawer = document.getElementById("whatsappDrawer");
+  if (drawer) {
+    drawer.classList.toggle("active");
+  }
+}
+
+function sendWhatsAppQuickMsg(type) {
+  const list = document.getElementById("whatsappMessagesList");
+  if (!list) return;
+
+  let userText = "";
+  let botReply = "";
+
+  if (type === 'voice') {
+    userText = "🎙️ व्हॉइस मेसेज (०:१२): 'माझ्या गाईच्या अंगावर मोठ्या गाठी आल्या आहेत, ताप खूप आहे.'";
+    botReply = `
+      🙏 <strong>पशूसचेत १९६२ सहाय्यता केंद्र</strong><br>
+      तुमचा व्हॉइस मेसेज प्राप्त झाला. प्राथमिक विश्लेषण:<br>
+      ⚠️ <strong>संशयित रोग:</strong> लंपी त्वचा रोग (LSD - RED TIER)<br>
+      👉 बाधित जनावराला कळपापासून वेगळे बांधा. संगमनेर फिरत्या पशुवैद्यकीय पथकाला (MVU 1962) अलर्ट पाठवला आहे.
+    `;
+  } else if (type === 'photo') {
+    userText = "📷 फोटो पाठवला: nodule_lesion.jpg";
+    botReply = `
+      🔍 <strong>फोटो विश्लेषण पूर्ण:</strong><br>
+      गाठींचा आकार २-४ सेमी असून लंपी रोगाची लक्षणे स्पष्ट दिसत आहेत.<br>
+      ⏱️ डॉ. प्रदीप देशमुख (CVD संगमनेर) यांना सूचित केले आहे.
+    `;
+  } else if (type === 'status') {
+    userText = "📋 केस स्टेटस: निमगाव जाळी अहवाल #SIG-9102";
+    botReply = `
+      📋 <strong>केस सद्यस्थिती:</strong><br>
+      • स्थिती: ✅ पॅरा-व्हेट गणेश काळे यांनी पडताळणी केली.<br>
+      • नमुना: #SAM-2026-AHM-0081 (RDDL पुणे लॅबमध्ये)<br>
+      • कारवाई: ५ किमी परिसरात रिंग लसीकरण सुरू.
+    `;
+  }
+
+  appendWhatsAppBubble(userText, 'outgoing');
+  setTimeout(() => {
+    appendWhatsAppBubble(botReply, 'incoming');
+  }, 700);
+}
+
+function sendWhatsAppUserText() {
+  const input = document.getElementById("whatsappUserInput");
+  if (!input || !input.value.trim()) return;
+
+  const text = input.value.trim();
+  appendWhatsAppBubble(text, 'outgoing');
+  input.value = "";
+
+  setTimeout(() => {
+    let reply = `
+      🙏 <strong>पशूसचेत महाराष्ट्र शासन:</strong><br>
+      आपला संदेश नोंदवला आहे: "<em>${text}</em>".<br>
+      १९६२ फिरते पथक आपल्या गावाच्या संपर्कात आहे. आपत्कालीन मदतीसाठी थेट १९६२ वर डायल करा.
+    `;
+    appendWhatsAppBubble(reply, 'incoming');
+  }, 800);
+}
+
+function appendWhatsAppBubble(content, direction) {
+  const list = document.getElementById("whatsappMessagesList");
+  if (!list) return;
+
+  const now = new Date();
+  const timeStr = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+  const msgDiv = document.createElement("div");
+  msgDiv.className = `whatsapp-msg ${direction}`;
+  msgDiv.innerHTML = `
+    <div>${content}</div>
+    <div class="whatsapp-time">${timeStr}</div>
+  `;
+  list.appendChild(msgDiv);
+  list.scrollTop = list.scrollHeight;
+}
+
+// Safe Helper Functions & Global Modal Wrappers
+function openEmergencyModal() {
+  const modal = document.getElementById("emergencyModal");
+  if (modal) modal.classList.add("active");
+}
+
+function closeEmergencyModal() {
+  const modal = document.getElementById("emergencyModal");
+  if (modal) modal.classList.remove("active");
+}
+
+function closeVoiceIvrModal() {
+  closeMissedCallModal();
+}
+
+function verifyNdlmTag() {
+  return lookupNdlmTag();
+}
+
+function generateNadresExport() { return exportNadresBatch(); }

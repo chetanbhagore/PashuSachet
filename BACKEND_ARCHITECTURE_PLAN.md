@@ -33,6 +33,21 @@ Seva First / PashuSachet is architected as the **participatory last-mile integra
 | **4. Federated Contribution Layer** | Every verified case can (with farmer consent) be de-identified and pushed to NADRES / state surveillance pipelines. Animal identity links to existing **Pashu Aadhaar** when available instead of creating a competing registry. | **Explicitly strengthens national systems instead of competing with them.** Avoids redundant data silos and respects existing government investments. |
 | **5. Offline-First + Voice + Community Verification** | Full offline queue, voice reporting in Marathi (and Hindi/English), community/para-vet confirmation of serious reports before high-urgency escalation. | Goes beyond current WhatsApp chatbots and basic offline forms. Designed ground-up for **real rural Maharashtra constraints** (low literacy, intermittent networks). |
 
+### 🔍 Architectural Audit: The 8 Core Deficiencies & How the Backend Solves Them
+
+| Core Deficiency | Impact If Unfixed | Backend Engineering Solution |
+| :--- | :--- | :--- |
+| **1. Complex App / Form Channels** | Excludes 70% of older, basic-phone farmers | Telephony webhooks (`/api/v1/telephony/missed-call`, `/ussd`) as primary; web API as secondary. |
+| **2. Weak Immediate Farmer Benefit** | Farmers report only when animals are dying | Instant SMS action card generation + async notification worker for closure feedback. |
+| **3. Untrusted Raw Crowd Reports** | Officers dismiss incoming data as noise | Mandatory verification gate: `is_actionable` remains FALSE until para-vet inspects. |
+| **4. Broken Diagnostic Sample Loop** | Loss of traceability on critical lab samples | Normalized `sample_tracking` table with 5-stage lifecycle state machine. |
+| **5. Extra Workload for Field Staff** | Resistance and boycott by busy veterinarians | Micro-payloads with single-click verification endpoints (`<30s` latency). |
+| **6. Slower than Direct 1962 Calls** | Farmers stick to traditional phone lines | Automated webhook integration creating pre-populated tickets directly in the 1962 MVU API. |
+| **7. Passive Aesthetic Dashboards** | Ignored by officers needing daily decisions | Action-oriented queue view (`GET /api/v1/officer/decision-queue`) ranking urgent tasks today. |
+| **8. Lack of Real-World Field Proof** | Dismissed by evaluators as an academic demo | `pilot_telemetry` table measuring channel adoption, verification hours, and closure rates. |
+
+---
+
 ## 1. Architectural Bug Fixes & Corrections Summary
 
 | Area | Previous Flaw | Corrected Architectural Design |
@@ -568,6 +583,128 @@ CREATE TABLE IF NOT EXISTS village_signal_aggregations (
     generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 ```
+
+
+-- -----------------------------------------------------------------------------
+-- 15. GRAM SIGNAL SYSTEM (GSS) RESPONSE METRICS & ACCOUNTABILITY LEDGER
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS response_metrics (
+    metric_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    case_id UUID NOT NULL REFERENCES clinical_cases(case_id) ON DELETE CASCADE,
+    village_census_code VARCHAR(16) NOT NULL,
+    block_name VARCHAR(64) NOT NULL,
+    district_name VARCHAR(64) NOT NULL,
+    
+    -- Timestamps tracking the complete response lifecycle
+    signal_received_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    para_vet_verified_at TIMESTAMPTZ,
+    officer_action_started_at TIMESTAMPTZ,
+    sample_collected_at TIMESTAMPTZ,
+    lab_resulted_at TIMESTAMPTZ,
+    case_closed_at TIMESTAMPTZ,
+    feedback_sent_at TIMESTAMPTZ,
+    
+    -- Computed operational durations (seconds)
+    verification_duration_sec INT, -- Time from report to para-vet validation
+    dispatch_duration_sec INT,     -- Time from verification to MVU/Vet arrival
+    sample_turnaround_sec INT,     -- Time from collection to lab confirmation
+    total_cycle_sec INT            -- Total time from signal to closure
+);
+
+CREATE INDEX IF NOT EXISTS idx_response_village ON response_metrics(village_census_code);
+CREATE INDEX IF NOT EXISTS idx_response_block ON response_metrics(block_name);
+
+-- -----------------------------------------------------------------------------
+-- 16. PROXY REPORTING, SENTINEL RECOGNITION & ONE HEALTH FIELDS
+-- -----------------------------------------------------------------------------
+ALTER TABLE clinical_cases
+ADD COLUMN IF NOT EXISTS reported_by_type VARCHAR(32) DEFAULT 'SELF',
+-- 'SELF', 'FAMILY_MEMBER', 'NEIGHBOUR', 'PARA_VET', 'MILK_COLLECTION_STAFF'
+ADD COLUMN IF NOT EXISTS proxy_reporter_phone VARCHAR(20),
+ADD COLUMN IF NOT EXISTS is_post_loss_mortality BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS is_zoonotic_suspect BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS zoonotic_alert_dispatched BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS farmer_feedback_status VARCHAR(32) DEFAULT 'PENDING';
+-- 'PENDING', 'SMS_ACK_SENT', 'VERIFIED_SMS_SENT', 'CLOSURE_SMS_SENT'
+
+
+-- -----------------------------------------------------------------------------
+-- 17. MULTI-CHANNEL INTAKE & 5-STAGE SAMPLE LIFECYCLE SCHEMA
+-- -----------------------------------------------------------------------------
+ALTER TABLE clinical_cases
+ADD COLUMN IF NOT EXISTS channel_source VARCHAR(32) DEFAULT 'WEB_PWA',
+-- 'MISSED_CALL_CALLBACK', 'USSD_MENU', 'VOICE_IVR', 'WHATSAPP_VOICE', 'WEB_PWA'
+ADD COLUMN IF NOT EXISTS number_affected INT DEFAULT 1,
+ADD COLUMN IF NOT EXISTS number_dead INT DEFAULT 0,
+ADD COLUMN IF NOT EXISTS voice_audio_duration_sec INT,
+ADD COLUMN IF NOT EXISTS sample_lifecycle_stage VARCHAR(32) DEFAULT 'NONE';
+-- 'NONE', 'SAMPLE_NEEDED', 'SAMPLE_COLLECTED', 'IN_TRANSIT_LAB', 'LAB_PROCESSING', 'RESULT_READY', 'ACTION_TAKEN_CLOSED'
+
+-- -----------------------------------------------------------------------------
+-- 18. MATERIALIZED VIEW: 6 CORE SUCCESS METRICS (VILLAGE & BLOCK LEVEL)
+-- -----------------------------------------------------------------------------
+CREATE MATERIALIZED VIEW IF NOT EXISTS mv_gss_success_metrics AS
+SELECT 
+    village_census_code,
+    block_name,
+    district_name,
+    DATE_TRUNC('month', signal_received_at) AS metric_month,
+    
+    -- Metric 1: Proactive early signal volume
+    COUNT(*) AS total_signals_count,
+    COUNT(*) FILTER (WHERE NOT is_post_loss_mortality) AS proactive_signals_count,
+    
+    -- Metric 2: Non-smartphone inclusion ratio
+    ROUND(100.0 * COUNT(*) FILTER (WHERE channel_source IN ('MISSED_CALL_CALLBACK', 'USSD_MENU', 'VOICE_IVR')) / NULLIF(COUNT(*), 0), 2) AS non_smartphone_pct,
+    
+    -- Metric 3: Average time from signal to verification (hours)
+    ROUND(AVG(verification_duration_sec) / 3600.0, 2) AS avg_verification_hours,
+    
+    -- Metric 4: Sample closure rate (% reaching action taken)
+    ROUND(100.0 * COUNT(*) FILTER (WHERE sample_turnaround_sec IS NOT NULL) / NULLIF(COUNT(*) FILTER (WHERE sample_collected_at IS NOT NULL), 0), 2) AS sample_closure_rate_pct,
+    
+    -- Metric 5 & 6: Average time to first official action (hours)
+    ROUND(AVG(dispatch_duration_sec) / 3600.0, 2) AS avg_time_to_first_action_hours
+    
+FROM response_metrics
+GROUP BY village_census_code, block_name, district_name, DATE_TRUNC('month', signal_received_at);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_gss_metrics ON mv_gss_success_metrics(village_census_code, metric_month);
+
+
+-- -----------------------------------------------------------------------------
+-- 19. AUTOMATED 1962 MOBILE VETERINARY UNIT (MVU) DISPATCH ADAPTER
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS mvu_dispatch_tickets (
+    ticket_id VARCHAR(32) PRIMARY KEY, -- e.g. "TKT-1962-MH-8821"
+    case_id UUID NOT NULL REFERENCES clinical_cases(case_id) ON DELETE CASCADE,
+    mvu_unit_code VARCHAR(32) NOT NULL, -- e.g. "MVU-SANGAMNER-01"
+    driver_contact VARCHAR(20) NOT NULL,
+    veterinary_surgeon_name VARCHAR(128) NOT NULL,
+    dispatched_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    estimated_arrival_minutes INT NOT NULL DEFAULT 45,
+    dispatch_status VARCHAR(32) NOT NULL DEFAULT 'DISPATCHED',
+    -- 'DISPATCHED', 'EN_ROUTE', 'ARRIVED_ON_SITE', 'TREATMENT_ISSUED', 'CANCELLED'
+    prepopulated_clinical_summary TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_mvu_case ON mvu_dispatch_tickets(case_id);
+
+-- -----------------------------------------------------------------------------
+-- 20. FOCUSED 5-10 VILLAGE PILOT TELEMETRY & FIELD VALIDATION LEDGER
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS pilot_telemetry (
+    telemetry_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    village_census_code VARCHAR(16) NOT NULL,
+    farmer_phone_hash VARCHAR(64) NOT NULL,
+    reporting_channel VARCHAR(32) NOT NULL, -- 'MISSED_CALL', 'USSD', 'VOICE_IVR', 'WEB'
+    seconds_to_verify INT NOT NULL,
+    sample_closed BOOLEAN NOT NULL DEFAULT FALSE,
+    is_repeat_report BOOLEAN NOT NULL DEFAULT FALSE,
+    recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_pilot_village ON pilot_telemetry(village_census_code);
 
 ## 3. Dynamic Withdrawal Calculation (Zero Sweeper Dependency)
 
