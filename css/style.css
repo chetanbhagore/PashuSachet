@@ -1,13 +1,15 @@
 /* ==========================================================================
    PashuSachet (पशूसचेत — पशु आरोग्य साथी)
-   The Village Animal-Care Notebook — Clean, Restrained, Human-Centered UI
+   The Village Animal-Care Notebook — Apple-Grade Interface Design
    ========================================================================== */
 
+/* 1. RESET & FOUNDATIONS */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 html, body {
@@ -18,17 +20,46 @@ html, body {
   font-family: var(--font-sans);
   font-size: 15px;
   line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  border: none;
+  outline: none;
+  background: transparent;
+}
+
+button {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+img, svg {
+  display: block;
+}
+
+/* Accessible Line Icon Support */
+.pashu-icon {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
 }
 
 /* ==========================================================================
-   PERSISTENT TOP BAR (Clean, Frosted Ivory Paper)
+   2. PERSISTENT TOPBAR (Apple Frosted Glass)
    ========================================================================== */
 .site-topbar {
   position: sticky;
   top: 0;
-  width: 100%;
+  left: 0;
+  right: 0;
   height: var(--header-height);
   background: var(--glass-nav);
   backdrop-filter: var(--glass-blur);
@@ -38,30 +69,27 @@ html, body {
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  z-index: 1000;
-  gap: 16px;
+  z-index: 100;
+  transition: background var(--duration-fast) var(--ease-spring);
 }
 
 .topbar-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  text-decoration: none;
-  color: var(--ink-primary);
-  flex-shrink: 0;
+  gap: 10px;
+  cursor: pointer;
 }
 
 .brand-emblem {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--radius-sm);
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  background: linear-gradient(135deg, #1A382B 0%, #295741 100%);
+  color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--ink-primary);
-  box-shadow: var(--shadow-xs);
+  box-shadow: 0 2px 6px rgba(26, 56, 43, 0.15);
 }
 
 .brand-titles {
@@ -69,13 +97,13 @@ html, body {
   flex-direction: column;
 }
 
-.brand-name {
+.brand-title {
   font-family: var(--font-display);
   font-size: 16px;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
   color: var(--ink-primary);
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 .brand-subtitle {
@@ -96,7 +124,7 @@ html, body {
   gap: 8px;
   padding: 6px 14px;
   background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-medium);
   border-radius: var(--radius-pill);
   font-size: 13px;
   font-weight: 600;
@@ -108,7 +136,7 @@ html, body {
 
 .role-switcher-capsule:hover {
   background: var(--bg-paper-light);
-  border-color: var(--border-medium);
+  border-color: var(--ink-primary);
 }
 
 .role-switcher-capsule:active {
@@ -124,42 +152,39 @@ html, body {
   background: var(--status-success-light);
   color: var(--status-success);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .sync-dot {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: var(--status-success);
+  background-color: var(--status-success);
 }
 
 .topbar-actions {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-shrink: 0;
 }
 
 .emergency-pill-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 14px;
+  padding: 6px 12px;
   background: var(--urgency-critical-light);
   border: 1px solid var(--urgency-critical-border);
   color: var(--urgency-critical);
+  border-radius: var(--radius-pill);
   font-size: 13px;
   font-weight: 700;
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  text-decoration: none;
   transition: all var(--duration-fast) var(--ease-spring);
 }
 
 .emergency-pill-btn:hover {
   background: var(--urgency-critical);
-  color: var(--ink-inverted);
+  color: #FFFFFF;
 }
 
 .emergency-pill-btn:active {
@@ -168,33 +193,28 @@ html, body {
 
 .lang-switch-btn {
   padding: 6px 12px;
+  border-radius: var(--radius-pill);
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-pill);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--ink-primary);
-  cursor: pointer;
+  color: var(--ink-secondary);
   transition: all var(--duration-fast) var(--ease-spring);
 }
 
 .lang-switch-btn:hover {
-  background: var(--bg-paper-light);
+  border-color: var(--border-medium);
+  color: var(--ink-primary);
 }
 
 .profile-capsule-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 12px 4px 5px;
+  padding: 4px 10px 4px 4px;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-pill);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink-primary);
-  cursor: pointer;
-  box-shadow: var(--shadow-xs);
   transition: all var(--duration-fast) var(--ease-spring);
 }
 
@@ -216,12 +236,17 @@ html, body {
 }
 
 /* ==========================================================================
-   ROLE NAVIGATION BAR (Restrained Subnav Tabs)
+   3. APPLE SEGMENTED SUBNAV BAR
    ========================================================================== */
 .role-subnav-bar {
-  background: var(--bg-paper-light);
+  position: sticky;
+  top: var(--header-height);
+  z-index: 90;
+  background: var(--glass-nav);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border-bottom: 1px solid var(--border-subtle);
-  padding: 0 20px;
+  padding: 8px 20px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -238,51 +263,49 @@ html, body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 16px;
-  font-size: 14px;
+  padding: 8px 16px;
+  font-size: 13.5px;
   font-weight: 500;
   color: var(--ink-secondary);
   background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
   cursor: pointer;
   white-space: nowrap;
   transition: all var(--duration-fast) var(--ease-spring);
+  touch-action: manipulation;
 }
 
 .subnav-tab-btn:hover, .role-subnav-btn:hover {
   color: var(--ink-primary);
+  background: rgba(26, 56, 43, 0.04);
+}
+
+.subnav-tab-btn:active, .role-subnav-btn:active {
+  transform: scale(0.97);
 }
 
 .subnav-tab-btn.active, .role-subnav-btn.active {
   color: var(--ink-primary);
   font-weight: 600;
-  border-bottom-color: var(--accent-turmeric);
-}
-
-.subnav-tab-badge {
-  padding: 2px 7px;
-  border-radius: var(--radius-pill);
-  font-size: 11px;
-  font-weight: 700;
-  background: var(--accent-turmeric-light);
-  color: var(--ink-primary);
+  background: var(--bg-surface);
+  border-color: var(--border-medium);
+  box-shadow: 0 2px 8px rgba(26, 56, 43, 0.06), 0 1px 2px rgba(26, 56, 43, 0.03);
 }
 
 /* ==========================================================================
-   MAIN APP WORKSPACE CANVAS
+   4. MAIN WORKSPACE CONTAINER & VIEWS
    ========================================================================== */
 .app-container {
-  width: 100%;
   max-width: var(--max-content-width);
   margin: 0 auto;
-  padding: 28px 20px 80px 20px;
+  padding: 24px 20px 80px 20px;
+  width: 100%;
 }
 
-/* View Switcher */
 .role-workspace-view {
   display: none;
-  animation: fadeIn 0.2s var(--ease-spring);
+  animation: fadeIn 200ms var(--ease-spring);
 }
 
 .role-workspace-view.active {
@@ -291,100 +314,100 @@ html, body {
 
 .notebook-tab-view {
   display: none;
-  animation: fadeIn 0.2s var(--ease-spring);
 }
 
 .notebook-tab-view.active {
   display: block;
+  animation: fadeIn 220ms var(--ease-spring);
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 /* ==========================================================================
-   NOTEBOOK CARDS & RESTRAINED CONTAINERS
+   5. NOTEBOOK TYPOGRAPHY & HEADERS
+   ========================================================================== */
+.notebook-header {
+  margin-bottom: 24px;
+}
+
+.notebook-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink-primary);
+  line-height: 1.2;
+}
+
+.notebook-subtitle {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--ink-secondary);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   6. APPLE INSET SURFACES & CARDS
    ========================================================================== */
 .notebook-card {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
   padding: 24px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-card);
   transition: all var(--duration-fast) var(--ease-spring);
 }
 
-.notebook-card:hover {
-  border-color: var(--border-medium);
-}
-
-.notebook-header {
-  margin-bottom: 20px;
-}
-
-.notebook-title {
-  font-family: var(--font-display);
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--ink-primary);
-  line-height: 1.25;
-}
-
-.notebook-subtitle {
-  font-size: 14px;
-  color: var(--ink-secondary);
-  margin-top: 4px;
-}
-
-/* Hero Dominant Action: Report an Animal Health Problem */
+/* Hero Health Check Dominant Card */
 .hero-report-card {
-  background: linear-gradient(135deg, #FFFFFF 0%, #FDFBF7 100%);
-  border: 1.5px solid var(--accent-turmeric-border);
+  background: linear-gradient(135deg, #FFFFFF 0%, #FFFDF9 100%);
+  border: 1px solid rgba(221, 167, 58, 0.25);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-card);
   padding: 28px;
   margin-bottom: 24px;
+  box-shadow: 0 8px 24px -6px rgba(221, 167, 58, 0.12), 0 2px 8px rgba(26, 56, 43, 0.04);
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
 .hero-cta-btn {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: 10px;
-  padding: 14px 28px;
-  min-height: 50px;
   background: var(--accent-turmeric);
-  color: var(--ink-primary);
-  font-size: 16px;
+  color: #FFFFFF;
+  font-size: 15px;
   font-weight: 700;
-  border: none;
+  padding: 14px 26px;
   border-radius: var(--radius-pill);
-  cursor: pointer;
-  box-shadow: 0 3px 12px rgba(221, 167, 58, 0.28);
+  box-shadow: 0 4px 12px rgba(221, 167, 58, 0.35);
   transition: all var(--duration-fast) var(--ease-spring);
-  width: fit-content;
 }
 
 .hero-cta-btn:hover {
   background: var(--accent-turmeric-hover);
-  box-shadow: 0 4px 16px rgba(221, 167, 58, 0.38);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(221, 167, 58, 0.42);
 }
 
 .hero-cta-btn:active {
+  background: var(--accent-turmeric-active);
   transform: scale(0.97);
 }
 
-/* Quick Glance Row */
-.glance-cards-row {
+/* Secondary Glance Cards Grid */
+.glance-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
   margin-bottom: 28px;
 }
 
@@ -392,7 +415,7 @@ html, body {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  padding: 16px 18px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -407,12 +430,25 @@ html, body {
   box-shadow: var(--shadow-sm);
 }
 
+.glance-item-card:active {
+  transform: scale(0.98);
+}
+
+/* Status Tags & Badges */
 .status-tag {
-  align-self: flex-start;
-  padding: 3px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
   border-radius: var(--radius-pill);
-  font-size: 11px;
-  font-weight: 700;
+  width: fit-content;
+}
+
+.status-tag.success {
+  background: var(--status-success-light);
+  color: var(--status-success);
 }
 
 .status-tag.warning {
@@ -425,13 +461,8 @@ html, body {
   color: var(--urgency-critical);
 }
 
-.status-tag.success {
-  background: var(--status-success-light);
-  color: var(--status-success);
-}
-
 /* ==========================================================================
-   HORIZONTAL ANIMAL HERD CAROUSEL (Passports)
+   7. ANIMAL HERD HORIZONTAL CAROUSEL (Pashu Aadhar Passports)
    ========================================================================== */
 .herd-carousel-header {
   display: flex;
@@ -444,10 +475,13 @@ html, body {
   display: flex;
   gap: 16px;
   overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
   padding-bottom: 12px;
-  scrollbar-width: thin;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.herd-carousel-track::-webkit-scrollbar {
+  display: none;
 }
 
 .passport-card {
@@ -457,244 +491,258 @@ html, body {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: 18px;
+  box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
   gap: 12px;
-  box-shadow: var(--shadow-xs);
   transition: all var(--duration-fast) var(--ease-spring);
 }
 
 .passport-card:hover {
   border-color: var(--border-medium);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-floating);
+  transform: translateY(-2px);
 }
 
 .ear-tag-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 8px;
-  background: var(--accent-turmeric-light);
-  border: 1px solid var(--accent-turmeric-border);
-  color: var(--ink-primary);
+  padding: 4px 10px;
+  background: var(--bg-paper-subtle);
+  border: 1px solid var(--border-medium);
   border-radius: var(--radius-xs);
   font-family: var(--font-mono);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
+  color: var(--ink-primary);
+  letter-spacing: 0.04em;
 }
 
 .passport-actions {
   display: flex;
   gap: 8px;
-  margin-top: 4px;
+  margin-top: auto;
 }
 
 .btn-passport-sm {
   flex: 1;
-  padding: 8px 12px;
-  min-height: 36px;
-  font-size: 12px;
+  padding: 9px 12px;
+  font-size: 13px;
   font-weight: 600;
   border-radius: var(--radius-pill);
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-surface);
-  color: var(--ink-primary);
-  cursor: pointer;
   text-align: center;
+  background: var(--bg-paper-subtle);
+  border: 1px solid var(--border-subtle);
+  color: var(--ink-primary);
   transition: all var(--duration-fast) var(--ease-spring);
 }
 
 .btn-passport-sm:hover {
-  background: var(--bg-paper-light);
+  background: var(--bg-paper-muted);
+}
+
+.btn-passport-sm:active {
+  transform: scale(0.97);
 }
 
 .btn-passport-sm.primary {
   background: var(--accent-turmeric);
+  color: #FFFFFF;
   border-color: transparent;
 }
 
+.btn-passport-sm.primary:hover {
+  background: var(--accent-turmeric-hover);
+}
+
 /* ==========================================================================
-   WORKFLOW A: GUIDED 4-STEP SYMPTOM REPORTING
+   8. 4-STEP GUIDED TRIAGE FLOW
    ========================================================================== */
 .stepper-progress-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 24px;
-  padding: 14px 20px;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-pill);
+  padding: 6px 12px;
+  box-shadow: var(--shadow-xs);
+  gap: 8px;
+  overflow-x: auto;
 }
 
 .stepper-node {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  font-weight: 600;
-  color: var(--ink-tertiary);
-}
-
-.stepper-node.active {
-  color: var(--ink-primary);
-}
-
-.stepper-node.done {
-  color: var(--status-success);
+  font-weight: 500;
+  color: var(--ink-secondary);
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  transition: all var(--duration-fast) var(--ease-spring);
+  white-space: nowrap;
 }
 
 .stepper-num {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  background: var(--bg-paper-muted);
+  background: var(--bg-paper-subtle);
+  color: var(--ink-secondary);
+  font-size: 12px;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+}
+
+.stepper-node.active {
+  background: var(--accent-turmeric-light);
+  color: var(--ink-primary);
   font-weight: 700;
 }
 
 .stepper-node.active .stepper-num {
   background: var(--accent-turmeric);
-  color: var(--ink-primary);
+  color: #FFFFFF;
 }
 
-.stepper-node.done .stepper-num {
+.stepper-node.completed {
+  color: var(--status-success);
+}
+
+.stepper-node.completed .stepper-num {
   background: var(--status-success);
-  color: #fff;
+  color: #FFFFFF;
 }
 
-/* Symptom Selection Cards */
+/* Symptom Selection Cards Grid */
 .symptom-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  gap: 14px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
 }
 
 .symptom-select-card {
+  position: relative;
   background: var(--bg-surface);
-  border: 1.5px solid var(--border-subtle);
+  border: 1px solid var(--border-medium);
   border-radius: var(--radius-md);
   padding: 16px;
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  align-items: flex-start;
+  gap: 14px;
   cursor: pointer;
-  user-select: none;
-  min-height: 100px;
   transition: all var(--duration-fast) var(--ease-spring);
-  position: relative;
+  user-select: none;
 }
 
 .symptom-select-card:hover {
-  border-color: var(--border-medium);
+  border-color: var(--ink-primary);
+  background: var(--bg-paper-light);
+}
+
+.symptom-select-card:active {
+  transform: scale(0.98);
 }
 
 .symptom-select-card.selected {
-  border-color: var(--accent-turmeric);
-  background: var(--accent-turmeric-light);
-  box-shadow: 0 0 0 1px var(--accent-turmeric);
+  border-color: var(--ink-primary);
+  background: #FFFDF9;
+  box-shadow: 0 0 0 1px var(--ink-primary), var(--shadow-sm);
+}
+
+.check-indicator-bubble {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: all var(--duration-fast) var(--ease-spring);
+}
+
+.symptom-select-card.selected .check-indicator-bubble {
+  background: var(--ink-primary);
+  border-color: var(--ink-primary);
+  color: #FFFFFF;
 }
 
 .symptom-card-icon {
   width: 32px;
   height: 32px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-xs);
   background: var(--bg-paper-subtle);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--ink-primary);
+  flex-shrink: 0;
 }
 
-.symptom-select-card.selected .symptom-card-icon {
-  background: #fff;
-}
-
-.check-indicator-bubble {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: 1.5px solid var(--border-medium);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: transparent;
-}
-
-.symptom-select-card.selected .check-indicator-bubble {
-  background: var(--accent-turmeric);
-  border-color: var(--accent-turmeric);
-  color: var(--ink-primary);
-}
-
-/* Vitals Buttons */
+/* Vitals Segmented Controls */
 .vitals-segmented-bar {
   display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-  overflow-x: auto;
+  background: var(--bg-paper-subtle);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  gap: 4px;
+  margin-bottom: 8px;
 }
 
 .vitals-pill-btn {
   flex: 1;
-  min-height: 44px;
-  padding: 8px 14px;
-  border-radius: var(--radius-sm);
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  padding: 8px 10px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
+  text-align: center;
+  border-radius: var(--radius-xs);
   color: var(--ink-secondary);
-  cursor: pointer;
   transition: all var(--duration-fast) var(--ease-spring);
 }
 
-.vitals-pill-btn:hover {
-  background: var(--bg-paper-light);
-}
-
 .vitals-pill-btn.active {
-  background: var(--ink-primary);
-  color: #fff;
-  border-color: var(--ink-primary);
+  background: var(--bg-surface);
+  color: var(--ink-primary);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
-/* Form Inputs */
+/* Inputs & Form Elements */
 .notebook-input {
   width: 100%;
   padding: 10px 14px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-subtle);
-  font-family: inherit;
-  font-size: 14px;
   background: var(--bg-surface);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
   color: var(--ink-primary);
   transition: border-color var(--duration-fast) var(--ease-spring);
 }
 
 .notebook-input:focus {
-  outline: none;
   border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-turmeric-light);
 }
 
 /* ==========================================================================
-   MODALS, SHEETS & OVERLAYS
+   9. MODALS & ROLE SWITCHER
    ========================================================================== */
 .notebook-modal-overlay {
-  display: none;
   position: fixed;
   inset: 0;
   background: rgba(26, 56, 43, 0.45);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  z-index: 2000;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: none;
   align-items: center;
   justify-content: center;
   padding: 20px;
@@ -702,33 +750,33 @@ html, body {
 
 .notebook-modal-overlay.active {
   display: flex;
+  animation: modalFadeIn 200ms var(--ease-spring);
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .notebook-modal-card {
-  width: 100%;
-  max-width: 540px;
-  max-height: 90vh;
-  overflow-y: auto;
   background: var(--bg-surface);
   border-radius: var(--radius-xl);
+  max-width: 520px;
+  width: 100%;
+  padding: 24px;
   box-shadow: var(--shadow-modal);
   border: 1px solid var(--border-subtle);
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  animation: modalScale 0.2s var(--ease-spring);
-}
-
-@keyframes modalScale {
-  from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .modal-header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .modal-title-text {
@@ -741,29 +789,27 @@ html, body {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--bg-paper-muted);
-  border: none;
+  background: var(--bg-paper-subtle);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--ink-secondary);
-  cursor: pointer;
   transition: all var(--duration-fast) var(--ease-spring);
 }
 
 .btn-close-modal:hover {
+  background: var(--border-medium);
   color: var(--ink-primary);
 }
 
-/* Role Selector Sheet Options */
 .role-choice-card {
   display: flex;
   align-items: center;
   gap: 14px;
   padding: 14px 16px;
-  border-radius: var(--radius-md);
-  border: 1.5px solid var(--border-subtle);
   background: var(--bg-surface);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: all var(--duration-fast) var(--ease-spring);
 }
@@ -773,9 +819,14 @@ html, body {
   background: var(--bg-paper-light);
 }
 
+.role-choice-card:active {
+  transform: scale(0.98);
+}
+
 .role-choice-card.active {
   border-color: var(--accent-turmeric);
-  background: var(--accent-turmeric-light);
+  background: #FFFDF9;
+  box-shadow: 0 0 0 1px var(--accent-turmeric);
 }
 
 .role-choice-title {
@@ -787,29 +838,26 @@ html, body {
 .role-choice-desc {
   font-size: 12px;
   color: var(--ink-secondary);
+  margin-top: 2px;
 }
 
-/* ==========================================================================
-   TOAST NOTIFICATION (Apple Island Style)
-   ========================================================================== */
+/* Toast Notifications */
 #toast {
   position: fixed;
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%) translateY(20px);
   background: var(--ink-primary);
-  color: var(--ink-inverted);
-  padding: 12px 22px;
+  color: #FFFFFF;
+  padding: 12px 24px;
   border-radius: var(--radius-pill);
-  font-size: 13px;
-  font-weight: 600;
-  box-shadow: var(--shadow-modal);
-  z-index: 2500;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   opacity: 0;
   pointer-events: none;
-  transition: all var(--duration-normal) var(--ease-spring);
-  max-width: 90vw;
-  text-align: center;
+  transition: all 250ms var(--ease-spring);
+  z-index: 2000;
 }
 
 #toast.show {
@@ -817,27 +865,51 @@ html, body {
   transform: translateX(-50%) translateY(0);
 }
 
-/* ==========================================================================
-   LEGACY TEST COMPLIANCE (Preserves All 190 IDs & Classes)
-   ========================================================================== */
+/* Legacy Test Storage Container */
 .legacy-test-store {
   display: none !important;
 }
 
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .site-topbar {
+    padding: 0 14px;
+  }
+  .app-container {
+    padding: 16px 14px 70px 14px;
+  }
+  .hero-report-card {
+    padding: 20px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .hero-cta-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .passport-card {
+    flex: 0 0 250px;
+  }
+  .topbar-center-role {
+    display: none;
+  }
+}
+
+/* Phase 3 & Phase 6 Test Matchers */
 .triage-band.abstention {
-  background: var(--bg-paper-light);
-  border: 1.5px solid var(--border-medium);
-  color: var(--ink-secondary);
+  background: var(--status-warning-light);
+  color: var(--status-warning);
+  border: 1px solid var(--status-warning-border);
 }
 
 .coldchain-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
+  gap: 6px;
+  padding: 4px 10px;
   border-radius: var(--radius-pill);
-  font-size: 11px;
-  font-weight: 700;
-  background: rgba(43, 108, 176, 0.1);
+  background: #EBF8FF;
   color: #2B6CB0;
+  font-size: 12px;
+  font-weight: 600;
 }

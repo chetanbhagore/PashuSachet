@@ -1,36 +1,38 @@
 /**
  * PashuSachet (पशूसचेत — पशु आरोग्य साथी) — Design System Tokens
- * Concept: The Village Animal-Care Notebook
- * Palette: Warm Ivory Paper, Deep Forest Green Ink, Maharashtra Turmeric, Terracotta Alert
- * Strictly zero emojis. Clean, restrained, high sunlight readability.
+ * Concept: The Village Animal-Care Notebook (Apple Design Translation)
+ * Aesthetics: SF Pro / Inter Typography, Grouped Inset Surfaces, Warm Paper Canvas,
+ *             Natural Maharashtra Turmeric, Deep Forest Ink, Restrained Monochrome Line Icons.
  */
 
 :root {
   /* Warm Village Notebook Canvas & Paper */
-  --bg-paper: #FAF7F2;
-  --bg-paper-light: #FDFBF7;
-  --bg-paper-subtle: #F3EFE6;
-  --bg-paper-muted: #EAE4D8;
+  --bg-paper: #FAF8F5;          /* Warm soft ivory paper */
+  --bg-paper-light: #FDFCF9;    /* Clean warm page highlight */
+  --bg-paper-subtle: #F3EFE8;   /* Inset well / background */
+  --bg-paper-muted: #EBE5DB;    /* Subtle divider / muted well */
   
-  --bg-surface: #FFFFFF;
+  --bg-surface: #FFFFFF;        /* Pure white card surface */
   --bg-surface-elevated: #FFFFFF;
   --bg-surface-subtle: #F7F5EE;
 
-  /* Subtle Notebook Borders */
-  --border-subtle: #E5DFD5;
-  --border-medium: #D4CCC0;
-  --border-strong: #B5AB9B;
+  /* Restrained Apple Hairline Borders (Subtle and human, never heavy) */
+  --border-subtle: rgba(26, 56, 43, 0.07);
+  --border-medium: rgba(26, 56, 43, 0.12);
+  --border-strong: rgba(26, 56, 43, 0.22);
   --border-focus: #1A382B;
 
-  /* Typography & Ink */
-  --ink-primary: #1A382B;      /* Deep Forest Green (14:1 high optical contrast) */
-  --ink-secondary: #53685C;    /* Muted Botanical Slate */
-  --ink-tertiary: #829288;     /* Captions & Timestamps */
+  /* Typography & Ink (High optical contrast in bright outdoor sunlight) */
+  --ink-primary: #1A382B;       /* Deep Forest Green Ink (14:1 contrast) */
+  --ink-secondary: #4A5E52;     /* Botanical Slate for subheadings */
+  --ink-tertiary: #7D8F84;      /* Timestamps, tags, footnotes */
+  --ink-quaternary: #A6B4AB;    /* Subtle placeholders */
   --ink-inverted: #FFFFFF;
 
-  /* Primary Action: Maharashtra Turmeric */
+  /* Primary Accent: Maharashtra Turmeric (Haldi) */
   --accent-turmeric: #DDA73A;
   --accent-turmeric-hover: #C9932B;
+  --accent-turmeric-active: #B58223;
   --accent-turmeric-light: rgba(221, 167, 58, 0.12);
   --accent-turmeric-border: rgba(221, 167, 58, 0.35);
 
@@ -38,53 +40,55 @@
   --urgency-critical: #B85D43;
   --urgency-critical-hover: #9E4A32;
   --urgency-critical-light: rgba(184, 93, 67, 0.12);
-  --urgency-critical-border: rgba(184, 93, 67, 0.3);
+  --urgency-critical-border: rgba(184, 93, 67, 0.32);
 
   --urgency-deep-red: #B91C1C;
-  --urgency-deep-red-light: rgba(185, 28, 28, 0.12);
+  --urgency-deep-red-light: rgba(185, 28, 28, 0.10);
 
-  /* Success & Food Safety: Muted Sage */
-  --status-success: #3D6B56;
-  --status-success-hover: #315746;
-  --status-success-light: rgba(61, 107, 86, 0.12);
-  --status-success-border: rgba(61, 107, 86, 0.28);
+  /* Success & Animal Welfare: Muted Sage */
+  --status-success: #336B51;
+  --status-success-hover: #295741;
+  --status-success-light: rgba(51, 107, 81, 0.12);
+  --status-success-border: rgba(51, 107, 81, 0.28);
 
-  --status-warning: #D97706;
-  --status-warning-light: rgba(217, 119, 6, 0.12);
+  --status-warning: #C27803;
+  --status-warning-light: rgba(194, 120, 3, 0.12);
+  --status-warning-border: rgba(194, 120, 3, 0.28);
 
   --status-info: #2B6CB0;
-  --status-info-light: rgba(43, 108, 176, 0.1);
+  --status-info-light: rgba(43, 108, 176, 0.10);
 
-  /* Translucent Liquid Glass */
-  --glass-nav: rgba(250, 247, 242, 0.92);
+  /* Apple Translucent Frosted Glass */
+  --glass-nav: rgba(250, 248, 245, 0.88);
   --glass-nav-border: rgba(26, 56, 43, 0.08);
-  --glass-blur: blur(24px) saturate(160%);
+  --glass-blur: blur(24px) saturate(180%);
 
-  /* Typography Stack */
+  /* Apple Typography Stack */
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Noto Sans Devanagari", "Segoe UI", Roboto, sans-serif;
   --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Noto Sans Devanagari", "Segoe UI", sans-serif;
   --font-mono: "SF Mono", Menlo, Consolas, monospace;
 
-  /* Squircle Border Radii */
+  /* Apple Squircle Border Radii */
   --radius-xs: 6px;
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 18px;
-  --radius-xl: 24px;
+  --radius-xl: 22px;
   --radius-pill: 9999px;
 
-  /* Ambient Soft Shadows */
+  /* Soft Ambient Apple Shadows (Diffuse, non-muddy) */
   --shadow-xs: 0 1px 2px rgba(26, 56, 43, 0.03);
   --shadow-sm: 0 2px 6px rgba(26, 56, 43, 0.04);
-  --shadow-card: 0 4px 16px -2px rgba(26, 56, 43, 0.05), 0 1px 3px rgba(26, 56, 43, 0.03);
-  --shadow-modal: 0 20px 40px -8px rgba(26, 56, 43, 0.15), 0 6px 12px rgba(26, 56, 43, 0.06);
+  --shadow-card: 0 4px 16px -2px rgba(26, 56, 43, 0.04), 0 1px 3px rgba(26, 56, 43, 0.02);
+  --shadow-floating: 0 8px 24px -4px rgba(26, 56, 43, 0.08), 0 2px 6px rgba(26, 56, 43, 0.04);
+  --shadow-modal: 0 24px 48px -12px rgba(26, 56, 43, 0.16), 0 4px 12px rgba(26, 56, 43, 0.04);
 
-  /* Interaction & Motion */
+  /* Apple Spring Physics Transitions */
   --ease-spring: cubic-bezier(0.25, 1, 0.5, 1);
-  --duration-fast: 150ms;
-  --duration-normal: 250ms;
+  --duration-fast: 160ms;
+  --duration-normal: 260ms;
 
-  --header-height: 60px;
-  --bottom-nav-height: 64px;
+  --header-height: 56px;
+  --subnav-height: 48px;
   --max-content-width: 1080px;
 }

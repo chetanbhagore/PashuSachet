@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>प्रवेश व भूमिका निवडा — PashuSachet (पशूसचेत)</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/landing.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      background: var(--bg-paper);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .login-container {
+      max-width: 680px;
+      margin: 40px auto;
+      padding: 0 20px;
+      width: 100%;
+      flex: 1;
+    }
+    .login-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      padding: 36px 32px;
+      box-shadow: 0 12px 36px rgba(26, 56, 43, 0.06);
+    }
+    .role-selection-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .role-entry-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: #FFFFFF;
+      border: 1.5px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all 180ms var(--ease-spring);
+    }
+    .role-entry-card:hover {
+      border-color: var(--accent-turmeric);
+      background: #FFFDF9;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(26, 56, 43, 0.05);
+    }
+    .role-entry-card:active {
+      transform: scale(0.98);
+    }
+    .role-icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <header class="landing-topbar">
+    <a href="index.html" class="landing-brand">
+      <div class="landing-brand-logo">
+        <span data-icon="shield" data-size="22"></span>
+      </div>
+      <div>
+        <div class="landing-brand-name">PashuSachet पशूसचेत</div>
+        <div class="landing-brand-sub">महाराष्ट्र शासन पशुसंवर्धन संलग्न</div>
+      </div>
+    </a>
+
+    <div class="landing-nav-actions">
+      <a href="index.html" class="landing-btn-secondary">
+        <span data-icon="arrow-right" data-size="14" style="transform: rotate(180deg);"></span>
+        <span>मुख्य पान (Home)</span>
+      </a>
+      <a href="tel:1962" class="landing-1962-pill">
+        <span data-icon="phone-call" data-size="14"></span>
+        <span>1962 टोल-फ्री</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- MAIN LOGIN & ROLE SELECTION -->
+  <main class="login-container">
+    <div class="login-card">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <span class="section-tag-pill">प्रवेश व भूमिका निवडा • Select Workspace</span>
+        <h1 style="font-family: var(--font-display); font-size: 26px; font-weight: 800; color: var(--ink-primary); margin-top: 6px;">
+          पशूसचेत प्रणालीत आपले स्वागत आहे
+        </h1>
+        <p style="font-size: 14px; color: var(--ink-secondary); margin-top: 6px;">
+          खालीलपैकी आपली भूमिका निवडून थेट प्रणालीत प्रवेश करा (Demonstration Mode):
+        </p>
+      </div>
+
+      <!-- ROLE CARDS LIST -->
+      <div class="role-selection-grid">
+        
+        <!-- Role 1: Farmer -->
+        <div class="role-entry-card" onclick="enterAppAs('farmer')">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div class="role-icon-box" style="background: rgba(221, 167, 58, 0.15); color: #B58223;">
+              <span data-icon="home" data-size="22"></span>
+            </div>
+            <div>
+              <div style="font-size: 16px; font-weight: 700; color: var(--ink-primary);">शेतकरी (Shetkari / Farmer)</div>
+              <div style="font-size: 13px; color: var(--ink-secondary); margin-top: 2px;">
+                एकनाथराव • मौजे साक्री (३ जनावरे) • ९०-सेकंद तपासणी व पशू आधार
+              </div>
+            </div>
+          </div>
+          <button type="button" class="landing-btn-primary" style="padding: 8px 18px; font-size: 13px;">
+            प्रवेश करा →
+          </button>
+        </div>
+
+        <!-- Role 2: Para-Vet -->
+        <div class="role-entry-card" onclick="enterAppAs('paravet')">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div class="role-icon-box" style="background: rgba(51, 107, 81, 0.15); color: var(--status-success);">
+              <span data-icon="clipboard-check" data-size="22"></span>
+            </div>
+            <div>
+              <div style="font-size: 16px; font-weight: 700; color: var(--ink-primary);">पशु सखी (Pashu Sakhi / Sentinel)</div>
+              <div style="font-size: 13px; color: var(--ink-secondary); margin-top: 2px;">
+                सुनिता पाटील • बीट साक्री (५ गावे) • <३० सेकंद पडताळणी रांग व नमुने
+              </div>
+            </div>
+          </div>
+          <button type="button" class="landing-btn-secondary" style="padding: 8px 18px; font-size: 13px;">
+            प्रवेश करा →
+          </button>
+        </div>
+
+        <!-- Role 3: LDO Doctor -->
+        <div class="role-entry-card" onclick="enterAppAs('ldo')">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div class="role-icon-box" style="background: rgba(43, 108, 176, 0.12); color: var(--status-info);">
+              <span data-icon="stethoscope" data-size="22"></span>
+            </div>
+            <div>
+              <div style="font-size: 16px; font-weight: 700; color: var(--ink-primary);">पशुवैद्यकीय अधिकारी (LDO Doctor)</div>
+              <div style="font-size: 13px; color: var(--ink-secondary); margin-top: 2px;">
+                डॉ. रामेश्वर कुटे • तालुका दवाखाना • क्लिनिकल ओपीडी व दूध विथड्रॉवल
+              </div>
+            </div>
+          </div>
+          <button type="button" class="landing-btn-secondary" style="padding: 8px 18px; font-size: 13px;">
+            प्रवेश करा →
+          </button>
+        </div>
+
+        <!-- Role 4: District Officer -->
+        <div class="role-entry-card" onclick="enterAppAs('collector')">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div class="role-icon-box" style="background: rgba(184, 93, 67, 0.15); color: var(--urgency-critical);">
+              <span data-icon="building-2" data-size="22"></span>
+            </div>
+            <div>
+              <div style="font-size: 16px; font-weight: 700; color: var(--ink-primary);">जिल्हाधिकारी / DVO (Surveillance)</div>
+              <div style="font-size: 13px; color: var(--ink-secondary); margin-top: 2px;">
+                धुळे जिल्हा नियंत्रण कक्ष • ५ किमी रिंग व्हॅक्सिनेशन व निर्णय रांग
+              </div>
+            </div>
+          </div>
+          <button type="button" class="landing-btn-secondary" style="padding: 8px 18px; font-size: 13px;">
+            प्रवेश करा →
+          </button>
+        </div>
+
+        <!-- Role 5: RDDL Lab -->
+        <div class="role-entry-card" onclick="enterAppAs('rddl')">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div class="role-icon-box" style="background: rgba(26, 56, 43, 0.1); color: var(--ink-primary);">
+              <span data-icon="flask" data-size="22"></span>
+            </div>
+            <div>
+              <div style="font-size: 16px; font-weight: 700; color: var(--ink-primary);">विभागीय प्रयोगशाळा (RDDL Lab)</div>
+              <div style="font-size: 13px; color: var(--ink-secondary); margin-top: 2px;">
+                पुणे मध्यवर्ती प्रयोगशाळा • RT-PCR चाचणी व NADRES V2 डेटा sync
+              </div>
+            </div>
+          </div>
+          <button type="button" class="landing-btn-secondary" style="padding: 8px 18px; font-size: 13px;">
+            प्रवेश करा →
+          </button>
+        </div>
+
+      </div>
+
+      <!-- OTP SIMULATION TAB -->
+      <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border-subtle);">
+        <details>
+          <summary style="font-size: 13px; font-weight: 600; color: var(--ink-secondary); cursor: pointer;">
+            वापरकर्ता मोबाईल नंबर व OTP द्वारे प्रवेश करायचा आहे का? (Mobile Login)
+          </summary>
+          <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+            <input type="tel" id="userMobileInput" class="notebook-input" placeholder="१०-अंकी मोबाईल नंबर (उदा. 98220 18491)" style="flex: 1; min-width: 200px;" value="9822018491">
+            <button type="button" class="landing-btn-primary" onclick="simulateOtpLogin()">
+              ओटीपी पाठवा (Send OTP)
+            </button>
+          </div>
+        </details>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="landing-footer">
+    <p>© 2026 PashuSachet (पशूसचेत). पशुसंवर्धन व दुग्धव्यवसाय विकास विभाग, महाराष्ट्र शासन संलग्न.</p>
+  </footer>
+
+  <script src="js/icons.js"></script>
+  <script>
+    function enterAppAs(role) {
+      try {
+        localStorage.setItem('pashu_persona', role);
+      } catch (e) {}
+      window.location.href = 'index.html?role=' + role + '#app';
+    }
+
+    function simulateOtpLogin() {
+      const mobile = document.getElementById('userMobileInput').value;
+      if (!mobile || mobile.length < 10) {
+        alert('कृपया योग्य १०-अंकी मोबाईल नंबर प्रविष्ट करा.');
+        return;
+      }
+      enterAppAs('farmer');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof renderIcons === 'function') renderIcons();
+    });
+  </script>
+</body>
+</html>

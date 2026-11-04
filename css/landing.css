@@ -1,0 +1,577 @@
+/**
+ * PashuSachet (पशूसचेत — पशु आरोग्य साथी)
+ * Public Landing Page Styles — Apple-Grade Rural Product Aesthetic
+ * Typography: SF Pro / Inter + Noto Sans Devanagari
+ * Palette: Warm Paper #FAF8F5, Forest Green Ink #1A382B, Turmeric #DDA73A, Terracotta #B85D43
+ */
+
+/* ==========================================================================
+   1. LANDING TOPBAR (Frosted Glass with Rural Identity)
+   ========================================================================== */
+.landing-topbar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: rgba(250, 248, 245, 0.90);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(26, 56, 43, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  z-index: 1000;
+  transition: all 200ms ease;
+}
+
+.landing-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.landing-brand-logo {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #1A382B 0%, #295741 100%);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(26, 56, 43, 0.2);
+}
+
+.landing-brand-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink-primary);
+  line-height: 1.15;
+}
+
+.landing-brand-sub {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-secondary);
+}
+
+.landing-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.landing-1962-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--urgency-critical-light);
+  border: 1px solid var(--urgency-critical-border);
+  color: var(--urgency-critical);
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 160ms var(--ease-spring);
+}
+
+.landing-1962-pill:hover {
+  background: var(--urgency-critical);
+  color: #FFFFFF;
+}
+
+.landing-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #FFFFFF;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-pill);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(26, 56, 43, 0.04);
+  transition: all 160ms var(--ease-spring);
+}
+
+.landing-btn-secondary:hover {
+  background: var(--bg-paper-light);
+  border-color: var(--ink-primary);
+}
+
+.landing-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 20px;
+  background: var(--accent-turmeric);
+  color: #FFFFFF;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(221, 167, 58, 0.35);
+  transition: all 160ms var(--ease-spring);
+}
+
+.landing-btn-primary:hover {
+  background: var(--accent-turmeric-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(221, 167, 58, 0.42);
+}
+
+.landing-btn-primary:active {
+  transform: scale(0.97);
+}
+
+/* ==========================================================================
+   2. HERO SECTION (Rural Maharashtra Landscape + Confident Value Prop)
+   ========================================================================== */
+.landing-hero {
+  position: relative;
+  width: 100%;
+  padding: 60px 24px 80px 24px;
+  background: linear-gradient(180deg, #FAF8F5 0%, #F5F1E8 100%);
+  border-bottom: 1px solid rgba(26, 56, 43, 0.06);
+  overflow: hidden;
+}
+
+.landing-hero-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 40px;
+  align-items: center;
+}
+
+.hero-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--status-success);
+  margin-bottom: 20px;
+  box-shadow: 0 2px 6px rgba(26, 56, 43, 0.04);
+}
+
+.hero-main-title {
+  font-family: var(--font-display);
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  color: var(--ink-primary);
+  margin-bottom: 16px;
+}
+
+.hero-lead-text {
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--ink-secondary);
+  margin-bottom: 28px;
+  max-width: 580px;
+}
+
+.hero-cta-group {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.hero-cta-btn-lg {
+  padding: 14px 28px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+  background: var(--accent-turmeric);
+  color: #FFFFFF;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 6px 20px rgba(221, 167, 58, 0.38);
+  transition: all 180ms var(--ease-spring);
+}
+
+.hero-cta-btn-lg:hover {
+  background: var(--accent-turmeric-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(221, 167, 58, 0.45);
+}
+
+.hero-cta-btn-lg:active {
+  transform: scale(0.97);
+}
+
+.hero-demo-btn-lg {
+  padding: 14px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: var(--radius-pill);
+  background: #FFFFFF;
+  color: var(--ink-primary);
+  border: 1.5px solid var(--border-medium);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(26, 56, 43, 0.04);
+  transition: all 180ms var(--ease-spring);
+}
+
+.hero-demo-btn-lg:hover {
+  border-color: var(--ink-primary);
+  background: var(--bg-paper-light);
+}
+
+.hero-demo-btn-lg:active {
+  transform: scale(0.97);
+}
+
+.hero-trust-bullets {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-secondary);
+}
+
+.hero-trust-bullet {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hero-visual-card {
+  background: #FFFFFF;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 16px 40px -10px rgba(26, 56, 43, 0.12), 0 4px 12px rgba(26, 56, 43, 0.04);
+  overflow: hidden;
+  position: relative;
+}
+
+.hero-visual-top {
+  padding: 16px 20px;
+  background: var(--bg-paper-light);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hero-visual-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hero-animal-preview {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  background: var(--bg-paper-subtle);
+  border: 1px solid var(--border-subtle);
+}
+
+.hero-animal-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-sm);
+  background: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-primary);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+/* ==========================================================================
+   3. GOVERNMENT ALIGNMENT & TRUST BAR
+   ========================================================================== */
+.landing-trust-bar {
+  background: #FFFFFF;
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 24px 20px;
+}
+
+.trust-bar-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  align-items: center;
+}
+
+.trust-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+}
+
+.trust-item-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--bg-paper-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--status-success);
+  flex-shrink: 0;
+}
+
+.trust-item-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink-primary);
+  line-height: 1.2;
+}
+
+.trust-item-sub {
+  font-size: 11.5px;
+  color: var(--ink-secondary);
+  margin-top: 2px;
+}
+
+/* ==========================================================================
+   4. SECTION LAYOUTS (Spacious, Apple Inset Hierarchy)
+   ========================================================================== */
+.landing-section {
+  padding: 72px 24px;
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.section-header-centered {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 48px auto;
+}
+
+.section-tag-pill {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--status-success-light);
+  color: var(--status-success);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.section-main-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink-primary);
+  line-height: 1.2;
+}
+
+.section-lead-sub {
+  font-size: 16px;
+  color: var(--ink-secondary);
+  margin-top: 8px;
+  line-height: 1.55;
+}
+
+/* ==========================================================================
+   5. PROBLEM -> SOLUTION CARDS
+   ========================================================================== */
+.problem-solution-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.contrast-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(26, 56, 43, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: all 200ms var(--ease-spring);
+}
+
+.contrast-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(26, 56, 43, 0.07);
+  border-color: var(--border-medium);
+}
+
+.contrast-problem-pane {
+  background: var(--urgency-critical-light);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  border-left: 3px solid var(--urgency-critical);
+}
+
+.contrast-solution-pane {
+  background: var(--status-success-light);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  border-left: 3px solid var(--status-success);
+}
+
+/* ==========================================================================
+   6. HOW IT WORKS (4 Step Flow)
+   ========================================================================== */
+.steps-horizontal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 20px;
+  position: relative;
+}
+
+.step-flow-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 24px 20px;
+  box-shadow: 0 4px 16px rgba(26, 56, 43, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.step-num-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-turmeric);
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ==========================================================================
+   7. STAKEHOLDER ROLE CARDS
+   ========================================================================== */
+.role-showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.role-persona-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 4px 16px rgba(26, 56, 43, 0.03);
+  transition: all 200ms var(--ease-spring);
+}
+
+.role-persona-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--border-medium);
+  box-shadow: 0 8px 24px rgba(26, 56, 43, 0.08);
+}
+
+.role-avatar-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ==========================================================================
+   8. PILOT IMPACT & METRICS BANNER
+   ========================================================================== */
+.pilot-metrics-banner {
+  background: linear-gradient(135deg, #1A382B 0%, #295741 100%);
+  border-radius: var(--radius-xl);
+  padding: 44px 36px;
+  color: #FFFFFF;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 30px;
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(26, 56, 43, 0.2);
+}
+
+.metric-big-num {
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: 800;
+  color: var(--accent-turmeric);
+  line-height: 1.1;
+}
+
+.metric-label-txt {
+  font-size: 13.5px;
+  color: #DDE7E1;
+  margin-top: 6px;
+}
+
+/* ==========================================================================
+   9. FINAL CALL TO ACTION (Warm Sunset Card)
+   ========================================================================== */
+.final-cta-card {
+  background: linear-gradient(135deg, #FFFBF0 0%, #FFF5E0 100%);
+  border: 1px solid rgba(221, 167, 58, 0.35);
+  border-radius: var(--radius-xl);
+  padding: 56px 32px;
+  text-align: center;
+  box-shadow: 0 12px 32px rgba(221, 167, 58, 0.15);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* ==========================================================================
+   10. PUBLIC FOOTER
+   ========================================================================== */
+.landing-footer {
+  background: var(--bg-paper-light);
+  border-top: 1px solid var(--border-subtle);
+  padding: 40px 24px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-secondary);
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .landing-hero-inner {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .hero-main-title {
+    font-size: 32px;
+  }
+}

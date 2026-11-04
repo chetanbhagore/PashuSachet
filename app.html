@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8">
+  <title>PashuSachet App Shell</title>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const role = urlParams.get('role') || localStorage.getItem('pashu_persona') || 'farmer';
+    window.location.replace('index.html?role=' + role + '#app');
+  </script>
+</head>
+<body>
+  <p>लोड करत आहे... (Loading PashuSachet App Shell...)</p>
+</body>
+</html>
